@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的投資現況</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+            font-size: 12px;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .exchange-rate {
+            background: #90EE90;
+            padding: 8px 15px;
+            display: inline-block;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+            font-size: 11px;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 4px 6px;
+            text-align: center;
+        }
+
+        th {
+            background: #e8e8e8;
+            font-weight: bold;
+        }
+
+        .section-header {
+            background: #4472C4;
+            color: white;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .sub-total {
+            background: #FFFF99;
+            font-weight: bold;
+        }
+
+        .grand-total {
+            background: #FF6B6B;
+            color: white;
+            font-weight: bold;
+        }
+
+        .positive {
+            color: #008000;
+        }
+
+        .negative {
+            color: #FF0000;
+        }
+
+        .highlight-green {
+            background: #90EE90;
+        }
+
+        .highlight-yellow {
+            background: #FFFF99;
+        }
+
+        .highlight-red {
+            background: #FF6B6B;
+            color: white;
+        }
+
+        .highlight-orange {
+            background: #FFA500;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+
+        .summary-box {
+            display: inline-block;
+            margin: 10px 20px 10px 0;
+            padding: 8px 15px;
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+
+        .summary-box.green {
+            background: #90EE90;
+        }
+
+        .summary-box.yellow {
+            background: #FFFF99;
+        }
+
+        .summary-box.red {
+            background: #FF6B6B;
+            color: white;
+        }
+
+        .loan-section {
+            margin-top: 30px;
+        }
+
+        .net-income {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 20px;
+            padding: 15px;
+            background: #4472C4;
+            color: white;
+            display: inline-block;
+        }
+
+        .update-date {
+            margin-top: 20px;
+            color: #666;
+            font-size: 11px;
+        }
+
+        .maintain-rate-section {
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        .maintain-rate-box {
+            display: inline-block;
+            padding: 5px 12px;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>我的投資現況</h1>
+        <div class="exchange-rate">
+            美元匯率: <span id="usdRate">-</span>
+        </div>
+
+        <!-- 股票(海外債券)區塊 -->
+        <table id="stockTable">
+            <thead>
+                <tr class="section-header">
+                    <th colspan="16">股票（海外債券）</th>
+                </tr>
+                <tr>
+                    <th>公司名稱</th>
+                    <th>代號</th>
+                    <th>買入價格</th>
+                    <th>持有單位</th>
+                    <th>最新價格</th>
+                    <th>損益(%)</th>
+                    <th>台幣資產</th>
+                    <th>票面利率</th>
+                    <th>年殖利率</th>
+                    <th>每年利息</th>
+                    <th>配息日</th>
+                    <th>剩餘天配息</th>
+                    <th>下次配息</th>
+                    <th>質押單位</th>
+                    <th>已質押資產</th>
+                    <th>到期日</th>
+                </tr>
+            </thead>
+            <tbody id="stockBody">
+            </tbody>
+            <tfoot>
+                <tr class="sub-total">
+                    <td colspan="6">小計</td>
+                    <td id="stockTotalAsset">-</td>
+                    <td colspan="2"></td>
+                    <td id="stockTotalInterest">-</td>
+                    <td colspan="4"></td>
+                    <td id="stockTotalPledge">-</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="maintain-rate-section">
+            <span class="maintain-rate-box highlight-green">整戶維持率: <span id="stockMaintainRate">-</span>%</span>
+            <span class="maintain-rate-box highlight-yellow">預警維持率: <span id="stockWarningRate">-</span>%</span>
+            <span class="maintain-rate-box highlight-orange">追繳維持率: <span id="stockMarginRate">-</span>%</span>
+        </div>
+
+        <!-- ETF區塊 -->
+        <table id="etfTable">
+            <thead>
+                <tr class="section-header">
+                    <th colspan="16">ETF</th>
+                </tr>
+                <tr>
+                    <th>ETF名稱</th>
+                    <th>代號</th>
+                    <th>買入均價</th>
+                    <th>持有單位</th>
+                    <th>最新價格</th>
+                    <th>損益(%)</th>
+                    <th>台幣資產</th>
+                    <th>每股配息</th>
+                    <th>年殖利率</th>
+                    <th>每年利息</th>
+                    <th>下次配息日</th>
+                    <th>剩餘天配息</th>
+                    <th>下次配息</th>
+                    <th>質押單位</th>
+                    <th>已質押資產</th>
+                    <th>最新殖利率</th>
+                </tr>
+            </thead>
+            <tbody id="etfBody">
+            </tbody>
+            <tfoot>
+                <tr class="sub-total">
+                    <td colspan="6">小計</td>
+                    <td id="etfTotalAsset">-</td>
+                    <td colspan="2"></td>
+                    <td id="etfTotalInterest">-</td>
+                    <td colspan="4"></td>
+                    <td id="etfTotalPledge">-</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="maintain-rate-section">
+            <span class="maintain-rate-box highlight-green">整戶維持率: <span id="etfMaintainRate">-</span>%</span>
+            <span class="maintain-rate-box highlight-orange">追繳維持率: <span id="etfMarginRate">-</span>%</span>
+        </div>
+
+        <!-- 其它資產區塊 -->
+        <table id="otherTable">
+            <thead>
+                <tr class="section-header">
+                    <th colspan="7">其它資產</th>
+                </tr>
+                <tr>
+                    <th>名稱</th>
+                    <th>代號</th>
+                    <th>買入均價</th>
+                    <th>持有單位</th>
+                    <th>最新價格</th>
+                    <th>損益(%)</th>
+                    <th>台幣資產</th>
+                </tr>
+            </thead>
+            <tbody id="otherBody">
+            </tbody>
+            <tfoot>
+                <tr class="sub-total">
+                    <td colspan="6">小計</td>
+                    <td id="otherTotalAsset">-</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- 總計 -->
+        <div style="margin: 20px 0;">
+            <span class="summary-box red">總計台幣資產: <span id="grandTotalAsset">-</span></span>
+            <span class="summary-box green">總計每年利息: <span id="grandTotalInterest">-</span></span>
+        </div>
+
+        <!-- 貸款區塊 -->
+        <table id="loanTable" class="loan-section">
+            <thead>
+                <tr class="section-header">
+                    <th colspan="5">貸款別</th>
+                </tr>
+                <tr>
+                    <th>貸款別</th>
+                    <th>貸款餘額</th>
+                    <th>貸款利率</th>
+                    <th>月繳金額</th>
+                    <th>每年利息</th>
+                </tr>
+            </thead>
+            <tbody id="loanBody">
+            </tbody>
+            <tfoot>
+                <tr class="grand-total">
+                    <td>總計</td>
+                    <td id="loanTotalBalance">-</td>
+                    <td></td>
+                    <td id="loanTotalMonthly">-</td>
+                    <td id="loanTotalInterest">-</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- 全年淨收入 -->
+        <div class="net-income">
+            全年淨收入: <span id="netIncome">-</span>
+        </div>
+
+        <div class="update-date">
+            資料更新日期: <span id="updateDate">-</span>
+        </div>
+    </div>
+
+    <script>
+        // 數字格式化
+        function formatNumber(num) {
+            if (num === null || num === undefined) return '-';
+            return Math.round(num).toLocaleString('zh-TW');
+        }
+
+        function formatDecimal(num, decimals = 3) {
+            if (num === null || num === undefined) return '-';
+            return num.toFixed(decimals);
+        }
+
+        function formatPercent(num) {
+            if (num === null || num === undefined) return '-';
+            return num.toFixed(2) + '%';
+        }
+
+        function getColorClass(value) {
+            if (value > 0) return 'positive';
+            if (value < 0) return 'negative';
+            return '';
+        }
+
+        // 載入並渲染資料
+        async function loadData() {
+            try {
+                const response = await fetch('投資總資料.json');
+                const data = await response.json();
+                renderData(data);
+            } catch (error) {
+                console.error('載入資料失敗:', error);
+                alert('載入資料失敗，請確認 投資總資料.json 檔案存在');
+            }
+        }
+
+        function renderData(data) {
+            // 匯率
+            document.getElementById('usdRate').textContent = data.匯率.美元匯率;
+
+            // 股票
+            const stockBody = document.getElementById('stockBody');
+            stockBody.innerHTML = data.股票.map(stock => `
+                <tr>
+                    <td class="text-left">${stock.公司名稱}</td>
+                    <td>${stock.代號}</td>
+                    <td>${formatDecimal(stock.買入價格)}</td>
+                    <td>${formatNumber(stock.持有單位)}</td>
+                    <td>${formatDecimal(stock.最新價格)}</td>
+                    <td class="${getColorClass(stock.損益百分比)}">${formatPercent(stock.損益百分比)}</td>
+                    <td class="text-right">${formatNumber(stock.台幣資產)}</td>
+                    <td>${formatDecimal(stock.票面利率)}</td>
+                    <td>${formatPercent(stock.年殖利率)}</td>
+                    <td class="text-right">${formatNumber(stock.每年利息)}</td>
+                    <td>${stock.配息日}</td>
+                    <td>${stock.剩餘天配息}</td>
+                    <td class="text-right">${formatNumber(stock.下次配息)}</td>
+                    <td>${formatNumber(stock.質押單位)}</td>
+                    <td class="text-right">${formatNumber(stock.已質押資產)}</td>
+                    <td>${stock.到期日}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('stockTotalAsset').textContent = formatNumber(data.股票小計.台幣資產);
+            document.getElementById('stockTotalInterest').textContent = formatNumber(data.股票小計.每年利息);
+            document.getElementById('stockTotalPledge').textContent = formatNumber(data.股票小計.已質押資產);
+            document.getElementById('stockMaintainRate').textContent = data.股票小計.整戶維持率百分比;
+            document.getElementById('stockWarningRate').textContent = data.股票小計.預警維持率百分比;
+            document.getElementById('stockMarginRate').textContent = data.股票小計.追繳維持率百分比;
+
+            // ETF
+            const etfBody = document.getElementById('etfBody');
+            etfBody.innerHTML = data.ETF.map(etf => `
+                <tr>
+                    <td class="text-left">${etf.名稱}</td>
+                    <td>${etf.代號}</td>
+                    <td>${formatDecimal(etf.買入均價)}</td>
+                    <td>${formatNumber(etf.持有單位)}</td>
+                    <td>${formatDecimal(etf.最新價格)}</td>
+                    <td class="${getColorClass(etf.損益百分比)}">${formatPercent(etf.損益百分比)}</td>
+                    <td class="text-right">${formatNumber(etf.台幣資產)}</td>
+                    <td>${formatDecimal(etf.每股配息)}</td>
+                    <td>${formatPercent(etf.年殖利率)}</td>
+                    <td class="text-right">${formatNumber(etf.每年利息)}</td>
+                    <td>${etf.下次配息日 || '-'}</td>
+                    <td>${etf.剩餘天配息 !== null ? etf.剩餘天配息 : (etf.剩餘天配息備註 || '-')}</td>
+                    <td class="text-right">${formatNumber(etf.下次配息)}</td>
+                    <td>${formatNumber(etf.質押單位)}</td>
+                    <td class="text-right">${formatNumber(etf.已質押資產)}</td>
+                    <td>${formatPercent(etf.最新殖利率)}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('etfTotalAsset').textContent = formatNumber(data.ETF小計.台幣資產);
+            document.getElementById('etfTotalInterest').textContent = formatNumber(data.ETF小計.每年利息);
+            document.getElementById('etfTotalPledge').textContent = formatNumber(data.ETF小計.已質押資產);
+            document.getElementById('etfMaintainRate').textContent = data.ETF小計.整戶維持率百分比;
+            document.getElementById('etfMarginRate').textContent = data.ETF小計.追繳維持率百分比;
+
+            // 其它資產
+            const otherBody = document.getElementById('otherBody');
+            otherBody.innerHTML = data.其它資產.map(asset => `
+                <tr>
+                    <td class="text-left">${asset.名稱}</td>
+                    <td>${asset.代號}</td>
+                    <td>${formatDecimal(asset.買入均價)}</td>
+                    <td>${asset.持有單位}</td>
+                    <td>${formatDecimal(asset.最新價格)}</td>
+                    <td class="${getColorClass(asset.損益百分比)}">${formatPercent(asset.損益百分比)}</td>
+                    <td class="text-right">${formatNumber(asset.台幣資產)}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('otherTotalAsset').textContent = formatNumber(data.其它資產小計.台幣資產);
+
+            // 總計
+            document.getElementById('grandTotalAsset').textContent = formatNumber(data.總計.台幣資產);
+            document.getElementById('grandTotalInterest').textContent = formatNumber(data.總計.每年利息);
+
+            // 貸款
+            const loanBody = document.getElementById('loanBody');
+            loanBody.innerHTML = data.貸款.map(loan => `
+                <tr>
+                    <td class="text-left">${loan.貸款別}${loan.備註 ? ' (' + loan.備註 + ')' : ''}</td>
+                    <td class="text-right">${formatNumber(loan.貸款餘額)}</td>
+                    <td>${formatPercent(loan.貸款利率)}</td>
+                    <td class="text-right">${formatNumber(loan.月繳金額)}</td>
+                    <td class="text-right highlight-orange">${formatNumber(loan.每年利息)}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('loanTotalBalance').textContent = formatNumber(data.貸款總計.貸款餘額);
+            document.getElementById('loanTotalMonthly').textContent = formatNumber(data.貸款總計.月繳金額);
+            document.getElementById('loanTotalInterest').textContent = formatNumber(data.貸款總計.每年利息);
+
+            // 淨收入
+            document.getElementById('netIncome').textContent = formatNumber(data.淨值統計.全年淨收入);
+
+            // 更新日期
+            document.getElementById('updateDate').textContent = data.資料更新日期;
+        }
+
+        // 頁面載入時執行
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>
