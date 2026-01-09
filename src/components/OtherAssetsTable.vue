@@ -2,7 +2,7 @@
   <table>
     <thead>
       <tr class="section-header">
-        <th colspan="7">其它資產</th>
+        <th colspan="7">無配息資產</th>
       </tr>
       <tr>
         <th>名稱</th>

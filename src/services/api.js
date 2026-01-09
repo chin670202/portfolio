@@ -417,20 +417,62 @@ export async function getCryptoPrices(symbols, currency = 'twd') {
 // ============================================================
 
 /**
- * 抓取美股價格
- * @param {string} symbol - 股票代號（如 TSLA）
- * @returns {Promise<string>} 價格
+ * 抓取美股價格（Yahoo Finance）
+ * @param {string} symbol - 股票代號（如 TSLA, GLDM, SIVR, COPX）
+ * @returns {Promise<number|string>} 美元價格或錯誤訊息
  */
 export async function getUsStockPrice(symbol) {
-  // TODO: 實作美股價格抓取
-  throw new Error('Not implemented')
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`
+
+  try {
+    const response = await fetch(CORS_PROXY + encodeURIComponent(url), {
+      headers: DEFAULT_HEADERS
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+
+    const data = await response.json()
+
+    if (data.chart?.result?.[0]?.meta?.regularMarketPrice) {
+      const price = data.chart.result[0].meta.regularMarketPrice
+      return Math.round(price * 100) / 100 // 兩位小數
+    }
+
+    return '無法取得價格'
+  } catch (e) {
+    console.error(`getUsStockPrice error for ${symbol}:`, e)
+    return 'Error: ' + e.message
+  }
 }
 
 /**
- * 抓取美元匯率
- * @returns {Promise<string>} USD/TWD 匯率
+ * 抓取美元對台幣匯率（Yahoo Finance）
+ * @returns {Promise<number|string>} USD/TWD 匯率或錯誤訊息
  */
 export async function getUsdTwdRate() {
-  // TODO: 實作匯率抓取
-  throw new Error('Not implemented')
+  const url = 'https://query1.finance.yahoo.com/v8/finance/chart/USDTWD=X'
+
+  try {
+    const response = await fetch(CORS_PROXY + encodeURIComponent(url), {
+      headers: DEFAULT_HEADERS
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+
+    const data = await response.json()
+
+    if (data.chart?.result?.[0]?.meta?.regularMarketPrice) {
+      const rate = data.chart.result[0].meta.regularMarketPrice
+      return Math.round(rate * 10000) / 10000 // 四位小數
+    }
+
+    return '無法取得匯率'
+  } catch (e) {
+    console.error('getUsdTwdRate error:', e)
+    return 'Error: ' + e.message
+  }
 }

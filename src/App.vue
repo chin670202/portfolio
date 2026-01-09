@@ -17,7 +17,7 @@ import {
   calculateGrandTotal,
   calculateNetIncome
 } from './services/calculator'
-import { getBondPrice, getStockPrice, getLatestDividend, getNextDividendDate, getCryptoPrice } from './services/api'
+import { getBondPrice, getStockPrice, getLatestDividend, getNextDividendDate, getCryptoPrice, getUsdTwdRate, getUsStockPrice } from './services/api'
 
 const rawData = ref(null)
 const loading = ref(true)
@@ -119,6 +119,24 @@ async function updateAllPrices() {
   updating.value = true
 
   try {
+    // 更新美元匯率
+    try {
+      const rate = await getUsdTwdRate()
+      if (typeof rate === 'number') {
+        rawData.value.匯率.美元匯率 = rate
+      } else if (typeof rate === 'string') {
+        const parsed = parseFloat(rate)
+        if (!isNaN(parsed) && parsed > 0) {
+          rawData.value.匯率.美元匯率 = parsed
+        } else {
+          rawData.value.匯率.美元匯率 = rate // 顯示錯誤訊息
+        }
+      }
+    } catch (e) {
+      console.error('美元匯率更新失敗:', e)
+      rawData.value.匯率.美元匯率 = '抓取失敗'
+    }
+
     // 更新海外債券價格
     for (const bond of rawData.value.股票) {
       try {
@@ -184,15 +202,18 @@ async function updateAllPrices() {
       }
     }
 
-    // 更新其他資產價格（加密貨幣）
+    // 更新其他資產價格
     const cryptoMapping = {
       'BTC/TWD': 'bitcoin',
       'ETH/TWD': 'ethereum'
     }
+    // 美股代號列表
+    const usStockSymbols = ['TSLA', 'GLDM', 'SIVR', 'COPX']
 
     for (const asset of rawData.value.其它資產) {
       const coinId = cryptoMapping[asset.代號]
       if (coinId) {
+        // 加密貨幣 - 使用 CoinGecko（回傳台幣價格）
         try {
           const price = await getCryptoPrice(coinId, 'twd')
           if (typeof price === 'number') {
@@ -202,6 +223,19 @@ async function updateAllPrices() {
           }
         } catch (e) {
           console.error(`加密貨幣 ${asset.代號} 價格更新失敗:`, e)
+          asset.最新價格 = '抓取失敗'
+        }
+      } else if (usStockSymbols.includes(asset.代號)) {
+        // 美股 - 使用 Yahoo Finance（回傳美元價格，需乘匯率轉台幣）
+        try {
+          const price = await getUsStockPrice(asset.代號)
+          if (typeof price === 'number') {
+            asset.最新價格 = price
+          } else {
+            asset.最新價格 = price // 顯示錯誤訊息
+          }
+        } catch (e) {
+          console.error(`美股 ${asset.代號} 價格更新失敗:`, e)
           asset.最新價格 = '抓取失敗'
         }
       }
@@ -257,7 +291,7 @@ onMounted(async () => {
 
     <template v-else-if="rawData">
       <div class="exchange-rate">
-        美元匯率: {{ rawData.匯率.美元匯率 }}
+        美元匯率: <span class="calculated">{{ rawData.匯率.美元匯率 }}</span>
       </div>
 
       <!-- 股票(海外債券) -->

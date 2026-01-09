@@ -21,7 +21,7 @@
         <td class="text-right">{{ formatNumber(loan.貸款餘額) }}</td>
         <td>{{ formatPercent(loan.貸款利率) }}</td>
         <td class="text-right calculated">{{ formatNumber(loan.月繳金額) }}</td>
-        <td class="text-right highlight-orange calculated">{{ formatNumber(loan.每年利息) }}</td>
+        <td class="text-right calculated">{{ formatNumber(loan.每年利息) }}</td>
       </tr>
     </tbody>
     <tfoot>
