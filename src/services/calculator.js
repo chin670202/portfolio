@@ -158,8 +158,10 @@ export function calculateOtherAssetDerivedData(asset, usdRate) {
 
   // G: 台幣資產
   let 台幣資產
-  if (asset.代號.includes('/TWD')) {
-    // 加密貨幣已是台幣計價
+  // 判斷是否為台幣計價資產
+  const isTwdAsset = asset.代號.includes('/TWD') || /^\d/.test(asset.代號)
+  if (isTwdAsset) {
+    // 加密貨幣(TWD)或台股已是台幣計價
     台幣資產 = E * D
   } else {
     // 美股/美元計價
