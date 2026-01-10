@@ -47,6 +47,14 @@ h1 {
   font-size: 12px;
 }
 
+.version {
+  color: #999;
+  font-size: 11px;
+  padding: 2px 8px;
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+
 .update-btn {
   background: #4472c4;
   color: white;

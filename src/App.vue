@@ -18,7 +18,9 @@ import {
   calculateNetIncome
 } from './services/calculator'
 import { getBondPrice, getStockPrice, getLatestDividend, getNextDividendDate, getCryptoPrice, getUsdTwdRate, getUsStockPrice } from './services/api'
+import packageJson from '../package.json'
 
+const appVersion = packageJson.version
 const rawData = ref(null)
 const loading = ref(true)
 const error = ref(null)
@@ -242,6 +244,7 @@ onMounted(async () => {
         >
           {{ updating ? '更新中...' : '更新價格' }}
         </button>
+        <span class="version">v{{ appVersion }}</span>
       </div>
     </div>
 
