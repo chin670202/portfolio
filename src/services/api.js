@@ -8,8 +8,8 @@
  * 3. 透過 CORS proxy 的前端調用
  */
 
-// CORS Proxy 設定（開發用，正式環境建議自架）
-// 備用: 'https://api.allorigins.win/raw?url='
+// CORS Proxy 設定
+// 自架 Cloudflare Worker: 'https://muddy-glade-88a0.chinghunglai.workers.dev/?url='
 const CORS_PROXY = 'https://corsproxy.io/?'
 
 // 共用 Headers
