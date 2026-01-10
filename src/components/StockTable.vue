@@ -126,16 +126,24 @@ const getPriceStatus = (symbol) => {
 
 const showModal = ref(false)
 
-const modalValues = computed(() => [
-  { name: '已質押資產', value: formatNumber(props.subtotal.已質押資產) },
-  { name: '金交債質貸', value: formatNumber(props.loanDetails.金交債質貸 || 0) },
-  { name: '金交債質貸款', value: formatNumber(props.loanDetails.金交債質貸款 || 0) },
-  { name: '貸款餘額合計', value: formatNumber((props.loanDetails.金交債質貸 || 0) + (props.loanDetails.金交債質貸款 || 0)) }
-])
+const totalLoan = computed(() => {
+  return props.loanDetails.reduce((sum, l) => sum + l.value, 0)
+})
+
+const modalValues = computed(() => {
+  const values = [
+    { name: '已質押資產', value: formatNumber(props.subtotal.已質押資產) }
+  ]
+  // 動態加入各筆貸款
+  props.loanDetails.forEach(l => {
+    values.push({ name: l.name, value: formatNumber(l.value) })
+  })
+  values.push({ name: '貸款餘額合計', value: formatNumber(totalLoan.value) })
+  return values
+})
 
 const resultFormula = computed(() => {
-  const totalLoan = (props.loanDetails.金交債質貸 || 0) + (props.loanDetails.金交債質貸款 || 0)
-  return `${formatNumber(props.subtotal.已質押資產)} ÷ ${formatNumber(totalLoan)} × 100%`
+  return `${formatNumber(props.subtotal.已質押資產)} ÷ ${formatNumber(totalLoan.value)} × 100%`
 })
 </script>
 

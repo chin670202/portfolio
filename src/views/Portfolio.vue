@@ -66,20 +66,22 @@ const getLoanBalanceByUsage = (usage) => {
     .reduce((sum, loan) => sum + loan.貸款餘額, 0)
 }
 
-// 債券小計（需要股票用途的貸款餘額來計算維持率）
+// 債券小計（需要金交債相關貸款餘額來計算維持率）
 const bondSubtotal = computed(() => {
   if (!calculatedBonds.value.length) return {}
-  const loanG42 = calculatedLoans.value.find(l => l.貸款別 === '金交債質貸')?.貸款餘額 || 28407164
-  const loanG43 = calculatedLoans.value.find(l => l.貸款別 === '金交債質貸款')?.貸款餘額 || 12420000
-  return calculateBondSubtotal(calculatedBonds.value, loanG42, loanG43)
+  // 查找包含「金交債」的貸款，加總所有金交債相關貸款
+  const bondLoans = calculatedLoans.value.filter(l => l.貸款別.includes('金交債'))
+  const totalBondLoan = bondLoans.reduce((sum, l) => sum + l.貸款餘額, 0)
+  return calculateBondSubtotal(calculatedBonds.value, totalBondLoan, 0)
 })
 
-// ETF 小計（需要 ETF 用途的貸款餘額來計算維持率）
+// ETF 小計（需要股票質借相關貸款餘額來計算維持率）
 const etfSubtotal = computed(() => {
   if (!calculatedEtfs.value.length) return {}
-  const loanG44 = calculatedLoans.value.find(l => l.貸款別 === '股票貸款2.15%')?.貸款餘額 || 7888670
-  const loanG45 = calculatedLoans.value.find(l => l.貸款別 === '股票貸款2.69%')?.貸款餘額 || 3120703
-  return calculateEtfSubtotal(calculatedEtfs.value, loanG44, loanG45)
+  // 查找包含「股票」的貸款，加總所有股票相關貸款
+  const etfLoans = calculatedLoans.value.filter(l => l.貸款別.includes('股票'))
+  const totalEtfLoan = etfLoans.reduce((sum, l) => sum + l.貸款餘額, 0)
+  return calculateEtfSubtotal(calculatedEtfs.value, totalEtfLoan, 0)
 })
 
 // 其他資產小計
@@ -106,18 +108,16 @@ const netIncome = computed(() => {
   return calculateNetIncome(grandTotal.value.每年利息, loanTotal.value.每年利息)
 })
 
-// 股票（海外債券）的貸款明細
+// 股票（海外債券）的貸款明細 - 查找包含「金交債」的貸款
 const bondLoanDetails = computed(() => {
-  const 金交債質貸 = calculatedLoans.value.find(l => l.貸款別 === '金交債質貸')?.貸款餘額 || 0
-  const 金交債質貸款 = calculatedLoans.value.find(l => l.貸款別 === '金交債質貸款')?.貸款餘額 || 0
-  return { 金交債質貸, 金交債質貸款 }
+  const loans = calculatedLoans.value.filter(l => l.貸款別.includes('金交債'))
+  return loans.map(l => ({ name: l.貸款別, value: l.貸款餘額 }))
 })
 
-// ETF 的貸款明細
+// ETF 的貸款明細 - 查找包含「股票」的貸款
 const etfLoanDetails = computed(() => {
-  const 股票貸款215 = calculatedLoans.value.find(l => l.貸款別 === '股票貸款2.15%')?.貸款餘額 || 0
-  const 股票貸款269 = calculatedLoans.value.find(l => l.貸款別 === '股票貸款2.69%')?.貸款餘額 || 0
-  return { 股票貸款215, 股票貸款269 }
+  const loans = calculatedLoans.value.filter(l => l.貸款別.includes('股票'))
+  return loans.map(l => ({ name: l.貸款別, value: l.貸款餘額 }))
 })
 
 // 輔助函式：更新價格並追蹤狀態
