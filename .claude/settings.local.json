@@ -7,7 +7,17 @@
       "Bash(npm install:*)",
       "Bash(npm run dev:*)",
       "Bash(node -e:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(gh auth:*)",
+      "Bash(git config:*)",
+      "Bash(cmdkey /list:*)",
+      "Bash(findstr:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run deploy:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
