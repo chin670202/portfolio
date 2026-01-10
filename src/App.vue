@@ -254,7 +254,7 @@ async function updateAllPrices() {
 
 onMounted(async () => {
   try {
-    const response = await fetch('/投資總資料.json')
+    const response = await fetch(import.meta.env.BASE_URL + '投資總資料.json')
     if (!response.ok) throw new Error('載入失敗')
     rawData.value = await response.json()
 
