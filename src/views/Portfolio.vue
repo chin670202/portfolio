@@ -84,7 +84,7 @@ const etfSubtotal = computed(() => {
 
 // 其他資產小計
 const otherAssetSubtotal = computed(() => {
-  if (!calculatedOtherAssets.value.length) return {}
+  if (!calculatedOtherAssets.value.length) return { 台幣資產: 0 }
   return calculateOtherAssetSubtotal(calculatedOtherAssets.value)
 })
 
