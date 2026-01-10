@@ -2,25 +2,26 @@
   <table>
     <thead>
       <tr class="section-header">
-        <th colspan="16">股票/ETF</th>
+        <th colspan="17">股票/ETF</th>
       </tr>
       <tr>
         <th>ETF名稱</th>
         <th>代號</th>
         <th>買入均價</th>
         <th>持有單位</th>
-        <th >最新價格</th>
-        <th >損益(%)</th>
-        <th >台幣資產</th>
-        <th >每股配息</th>
-        <th >年殖利率</th>
-        <th >每年利息</th>
-        <th >下次配息日</th>
-        <th >剩餘天配息</th>
-        <th >下次配息</th>
+        <th>最新價格</th>
+        <th>損益(%)</th>
+        <th>台幣資產</th>
+        <th>佔比</th>
+        <th>每股配息</th>
+        <th>年殖利率</th>
+        <th>每年利息</th>
+        <th>下次配息日</th>
+        <th>剩餘天配息</th>
+        <th>下次配息</th>
         <th>質押單位</th>
-        <th >已質押資產</th>
-        <th >最新殖利率</th>
+        <th>已質押資產</th>
+        <th>最新殖利率</th>
       </tr>
     </thead>
     <tbody>
@@ -35,6 +36,7 @@
         </td>
         <td :class="['calculated', getColorClass(etf.損益百分比)]">{{ formatPercent(etf.損益百分比) }}</td>
         <td class="text-right calculated">{{ formatNumber(etf.台幣資產) }}</td>
+        <td class="calculated">{{ formatPercent(getPercentage(etf.台幣資產)) }}</td>
         <td :class="['calculated', { 'price-failed': getDividendStatus(etf.代號).failed }]">
           {{ formatDecimal(etf.每股配息) }}
           <span v-if="getDividendStatus(etf.代號).loading" class="spinner"></span>
@@ -53,6 +55,7 @@
       <tr class="sub-total">
         <td colspan="6">小計</td>
         <td class="text-right calculated">{{ formatNumber(subtotal.台幣資產) }}</td>
+        <td class="calculated">{{ formatPercent(getPercentage(subtotal.台幣資產)) }}</td>
         <td colspan="2"></td>
         <td class="text-right calculated">{{ formatNumber(subtotal.每年利息) }}</td>
         <td colspan="4"></td>
@@ -103,8 +106,18 @@ const props = defineProps({
   priceStatus: {
     type: Object,
     default: () => ({})
+  },
+  totalAssets: {
+    type: Number,
+    default: 0
   }
 })
+
+// 計算佔總投資比例
+const getPercentage = (value) => {
+  if (!props.totalAssets || props.totalAssets === 0) return 0
+  return (value / props.totalAssets) * 100
+}
 
 // 取得價格狀態
 const getPriceStatus = (symbol) => {

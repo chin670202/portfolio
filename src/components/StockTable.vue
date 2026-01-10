@@ -2,24 +2,25 @@
   <table>
     <thead>
       <tr class="section-header">
-        <th colspan="16">海外債券</th>
+        <th colspan="17">海外債券</th>
       </tr>
       <tr>
         <th>公司名稱</th>
         <th>代號</th>
         <th>買入價格</th>
         <th>持有單位</th>
-        <th >最新價格</th>
-        <th >損益(%)</th>
-        <th >台幣資產</th>
+        <th>最新價格</th>
+        <th>損益(%)</th>
+        <th>台幣資產</th>
+        <th>佔比</th>
         <th>票面利率</th>
-        <th >年殖利率</th>
-        <th >每年利息</th>
+        <th>年殖利率</th>
+        <th>每年利息</th>
         <th>配息日</th>
-        <th >剩餘天配息</th>
-        <th >下次配息</th>
+        <th>剩餘天配息</th>
+        <th>下次配息</th>
         <th>質押單位</th>
-        <th >已質押資產</th>
+        <th>已質押資產</th>
         <th>到期日</th>
       </tr>
     </thead>
@@ -35,6 +36,7 @@
         </td>
         <td :class="['calculated', getColorClass(stock.損益百分比)]">{{ formatPercent(stock.損益百分比) }}</td>
         <td class="text-right calculated">{{ formatNumber(stock.台幣資產) }}</td>
+        <td class="calculated">{{ formatPercent(getPercentage(stock.台幣資產)) }}</td>
         <td>{{ formatDecimal(stock.票面利率) }}</td>
         <td class="calculated">{{ formatPercent(stock.年殖利率) }}</td>
         <td class="text-right calculated">{{ formatNumber(stock.每年利息) }}</td>
@@ -50,6 +52,7 @@
       <tr class="sub-total">
         <td colspan="6">小計</td>
         <td class="text-right calculated">{{ formatNumber(subtotal.台幣資產) }}</td>
+        <td class="calculated">{{ formatPercent(getPercentage(subtotal.台幣資產)) }}</td>
         <td colspan="2"></td>
         <td class="text-right calculated">{{ formatNumber(subtotal.每年利息) }}</td>
         <td colspan="4"></td>
@@ -103,8 +106,18 @@ const props = defineProps({
   priceStatus: {
     type: Object,
     default: () => ({})
+  },
+  totalAssets: {
+    type: Number,
+    default: 0
   }
 })
+
+// 計算佔總投資比例
+const getPercentage = (value) => {
+  if (!props.totalAssets || props.totalAssets === 0) return 0
+  return (value / props.totalAssets) * 100
+}
 
 // 取得價格狀態
 const getPriceStatus = (symbol) => {

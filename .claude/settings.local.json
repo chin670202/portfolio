@@ -17,7 +17,10 @@
       "Bash(npm run build:*)",
       "Bash(npm run deploy:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git fetch:*)",
+      "Bash(node compare-data.js:*)",
+      "Bash(node:*)"
     ]
   }
 }

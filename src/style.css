@@ -6,7 +6,7 @@
 
 body {
   font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
-  font-size: 12px;
+  font-size: 18px;
   background: #f5f5f5;
   padding: 20px;
 }
@@ -44,13 +44,13 @@ h1 {
 
 .last-update {
   color: #666;
-  font-size: 12px;
+  font-size: 18px;
 }
 
 .version {
   color: #999;
-  font-size: 11px;
-  padding: 2px 8px;
+  font-size: 16px;
+  padding: 3px 12px;
   background: #f0f0f0;
   border-radius: 4px;
 }
@@ -59,10 +59,10 @@ h1 {
   background: #4472c4;
   color: white;
   border: none;
-  padding: 8px 16px;
+  padding: 12px 24px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 20px;
   font-weight: bold;
   transition: background 0.2s;
 }
@@ -88,7 +88,7 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 25px;
-  font-size: 11px;
+  font-size: 16px;
 }
 
 th,
@@ -107,7 +107,7 @@ th {
   background: #4472c4;
   color: white;
   font-weight: bold;
-  font-size: 13px;
+  font-size: 20px;
 }
 
 .section-header th {
@@ -135,12 +135,12 @@ th {
 }
 
 .positive {
-  color: #008000;
+  color: #d32f2f;
   font-weight: bold;
 }
 
 .negative {
-  color: #ff0000;
+  color: #00ff00;
   font-weight: bold;
 }
 
@@ -150,11 +150,11 @@ th {
 }
 
 .calculated.positive {
-  color: #006600;
+  color: #c62828;
 }
 
 .calculated.negative {
-  color: #cc0000;
+  color: #00ff00;
 }
 
 /* 用於深色背景區域的計算欄位 */
@@ -213,53 +213,62 @@ th {
   font-weight: bold;
 }
 
-.summary-box.green {
-  background: #90ee90;
+/* 總計台幣資產 - 藍色代表總資產 */
+.summary-box.asset {
+  background: #4472c4;
+  color: white;
 }
 
-.summary-box.red {
+/* 總計台幣負債 - 紅色代表負債 */
+.summary-box.liability {
   background: #ff6b6b;
   color: white;
 }
 
-.net-income {
-  font-size: 16px;
-  font-weight: bold;
-  margin-top: 20px;
-  padding: 15px;
-  background: #4472c4;
+/* 總計每年利息 - 橘色代表利息收入 */
+.summary-box.interest {
+  background: #ffa500;
   color: white;
-  display: inline-block;
-  border-radius: 4px;
+}
+
+/* 總計台幣權益 - 綠色代表淨值/權益 */
+.summary-box.equity {
+  background: #90ee90;
+}
+
+/* 全年淨收入 - 深藍色代表最終收益 */
+.summary-box.income {
+  background: #2e5a9e;
+  color: white;
 }
 
 .update-date {
   margin-top: 20px;
   color: #666;
-  font-size: 11px;
+  font-size: 16px;
 }
 
 .loading {
   text-align: center;
   padding: 50px;
-  font-size: 18px;
+  font-size: 27px;
   color: #666;
 }
 
 .error {
   text-align: center;
   padding: 50px;
-  font-size: 18px;
+  font-size: 27px;
   color: #ff0000;
 }
 
 /* 價格更新中的轉圈圈圖示 */
 .spinner {
   display: inline-block;
-  width: 10px;
-  height: 10px;
-  margin-left: 4px;
-  border: 2px solid #ddd;
+  width: 15px;
+  height: 15px;
+  margin-left: 6px;
+  border: 3px solid #ddd;
   border-top-color: #4472c4;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;

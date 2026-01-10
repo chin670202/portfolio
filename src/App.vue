@@ -257,30 +257,34 @@ onMounted(async () => {
       </div>
 
       <!-- 股票(海外債券) -->
-      <StockTable :stocks="calculatedBonds" :subtotal="bondSubtotal" :loan-details="bondLoanDetails" :price-status="priceStatus" />
+      <StockTable :stocks="calculatedBonds" :subtotal="bondSubtotal" :loan-details="bondLoanDetails" :price-status="priceStatus" :total-assets="grandTotal.台幣資產" />
 
       <!-- ETF -->
-      <EtfTable :etfs="calculatedEtfs" :subtotal="etfSubtotal" :loan-details="etfLoanDetails" :price-status="priceStatus" />
+      <EtfTable :etfs="calculatedEtfs" :subtotal="etfSubtotal" :loan-details="etfLoanDetails" :price-status="priceStatus" :total-assets="grandTotal.台幣資產" />
 
       <!-- 其它資產 -->
-      <OtherAssetsTable :assets="calculatedOtherAssets" :subtotal="otherAssetSubtotal" :price-status="priceStatus" />
-
-      <!-- 總計 -->
-      <div class="summary-section">
-        <span class="summary-box red">
-          總計台幣資產: <span class="calculated-value">{{ formatNumber(grandTotal.台幣資產) }}</span>
-        </span>
-        <span class="summary-box green">
-          總計每年利息: <span class="calculated-value">{{ formatNumber(grandTotal.每年利息) }}</span>
-        </span>
-      </div>
+      <OtherAssetsTable :assets="calculatedOtherAssets" :subtotal="otherAssetSubtotal" :price-status="priceStatus" :total-assets="grandTotal.台幣資產" />
 
       <!-- 貸款 -->
       <LoanTable :loans="calculatedLoans" :total="loanTotal" />
 
-      <!-- 淨收入 -->
-      <div class="net-income">
-        全年淨收入: <span class="calculated-value">{{ formatNumber(netIncome) }}</span>
+      <!-- 總計摘要 -->
+      <div class="summary-section">
+        <span class="summary-box asset">
+          台幣資產: <span class="calculated-value">{{ formatNumber(grandTotal.台幣資產) }}</span>
+        </span>
+        <span class="summary-box liability">
+          台幣負債: <span class="calculated-value">{{ formatNumber(loanTotal.貸款餘額) }}</span>
+        </span>
+        <span class="summary-box interest">
+          每年利息: <span class="calculated-value">{{ formatNumber(grandTotal.每年利息) }}</span>
+        </span>
+        <span class="summary-box equity">
+          台幣權益: <span class="calculated-value">{{ formatNumber(grandTotal.台幣資產 - loanTotal.貸款餘額) }}</span>
+        </span>
+        <span class="summary-box income">
+          全年淨收入: <span class="calculated-value">{{ formatNumber(netIncome) }}</span>
+        </span>
       </div>
 
       <div class="update-date">
