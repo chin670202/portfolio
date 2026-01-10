@@ -20,7 +20,10 @@
         <td>{{ asset.代號 }}</td>
         <td>{{ formatDecimal(asset.買入均價) }}</td>
         <td>{{ asset.持有單位 }}</td>
-        <td class="calculated">{{ formatDecimal(asset.最新價格) }}</td>
+        <td :class="['calculated', { 'price-failed': getPriceStatus(asset.代號).failed }]">
+          {{ formatDecimal(asset.最新價格) }}
+          <span v-if="getPriceStatus(asset.代號).loading" class="spinner"></span>
+        </td>
         <td :class="['calculated', getColorClass(asset.損益百分比)]">{{ formatPercent(asset.損益百分比) }}</td>
         <td class="text-right calculated">{{ formatNumber(asset.台幣資產) }}</td>
       </tr>
@@ -37,7 +40,7 @@
 <script setup>
 import { formatNumber, formatDecimal, formatPercent, getColorClass } from '../utils/format'
 
-defineProps({
+const props = defineProps({
   assets: {
     type: Array,
     required: true
@@ -45,7 +48,16 @@ defineProps({
   subtotal: {
     type: Object,
     required: true
+  },
+  priceStatus: {
+    type: Object,
+    default: () => ({})
   }
 })
+
+// 取得價格狀態
+const getPriceStatus = (symbol) => {
+  return props.priceStatus[`other_${symbol}`] || { loading: false, failed: false }
+}
 </script>
 

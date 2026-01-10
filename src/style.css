@@ -244,3 +244,27 @@ th {
   font-size: 18px;
   color: #ff0000;
 }
+
+/* 價格更新中的轉圈圈圖示 */
+.spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-left: 4px;
+  border: 2px solid #ddd;
+  border-top-color: #4472c4;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 價格更新失敗，使用緩存值的紅色樣式 */
+.price-failed {
+  color: #cc0000 !important;
+}

@@ -9,6 +9,7 @@
  */
 
 // CORS Proxy 設定（開發用，正式環境建議自架）
+// 備用: 'https://api.allorigins.win/raw?url='
 const CORS_PROXY = 'https://corsproxy.io/?'
 
 // 共用 Headers
@@ -355,8 +356,10 @@ export async function getCryptoPrice(symbol = 'bitcoin', currency = 'twd') {
   const url = `https://api.coingecko.com/api/v3/simple/price?ids=${symbol}&vs_currencies=${currency}`
 
   try {
-    // CoinGecko API 支援 CORS，可以直接呼叫
-    const response = await fetch(url)
+    // 使用 CORS proxy 避免跨域問題
+    const response = await fetch(CORS_PROXY + encodeURIComponent(url), {
+      headers: DEFAULT_HEADERS
+    })
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`)

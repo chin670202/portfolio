@@ -29,10 +29,16 @@
         <td>{{ etf.代號 }}</td>
         <td>{{ formatDecimal(etf.買入均價) }}</td>
         <td>{{ formatNumber(etf.持有單位) }}</td>
-        <td class="calculated">{{ formatDecimal(etf.最新價格) }}</td>
+        <td :class="['calculated', { 'price-failed': getPriceStatus(etf.代號).failed }]">
+          {{ formatDecimal(etf.最新價格) }}
+          <span v-if="getPriceStatus(etf.代號).loading" class="spinner"></span>
+        </td>
         <td :class="['calculated', getColorClass(etf.損益百分比)]">{{ formatPercent(etf.損益百分比) }}</td>
         <td class="text-right calculated">{{ formatNumber(etf.台幣資產) }}</td>
-        <td class="calculated">{{ formatDecimal(etf.每股配息) }}</td>
+        <td :class="['calculated', { 'price-failed': getDividendStatus(etf.代號).failed }]">
+          {{ formatDecimal(etf.每股配息) }}
+          <span v-if="getDividendStatus(etf.代號).loading" class="spinner"></span>
+        </td>
         <td class="calculated">{{ formatPercent(etf.年殖利率) }}</td>
         <td class="text-right calculated">{{ formatNumber(etf.每年利息) }}</td>
         <td class="calculated">{{ etf.下次配息日 || '-' }}</td>
@@ -93,8 +99,22 @@ const props = defineProps({
   loanDetails: {
     type: Object,
     default: () => ({})
+  },
+  priceStatus: {
+    type: Object,
+    default: () => ({})
   }
 })
+
+// 取得價格狀態
+const getPriceStatus = (symbol) => {
+  return props.priceStatus[`etf_${symbol}`] || { loading: false, failed: false }
+}
+
+// 取得配息狀態
+const getDividendStatus = (symbol) => {
+  return props.priceStatus[`etf_div_${symbol}`] || { loading: false, failed: false }
+}
 
 const showModal = ref(false)
 

@@ -29,7 +29,10 @@
         <td>{{ stock.代號 }}</td>
         <td>{{ formatDecimal(stock.買入價格) }}</td>
         <td>{{ formatNumber(stock.持有單位) }}</td>
-        <td class="calculated">{{ formatDecimal(stock.最新價格) }}</td>
+        <td :class="['calculated', { 'price-failed': getPriceStatus(stock.代號).failed }]">
+          {{ formatDecimal(stock.最新價格) }}
+          <span v-if="getPriceStatus(stock.代號).loading" class="spinner"></span>
+        </td>
         <td :class="['calculated', getColorClass(stock.損益百分比)]">{{ formatPercent(stock.損益百分比) }}</td>
         <td class="text-right calculated">{{ formatNumber(stock.台幣資產) }}</td>
         <td>{{ formatDecimal(stock.票面利率) }}</td>
@@ -96,8 +99,17 @@ const props = defineProps({
   loanDetails: {
     type: Object,
     default: () => ({})
+  },
+  priceStatus: {
+    type: Object,
+    default: () => ({})
   }
 })
+
+// 取得價格狀態
+const getPriceStatus = (symbol) => {
+  return props.priceStatus[`bond_${symbol}`] || { loading: false, failed: false }
+}
 
 const showModal = ref(false)
 

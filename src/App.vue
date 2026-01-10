@@ -25,6 +25,9 @@ const error = ref(null)
 const updating = ref(false)
 const lastUpdateTime = ref(null)
 
+// 價格狀態追蹤: { [代號]: { loading: boolean, failed: boolean } }
+const priceStatus = ref({})
+
 // 計算後的債券資料
 const calculatedBonds = computed(() => {
   if (!rawData.value) return []
@@ -112,6 +115,30 @@ const etfLoanDetails = computed(() => {
   return { 股票貸款215, 股票貸款269 }
 })
 
+// 輔助函式：更新價格並追蹤狀態
+async function updatePriceWithStatus(key, fetchFn, onSuccess) {
+  priceStatus.value[key] = { loading: true, failed: false }
+  try {
+    const result = await fetchFn()
+    if (typeof result === 'number') {
+      onSuccess(result)
+      priceStatus.value[key] = { loading: false, failed: false }
+    } else if (typeof result === 'string') {
+      const parsed = parseFloat(result)
+      if (!isNaN(parsed) && parsed > 0) {
+        onSuccess(parsed)
+        priceStatus.value[key] = { loading: false, failed: false }
+      } else {
+        // 抓取失敗，保留舊值，標記為 failed
+        priceStatus.value[key] = { loading: false, failed: true }
+      }
+    }
+  } catch (e) {
+    console.error(`${key} 更新失敗:`, e)
+    priceStatus.value[key] = { loading: false, failed: true }
+  }
+}
+
 // 更新所有價格
 async function updateAllPrices() {
   if (!rawData.value || updating.value) return
@@ -120,126 +147,58 @@ async function updateAllPrices() {
 
   try {
     // 更新美元匯率
-    try {
-      const rate = await getUsdTwdRate()
-      if (typeof rate === 'number') {
-        rawData.value.匯率.美元匯率 = rate
-      } else if (typeof rate === 'string') {
-        const parsed = parseFloat(rate)
-        if (!isNaN(parsed) && parsed > 0) {
-          rawData.value.匯率.美元匯率 = parsed
-        } else {
-          rawData.value.匯率.美元匯率 = rate // 顯示錯誤訊息
-        }
-      }
-    } catch (e) {
-      console.error('美元匯率更新失敗:', e)
-      rawData.value.匯率.美元匯率 = '抓取失敗'
-    }
+    await updatePriceWithStatus('匯率', getUsdTwdRate, (rate) => {
+      rawData.value.匯率.美元匯率 = rate
+    })
 
-    // 更新海外債券價格
-    for (const bond of rawData.value.股票) {
+    // 更新海外債券價格 (並行)
+    const bondPromises = rawData.value.股票.map(bond =>
+      updatePriceWithStatus(`bond_${bond.代號}`, () => getBondPrice(bond.代號), (price) => {
+        bond.最新價格 = price
+      })
+    )
+    await Promise.all(bondPromises)
+
+    // 更新 ETF 價格和配息資料 (並行)
+    const etfPromises = rawData.value.ETF.map(async etf => {
+      // 價格
+      await updatePriceWithStatus(`etf_${etf.代號}`, () => getStockPrice(etf.代號), (price) => {
+        etf.最新價格 = price
+      })
+      // 配息
+      await updatePriceWithStatus(`etf_div_${etf.代號}`, () => getLatestDividend(etf.代號), (dividend) => {
+        etf.每股配息 = dividend
+      })
+      // 下次配息日
       try {
-        const price = await getBondPrice(bond.代號)
-        if (typeof price === 'number') {
-          bond.最新價格 = price
-        } else if (typeof price === 'string') {
-          const parsed = parseFloat(price)
-          if (!isNaN(parsed) && parsed > 0) {
-            bond.最新價格 = parsed
-          } else {
-            bond.最新價格 = price // 顯示錯誤訊息
-          }
-        }
-      } catch (e) {
-        console.error(`債券 ${bond.代號} 價格更新失敗:`, e)
-        bond.最新價格 = '抓取失敗'
-      }
-    }
-
-    // 更新 ETF 價格和配息資料
-    for (const etf of rawData.value.ETF) {
-      try {
-        const [price, dividend, nextDate] = await Promise.all([
-          getStockPrice(etf.代號),
-          getLatestDividend(etf.代號),
-          getNextDividendDate(etf.代號)
-        ])
-
-        // 處理價格
-        if (typeof price === 'number') {
-          etf.最新價格 = price
-        } else if (typeof price === 'string') {
-          const parsed = parseFloat(price)
-          if (!isNaN(parsed) && parsed > 0) {
-            etf.最新價格 = parsed
-          } else {
-            etf.最新價格 = price // 顯示錯誤訊息
-          }
-        }
-
-        // 處理配息
-        if (typeof dividend === 'number') {
-          etf.每股配息 = dividend
-        } else if (typeof dividend === 'string') {
-          const parsed = parseFloat(dividend)
-          if (!isNaN(parsed) && parsed > 0) {
-            etf.每股配息 = parsed
-          } else {
-            etf.每股配息 = dividend // 顯示錯誤訊息
-          }
-        }
-
-        // 處理下次配息日
+        const nextDate = await getNextDividendDate(etf.代號)
         if (typeof nextDate === 'string' && nextDate.match(/^\d{4}\/\d{2}\/\d{2}$/)) {
           etf.下次配息日 = nextDate
-        } else if (nextDate) {
-          etf.下次配息日 = nextDate // 顯示錯誤訊息或其他狀態
         }
       } catch (e) {
-        console.error(`ETF ${etf.代號} 資料更新失敗:`, e)
-        etf.最新價格 = '抓取失敗'
+        console.error(`ETF ${etf.代號} 配息日更新失敗:`, e)
       }
-    }
+    })
+    await Promise.all(etfPromises)
 
-    // 更新其他資產價格
-    const cryptoMapping = {
-      'BTC/TWD': 'bitcoin',
-      'ETH/TWD': 'ethereum'
-    }
-    // 美股代號列表
+    // 更新其他資產價格 (並行)
+    const cryptoMapping = { 'BTC/TWD': 'bitcoin', 'ETH/TWD': 'ethereum' }
     const usStockSymbols = ['TSLA', 'GLDM', 'SIVR', 'COPX']
 
-    for (const asset of rawData.value.其它資產) {
+    const otherPromises = rawData.value.其它資產.map(asset => {
       const coinId = cryptoMapping[asset.代號]
       if (coinId) {
-        // 加密貨幣 - 使用 CoinGecko（回傳台幣價格）
-        try {
-          const price = await getCryptoPrice(coinId, 'twd')
-          if (typeof price === 'number') {
-            asset.最新價格 = price
-          } else {
-            asset.最新價格 = price // 顯示錯誤訊息
-          }
-        } catch (e) {
-          console.error(`加密貨幣 ${asset.代號} 價格更新失敗:`, e)
-          asset.最新價格 = '抓取失敗'
-        }
+        return updatePriceWithStatus(`other_${asset.代號}`, () => getCryptoPrice(coinId, 'twd'), (price) => {
+          asset.最新價格 = price
+        })
       } else if (usStockSymbols.includes(asset.代號)) {
-        // 美股 - 使用 Yahoo Finance（回傳美元價格，需乘匯率轉台幣）
-        try {
-          const price = await getUsStockPrice(asset.代號)
-          if (typeof price === 'number') {
-            asset.最新價格 = price
-          } else {
-            asset.最新價格 = price // 顯示錯誤訊息
-          }
-        } catch (e) {
-          console.error(`美股 ${asset.代號} 價格更新失敗:`, e)
-          asset.最新價格 = '抓取失敗'
-        }
+        return updatePriceWithStatus(`other_${asset.代號}`, () => getUsStockPrice(asset.代號), (price) => {
+          asset.最新價格 = price
+        })
       }
-    }
+      return Promise.resolve()
+    })
+    await Promise.all(otherPromises)
 
     // 觸發響應式更新
     rawData.value = { ...rawData.value }
@@ -295,13 +254,13 @@ onMounted(async () => {
       </div>
 
       <!-- 股票(海外債券) -->
-      <StockTable :stocks="calculatedBonds" :subtotal="bondSubtotal" :loan-details="bondLoanDetails" />
+      <StockTable :stocks="calculatedBonds" :subtotal="bondSubtotal" :loan-details="bondLoanDetails" :price-status="priceStatus" />
 
       <!-- ETF -->
-      <EtfTable :etfs="calculatedEtfs" :subtotal="etfSubtotal" :loan-details="etfLoanDetails" />
+      <EtfTable :etfs="calculatedEtfs" :subtotal="etfSubtotal" :loan-details="etfLoanDetails" :price-status="priceStatus" />
 
       <!-- 其它資產 -->
-      <OtherAssetsTable :assets="calculatedOtherAssets" :subtotal="otherAssetSubtotal" />
+      <OtherAssetsTable :assets="calculatedOtherAssets" :subtotal="otherAssetSubtotal" :price-status="priceStatus" />
 
       <!-- 總計 -->
       <div class="summary-section">
