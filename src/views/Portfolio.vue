@@ -6,6 +6,7 @@ import EtfTable from '../components/EtfTable.vue'
 import OtherAssetsTable from '../components/OtherAssetsTable.vue'
 import LoanTable from '../components/LoanTable.vue'
 import AssetHistoryTable from '../components/AssetHistoryTable.vue'
+import AssetHistoryChart from '../components/AssetHistoryChart.vue'
 import { formatNumber } from '../utils/format'
 import {
   calculateBondDerivedData,
@@ -320,6 +321,9 @@ onMounted(() => {
 
       <!-- 資產變化記錄 -->
       <AssetHistoryTable :records="rawData.資產變化記錄" />
+
+      <!-- 資產變化趨勢圖 -->
+      <AssetHistoryChart :records="rawData.資產變化記錄" />
 
       <div class="update-date">
         資料更新日期: {{ rawData.資料更新日期 }}
