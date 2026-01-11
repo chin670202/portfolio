@@ -43,8 +43,8 @@
         </td>
         <td class="calculated">{{ formatPercent(etf.年殖利率) }}</td>
         <td class="text-right calculated">{{ formatNumber(etf.每年利息) }}</td>
-        <td class="calculated">{{ etf.下次配息日 || '-' }}</td>
-        <td class="calculated">{{ etf.剩餘天配息 !== null ? etf.剩餘天配息 : (etf.剩餘天配息備註 || '-') }}</td>
+        <td class="calculated">{{ etf.下次配息日 || '--' }}</td>
+        <td class="calculated">{{ etf.剩餘天配息 !== null ? etf.剩餘天配息 : (etf.剩餘天配息備註 || '--') }}</td>
         <td class="text-right calculated">{{ formatNumber(etf.下次配息) }}</td>
         <td>{{ formatNumber(etf.質押單位) }}</td>
         <td class="text-right calculated">{{ formatNumber(etf.已質押資產) }}</td>
