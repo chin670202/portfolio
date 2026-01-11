@@ -284,8 +284,26 @@ onMounted(() => {
     <div v-else-if="error" class="error">錯誤: {{ error }}</div>
 
     <template v-else-if="rawData">
-      <div class="exchange-rate">
-        美元匯率: <span class="calculated">{{ rawData.匯率.美元匯率 }}</span>
+      <!-- 頂部摘要列 -->
+      <div class="top-summary">
+        <span class="summary-item">
+          美元匯率: <span class="calculated">{{ rawData.匯率.美元匯率 }}</span>
+        </span>
+        <span class="summary-item asset">
+          台幣資產: <span class="calculated-value">{{ formatNumber(grandTotal.台幣資產) }}</span>
+        </span>
+        <span class="summary-item liability">
+          台幣負債: <span class="calculated-value">{{ formatNumber(loanTotal.貸款餘額) }}</span>
+        </span>
+        <span class="summary-item interest">
+          每年利息: <span class="calculated-value">{{ formatNumber(grandTotal.每年利息) }}</span>
+        </span>
+        <span class="summary-item equity">
+          台幣權益: <span class="calculated-value">{{ formatNumber(grandTotal.台幣資產 - loanTotal.貸款餘額) }}</span>
+        </span>
+        <span class="summary-item income">
+          全年淨收入: <span class="calculated-value">{{ formatNumber(netIncome) }}</span>
+        </span>
       </div>
 
       <!-- 股票(海外債券) -->
@@ -299,25 +317,6 @@ onMounted(() => {
 
       <!-- 貸款 -->
       <LoanTable :loans="calculatedLoans" :total="loanTotal" />
-
-      <!-- 總計摘要 -->
-      <div class="summary-section">
-        <span class="summary-box asset">
-          台幣資產: <span class="calculated-value">{{ formatNumber(grandTotal.台幣資產) }}</span>
-        </span>
-        <span class="summary-box liability">
-          台幣負債: <span class="calculated-value">{{ formatNumber(loanTotal.貸款餘額) }}</span>
-        </span>
-        <span class="summary-box interest">
-          每年利息: <span class="calculated-value">{{ formatNumber(grandTotal.每年利息) }}</span>
-        </span>
-        <span class="summary-box equity">
-          台幣權益: <span class="calculated-value">{{ formatNumber(grandTotal.台幣資產 - loanTotal.貸款餘額) }}</span>
-        </span>
-        <span class="summary-box income">
-          全年淨收入: <span class="calculated-value">{{ formatNumber(netIncome) }}</span>
-        </span>
-      </div>
 
       <!-- 資產變化記錄 -->
       <AssetHistoryTable :records="rawData.資產變化記錄" />

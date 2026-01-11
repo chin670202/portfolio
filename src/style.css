@@ -77,12 +77,44 @@ h1 {
   cursor: not-allowed;
 }
 
-.exchange-rate {
-  background: #90ee90;
-  padding: 8px 15px;
-  display: inline-block;
+/* 頂部摘要列 */
+.top-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 15px;
+  align-items: center;
+}
+
+.summary-item {
+  padding: 8px 15px;
   font-weight: bold;
+  border-radius: 4px;
+  background: #90ee90;
+}
+
+.summary-item.asset {
+  background: #4472c4;
+  color: white;
+}
+
+.summary-item.liability {
+  background: #ff6b6b;
+  color: white;
+}
+
+.summary-item.interest {
+  background: #ffa500;
+  color: white;
+}
+
+.summary-item.equity {
+  background: #90ee90;
+}
+
+.summary-item.income {
+  background: #2e5a9e;
+  color: white;
 }
 
 table {
