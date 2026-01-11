@@ -297,16 +297,19 @@ onMounted(() => {
         <span class="summary-item liability">
           台幣負債: <span class="calculated-value">{{ formatNumber(loanTotal.貸款餘額) }}</span>
         </span>
-        <span class="summary-item interest">
-          每年利息: <span v-if="updating" class="calculated-value">--<span class="spinner"></span></span>
-          <span v-else class="calculated-value">{{ formatNumber(grandTotal.每年利息) }}</span>
-        </span>
         <span class="summary-item equity">
-          台幣權益: <span v-if="updating" class="calculated-value">--<span class="spinner"></span></span>
+          台幣淨值: <span v-if="updating" class="calculated-value">--<span class="spinner"></span></span>
           <span v-else class="calculated-value">{{ formatNumber(grandTotal.台幣資產 - loanTotal.貸款餘額) }}</span>
         </span>
+        <span class="summary-item interest">
+          每年收息: <span v-if="updating" class="calculated-value">--<span class="spinner"></span></span>
+          <span v-else class="calculated-value">{{ formatNumber(grandTotal.每年利息) }}</span>
+        </span>
+        <span class="summary-item expense">
+          每年付息: <span class="calculated-value">{{ formatNumber(loanTotal.每年利息) }}</span>
+        </span>
         <span class="summary-item income">
-          全年淨收入: <span v-if="updating" class="calculated-value">--<span class="spinner"></span></span>
+          全年淨收: <span v-if="updating" class="calculated-value">--<span class="spinner"></span></span>
           <span v-else class="calculated-value">{{ formatNumber(netIncome) }}</span>
         </span>
       </div>

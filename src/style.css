@@ -112,6 +112,11 @@ h1 {
   background: #90ee90;
 }
 
+.summary-item.expense {
+  background: #dc3545;
+  color: white;
+}
+
 .summary-item.income {
   background: #2e5a9e;
   color: white;
