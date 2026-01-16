@@ -109,7 +109,8 @@ h1 {
 }
 
 .summary-item.equity {
-  background: #90ee90;
+  background: #228b22;
+  color: white;
 }
 
 .summary-item.expense {
@@ -323,4 +324,50 @@ th {
 /* 價格更新失敗，使用緩存值的紅色樣式 */
 .price-failed {
   color: #cc0000 !important;
+}
+
+/* 買入均價欄位 */
+.cost-price {
+  color: #2c5282;
+  font-weight: bold;
+}
+
+/* Tooltip 樣式 */
+.tooltip-container {
+  position: relative;
+  cursor: pointer;
+}
+
+.tooltip-text {
+  visibility: hidden;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  padding: 6px 12px;
+  border-radius: 4px;
+  position: absolute;
+  z-index: 100;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #333 transparent transparent transparent;
+}
+
+.tooltip-container:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
 }

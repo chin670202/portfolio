@@ -2,7 +2,7 @@
   <table>
     <thead>
       <tr class="section-header">
-        <th colspan="17">海外債券</th>
+        <th colspan="16">海外債券</th>
       </tr>
       <tr>
         <th>公司名稱</th>
@@ -19,16 +19,15 @@
         <th>配息日</th>
         <th>剩餘天配息</th>
         <th>下次配息</th>
-        <th>質押單位</th>
-        <th>已質押資產</th>
         <th>到期日</th>
+        <th>剩餘年數</th>
       </tr>
     </thead>
     <tbody>
       <tr v-for="(stock, index) in stocks" :key="index">
         <td class="text-left">{{ stock.公司名稱 }}</td>
         <td>{{ stock.代號 }}</td>
-        <td>{{ formatDecimal(stock.買入價格) }}</td>
+        <td class="cost-price">{{ formatDecimal(stock.買入價格) }}</td>
         <td>{{ formatNumber(stock.持有單位) }}</td>
         <td :class="['calculated', { 'price-failed': getPriceStatus(stock.代號).failed }]">
           {{ formatDecimal(stock.最新價格) }}
@@ -43,9 +42,8 @@
         <td>{{ stock.配息日 }}</td>
         <td class="calculated">{{ stock.剩餘天配息 }}</td>
         <td class="text-right calculated">{{ formatNumber(stock.下次配息) }}</td>
-        <td>{{ formatNumber(stock.質押單位) }}</td>
-        <td class="text-right calculated">{{ formatNumber(stock.已質押資產) }}</td>
         <td>{{ stock.到期日 }}</td>
+        <td class="calculated">{{ getRemainingYears(stock.到期日) }}</td>
       </tr>
     </tbody>
     <tfoot>
@@ -55,9 +53,7 @@
         <td class="calculated">{{ formatPercent(getPercentage(subtotal.台幣資產)) }}</td>
         <td colspan="2"></td>
         <td class="text-right calculated">{{ formatNumber(subtotal.每年利息) }}</td>
-        <td colspan="4"></td>
-        <td class="text-right calculated">{{ formatNumber(subtotal.已質押資產) }}</td>
-        <td></td>
+        <td colspan="5"></td>
       </tr>
     </tfoot>
   </table>
@@ -124,6 +120,18 @@ const getPriceStatus = (symbol) => {
   return props.priceStatus[`bond_${symbol}`] || { loading: false, failed: false }
 }
 
+// 計算剩餘年數
+const getRemainingYears = (maturityDate) => {
+  if (!maturityDate) return '--'
+  // 解析到期日 (格式: YYYY/MM/DD)
+  const [year, month, day] = maturityDate.split('/').map(Number)
+  const maturity = new Date(year, month - 1, day)
+  const today = new Date()
+  const diffMs = maturity - today
+  const diffYears = diffMs / (1000 * 60 * 60 * 24 * 365.25)
+  return diffYears > 0 ? diffYears.toFixed(1) : '0.0'
+}
+
 const showModal = ref(false)
 
 const totalLoan = computed(() => {
@@ -158,4 +166,3 @@ const resultFormula = computed(() => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 </style>
-

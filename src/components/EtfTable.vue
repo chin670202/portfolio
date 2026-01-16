@@ -28,7 +28,7 @@
       <tr v-for="(etf, index) in etfs" :key="index">
         <td class="text-left">{{ etf.名稱 }}</td>
         <td>{{ etf.代號 }}</td>
-        <td>{{ formatDecimal(etf.買入均價) }}</td>
+        <td class="cost-price">{{ formatDecimal(etf.買入均價) }}</td>
         <td>{{ formatNumber(etf.持有單位) }}</td>
         <td :class="['calculated', { 'price-failed': getPriceStatus(etf.代號).failed }]">
           {{ formatDecimal(etf.最新價格) }}

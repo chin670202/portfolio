@@ -24,3 +24,12 @@ export function getColorClass(value) {
   if (value < 0) return 'negative'
   return ''
 }
+
+// 格式化為萬元單位 (x,xxx萬)
+export function formatWan(num) {
+  if (num === null || num === undefined) return '-'
+  if (typeof num === 'string') return num
+  if (typeof num !== 'number' || isNaN(num)) return '-'
+  const wan = Math.round(num / 10000)
+  return wan.toLocaleString('zh-TW') + '萬'
+}

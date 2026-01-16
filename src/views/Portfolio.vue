@@ -7,7 +7,7 @@ import OtherAssetsTable from '../components/OtherAssetsTable.vue'
 import LoanTable from '../components/LoanTable.vue'
 import AssetHistoryTable from '../components/AssetHistoryTable.vue'
 import AssetHistoryChart from '../components/AssetHistoryChart.vue'
-import { formatNumber } from '../utils/format'
+import { formatNumber, formatWan } from '../utils/format'
 import {
   calculateBondDerivedData,
   calculateEtfDerivedData,
@@ -290,27 +290,33 @@ onMounted(() => {
           美元匯率: <span class="calculated">{{ rawData.匯率.美元匯率 }}</span>
           <span v-if="updating" class="spinner"></span>
         </span>
-        <span class="summary-item asset">
+        <span class="summary-item asset tooltip-container">
           台幣資產: <span v-if="updating" class="calculated-value">--<span class="spinner"></span></span>
-          <span v-else class="calculated-value">{{ formatNumber(grandTotal.台幣資產) }}</span>
+          <span v-else class="calculated-value">{{ formatWan(grandTotal.台幣資產) }}</span>
+          <span class="tooltip-text">台幣資產: {{ formatNumber(grandTotal.台幣資產) }} 元</span>
         </span>
-        <span class="summary-item liability">
-          台幣負債: <span class="calculated-value">{{ formatNumber(loanTotal.貸款餘額) }}</span>
+        <span class="summary-item liability tooltip-container">
+          台幣負債: <span class="calculated-value">{{ formatWan(loanTotal.貸款餘額) }}</span>
+          <span class="tooltip-text">台幣負債: {{ formatNumber(loanTotal.貸款餘額) }} 元</span>
         </span>
-        <span class="summary-item equity">
+        <span class="summary-item equity tooltip-container">
           台幣淨值: <span v-if="updating" class="calculated-value">--<span class="spinner"></span></span>
-          <span v-else class="calculated-value">{{ formatNumber(grandTotal.台幣資產 - loanTotal.貸款餘額) }}</span>
+          <span v-else class="calculated-value">{{ formatWan(grandTotal.台幣資產 - loanTotal.貸款餘額) }}</span>
+          <span class="tooltip-text">台幣淨值: {{ formatNumber(grandTotal.台幣資產 - loanTotal.貸款餘額) }} 元</span>
         </span>
-        <span class="summary-item interest">
+        <span class="summary-item interest tooltip-container">
           每年收息: <span v-if="updating" class="calculated-value">--<span class="spinner"></span></span>
-          <span v-else class="calculated-value">{{ formatNumber(grandTotal.每年利息) }}</span>
+          <span v-else class="calculated-value">{{ formatWan(grandTotal.每年利息) }}</span>
+          <span class="tooltip-text">每年收息: {{ formatNumber(grandTotal.每年利息) }} 元</span>
         </span>
-        <span class="summary-item expense">
-          每年付息: <span class="calculated-value">{{ formatNumber(loanTotal.每年利息) }}</span>
+        <span class="summary-item expense tooltip-container">
+          每年付息: <span class="calculated-value">{{ formatWan(loanTotal.每年利息) }}</span>
+          <span class="tooltip-text">每年付息: {{ formatNumber(loanTotal.每年利息) }} 元</span>
         </span>
-        <span class="summary-item income">
+        <span class="summary-item income tooltip-container">
           全年淨收: <span v-if="updating" class="calculated-value">--<span class="spinner"></span></span>
-          <span v-else class="calculated-value">{{ formatNumber(netIncome) }}</span>
+          <span v-else class="calculated-value">{{ formatWan(netIncome) }}</span>
+          <span class="tooltip-text">全年淨收: {{ formatNumber(netIncome) }} 元</span>
         </span>
       </div>
 
