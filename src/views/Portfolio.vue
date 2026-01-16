@@ -190,7 +190,7 @@ async function updateAllPrices() {
 
     // 更新其他資產價格 (並行)
     const cryptoMapping = { 'BTC/TWD': 'bitcoin', 'ETH/TWD': 'ethereum' }
-    const usStockSymbols = ['TSLA', 'GLDM', 'SIVR', 'COPX']
+    const usStockSymbols = ['TSLA', 'GLDM', 'SIVR', 'COPX', 'VOO']
     // 台股代號格式：數字開頭（如 00635U, 2330）
     const isTwStock = (symbol) => /^\d/.test(symbol)
 
