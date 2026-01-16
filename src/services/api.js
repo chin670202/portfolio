@@ -85,7 +85,9 @@ export async function getStockPrice(stockCode) {
     return '請輸入股票代碼'
   }
 
-  const url = `https://tw.stock.yahoo.com/quote/${stockCode}.TWO/technical-analysis`
+  // 判斷上市(.TW)或上櫃(.TWO)：ETF代號含字母或數字開頭超過4碼通常是上櫃
+  const suffix = /^00\d{3}[A-Z]?$/.test(stockCode) ? '.TWO' : '.TW'
+  const url = `https://tw.stock.yahoo.com/quote/${stockCode}${suffix}`
 
   try {
     const response = await fetch(CORS_PROXY + encodeURIComponent(url), {
@@ -98,13 +100,15 @@ export async function getStockPrice(stockCode) {
 
     const content = await response.text()
 
-    // 使用正則表達式提取價格
-    const priceMatch = content.match(/<span[^>]*>(\d+\.\d+)<\/span>/)
+    // 使用正則表達式提取價格（找 Fz(32px) 樣式的 span，這是主要價格顯示區）
+    const priceMatch = content.match(/<span[^>]*class="[^"]*Fz\(32px\)[^"]*"[^>]*>([\d,.]+)<\/span>/)
     if (!priceMatch) {
       return '無法找到價格'
     }
 
-    const price = parseFloat(priceMatch[1])
+    // 移除千分位逗號
+    const priceStr = priceMatch[1].replace(/,/g, '')
+    const price = parseFloat(priceStr)
     const roundedPrice = Math.round(price * 1000) / 1000
     return roundedPrice.toFixed(3)
   } catch (e) {
