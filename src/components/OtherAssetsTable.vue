@@ -2,7 +2,7 @@
   <table>
     <thead>
       <tr class="section-header">
-        <th colspan="8">無配息資產</th>
+        <th colspan="9">無配息資產</th>
       </tr>
       <tr>
         <th>名稱</th>
@@ -10,6 +10,7 @@
         <th>買入均價</th>
         <th>持有單位</th>
         <th>最新價格</th>
+        <th>台幣損益</th>
         <th>損益(%)</th>
         <th>台幣資產</th>
         <th>佔比</th>
@@ -25,6 +26,7 @@
           {{ formatDecimal(asset.最新價格) }}
           <span v-if="getPriceStatus(asset.代號).loading" class="spinner"></span>
         </td>
+        <td :class="['text-right', 'calculated', getColorClass(asset.台幣損益)]">{{ formatNumber(asset.台幣損益) }}</td>
         <td :class="['calculated', getColorClass(asset.損益百分比)]">{{ formatPercent(asset.損益百分比) }}</td>
         <td class="text-right calculated">{{ formatNumber(asset.台幣資產) }}</td>
         <td class="calculated">{{ formatPercent(getPercentage(asset.台幣資產)) }}</td>
@@ -32,7 +34,9 @@
     </tbody>
     <tfoot>
       <tr class="sub-total">
-        <td colspan="6">小計</td>
+        <td colspan="5">小計</td>
+        <td class="text-right calculated">{{ formatNumber(totalProfitLoss) }}</td>
+        <td></td>
         <td class="text-right calculated">{{ formatNumber(subtotal.台幣資產) }}</td>
         <td class="calculated">{{ formatPercent(getPercentage(subtotal.台幣資產)) }}</td>
       </tr>
@@ -41,6 +45,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { formatNumber, formatDecimal, formatPercent, getColorClass } from '../utils/format'
 
 const props = defineProps({
@@ -60,6 +65,11 @@ const props = defineProps({
     type: Number,
     default: 0
   }
+})
+
+// 計算台幣損益小計
+const totalProfitLoss = computed(() => {
+  return props.assets.reduce((sum, asset) => sum + (asset.台幣損益 || 0), 0)
 })
 
 // 計算佔總投資比例
