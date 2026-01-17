@@ -567,7 +567,7 @@ h2 {
   background: linear-gradient(135deg, #4472c4 0%, #2e5a9e 100%);
   color: white;
   border-radius: 20px;
-  margin: 40px 20px;
+  margin: 40px auto;
 }
 
 .demo h2 {
@@ -827,7 +827,7 @@ h2 {
   background: linear-gradient(135deg, #1a1a2e 0%, #2a2a4e 100%);
   color: white;
   border-radius: 20px;
-  margin: 40px 20px;
+  margin: 40px auto;
 }
 
 .cta h2 {
