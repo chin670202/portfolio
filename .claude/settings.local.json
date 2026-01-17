@@ -45,7 +45,8 @@
       "Bash(taskkill:*)",
       "Bash(cmd /c \"taskkill /F /PID 37800\")",
       "Bash(claude --version:*)",
-      "Bash(Stop-Process -Id 40216 -Force)"
+      "Bash(Stop-Process -Id 40216 -Force)",
+      "Bash(git checkout:*)"
     ]
   }
 }

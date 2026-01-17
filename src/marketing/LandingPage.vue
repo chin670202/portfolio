@@ -110,6 +110,16 @@
             <li>財務健康檢視</li>
           </ul>
         </div>
+        <div class="feature-card highlight">
+          <div class="feature-icon">💬</div>
+          <h3>語意化快速更新</h3>
+          <p>用自然語言描述交易，AI 自動理解並更新您的投資部位</p>
+          <ul class="feature-details">
+            <li>「買了 10 張台積電」即可更新</li>
+            <li>不需手動填寫複雜表單</li>
+            <li>支援中文口語化輸入</li>
+          </ul>
+        </div>
         <div class="feature-card">
           <div class="feature-icon">🔒</div>
           <h3>資料安全私密</h3>

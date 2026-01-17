@@ -65,6 +65,12 @@ export const FEATURES = [
     highlight: true
   },
   {
+    icon: '💬',
+    title: '語意化快速更新',
+    description: '用自然語言描述交易，AI 自動理解並更新投資部位',
+    highlight: true
+  },
+  {
     icon: '💰',
     title: '多資產整合追蹤',
     description: '海外債券、ETF、美股、台股、加密貨幣一站管理'
