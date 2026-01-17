@@ -34,6 +34,8 @@ const error = ref(null)
 const updating = ref(false)
 const lastUpdateTime = ref(null)
 const currentUsername = computed(() => route.params.username || 'chin')
+// 顯示名稱（優先使用 JSON 中的顯示名稱，若無則用帳號）
+const displayName = computed(() => rawData.value?.顯示名稱 || currentUsername.value)
 
 // 價格狀態追蹤: { [代號]: { loading: boolean, failed: boolean } }
 const priceStatus = ref({})
@@ -411,7 +413,7 @@ onMounted(() => {
 <template>
   <div class="container">
     <div class="header">
-      <h1>{{ currentUsername }} 的投資現況</h1>
+      <h1>{{ displayName }} 的投資現況</h1>
       <div class="header-actions">
         <!-- 新聞篩選切換 -->
         <div class="news-filter">
