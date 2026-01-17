@@ -2,7 +2,7 @@
   <table>
     <thead>
       <tr class="section-header">
-        <th colspan="16">海外債券</th>
+        <th colspan="17">海外債券</th>
       </tr>
       <tr>
         <th>公司名稱</th>
@@ -21,10 +21,11 @@
         <th>下次配息</th>
         <th>到期日</th>
         <th>剩餘年數</th>
+        <th>新聞</th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(stock, index) in stocks" :key="index">
+      <tr v-for="(stock, index) in stocks" :key="index" :class="{ 'highlighted-row': stock.代號 === highlightSymbol }">
         <td class="text-left">{{ stock.公司名稱 }}</td>
         <td>{{ stock.代號 }}</td>
         <td class="cost-price">{{ formatDecimal(stock.買入價格) }}</td>
@@ -44,6 +45,21 @@
         <td class="text-right calculated">{{ formatNumber(stock.下次配息) }}</td>
         <td>{{ stock.到期日 }}</td>
         <td class="calculated">{{ getRemainingYears(stock.到期日) }}</td>
+        <td>
+          <div class="news-cell">
+            <span v-if="isNewsLoading(stock.代號)" class="spinner news-spinner"></span>
+            <button
+              v-else-if="hasNews(stock.代號)"
+              class="news-btn"
+              :class="{ 'has-negative': hasNegativeNews(stock.代號) }"
+              @click="$emit('open-news', stock.代號, stock.公司名稱)"
+            >
+              <span v-if="hasNegativeNews(stock.代號)">!</span>
+              <span v-else>i</span>
+              <span class="news-badge">{{ getNewsCount(stock.代號) }}</span>
+            </button>
+          </div>
+        </td>
       </tr>
     </tbody>
     <tfoot>
@@ -53,7 +69,7 @@
         <td class="calculated">{{ formatPercent(getPercentage(subtotal.台幣資產)) }}</td>
         <td colspan="2"></td>
         <td class="text-right calculated">{{ formatNumber(subtotal.每年利息) }}</td>
-        <td colspan="5"></td>
+        <td colspan="6"></td>
       </tr>
     </tfoot>
   </table>
@@ -106,8 +122,26 @@ const props = defineProps({
   totalAssets: {
     type: Number,
     default: 0
+  },
+  newsData: {
+    type: Object,
+    default: () => ({})
+  },
+  getNewsCount: {
+    type: Function,
+    default: () => 0
+  },
+  isNewsLoading: {
+    type: Function,
+    default: () => false
+  },
+  highlightSymbol: {
+    type: String,
+    default: ''
   }
 })
+
+defineEmits(['open-news'])
 
 // 計算佔總投資比例
 const getPercentage = (value) => {
@@ -130,6 +164,18 @@ const getRemainingYears = (maturityDate) => {
   const diffMs = maturity - today
   const diffYears = diffMs / (1000 * 60 * 60 * 24 * 365.25)
   return diffYears > 0 ? diffYears.toFixed(1) : '0.0'
+}
+
+// 檢查是否有負面新聞
+const hasNegativeNews = (symbol) => {
+  const data = props.newsData[symbol]
+  return data?.hasNegative || false
+}
+
+// 檢查是否有新聞
+const hasNews = (symbol) => {
+  const data = props.newsData[symbol]
+  return data?.hasNews || false
 }
 
 const showModal = ref(false)
@@ -164,5 +210,74 @@ const resultFormula = computed(() => {
 .clickable:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.news-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 24px;
+}
+
+.news-spinner {
+  width: 16px;
+  height: 16px;
+}
+
+.news-btn {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: #4472c4;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.news-btn:hover {
+  transform: scale(1.1);
+}
+
+.news-btn.has-negative {
+  background: #ff6b6b;
+  animation: pulse 1.5s infinite;
+}
+
+.news-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #e74c3c;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.news-btn:not(.has-negative) .news-badge {
+  background: #27ae60;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.highlighted-row {
+  background: #fff3cd !important;
+}
+
+.highlighted-row td {
+  background: #fff3cd !important;
 }
 </style>

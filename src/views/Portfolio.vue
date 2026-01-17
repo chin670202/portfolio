@@ -7,6 +7,7 @@ import OtherAssetsTable from '../components/OtherAssetsTable.vue'
 import LoanTable from '../components/LoanTable.vue'
 import AssetHistoryTable from '../components/AssetHistoryTable.vue'
 import AssetHistoryChart from '../components/AssetHistoryChart.vue'
+import NewsModal from '../components/NewsModal.vue'
 import { formatNumber, formatWan } from '../utils/format'
 import {
   calculateBondDerivedData,
@@ -21,6 +22,7 @@ import {
   calculateNetIncome
 } from '../services/calculator'
 import { getBondPrice, getStockPrice, getLatestDividend, getNextDividendDate, getCryptoPrice, getUsdTwdRate, getUsStockPrice } from '../services/api'
+import { useNews } from '../composables/useNews'
 import packageJson from '../../package.json'
 
 const route = useRoute()
@@ -34,6 +36,120 @@ const currentUsername = computed(() => route.params.username || 'chin')
 
 // 價格狀態追蹤: { [代號]: { loading: boolean, failed: boolean } }
 const priceStatus = ref({})
+
+// 新聞管理（使用 composable）
+const {
+  newsData,
+  showModal: showNewsModal,
+  currentTitle: currentNewsTitle,
+  currentSymbol,
+  currentNews,
+  modalLoading: newsLoading,
+  openModal: openNewsModal,
+  closeModal: closeNewsModal,
+  hasNews,
+  hasNegativeNews,
+  getNewsCount,
+  isLoading: isNewsLoading,
+  fetchBatchNews
+} = useNews()
+
+// 美股代號列表（與 OtherAssetsTable 一致）
+const usStockSymbols = ['TSLA', 'GLDM', 'SIVR', 'COPX', 'VOO']
+const isCrypto = (symbol) => symbol.includes('/TWD')
+const isTwStock = (symbol) => /^\d/.test(symbol) && !isCrypto(symbol)
+
+// 所有商品列表（用於新聞滾輪切換，順序與畫面一致）
+// 使用唯一 ID 避免重複代號問題
+const allProducts = computed(() => {
+  if (!rawData.value) return []
+  const products = []
+  // 1. 海外債券（使用索引建立唯一 ID）
+  rawData.value.股票.forEach((bond, idx) => {
+    products.push({ id: `bond_${idx}`, symbol: bond.代號, name: bond.公司名稱 })
+  })
+  // 2. ETF
+  rawData.value.ETF.forEach((etf, idx) => {
+    products.push({ id: `etf_${idx}`, symbol: etf.代號, name: etf.名稱 })
+  })
+  // 3. 其它資產（按畫面順序：美股 → 台股 → 加密貨幣）
+  const otherAssets = rawData.value.其它資產
+  // 美股
+  otherAssets.filter(a => usStockSymbols.includes(a.代號)).forEach((asset, idx) => {
+    products.push({ id: `us_${idx}`, symbol: asset.代號, name: asset.名稱 })
+  })
+  // 台股
+  otherAssets.filter(a => isTwStock(a.代號)).forEach((asset, idx) => {
+    products.push({ id: `tw_${idx}`, symbol: asset.代號, name: asset.名稱 })
+  })
+  // 加密貨幣
+  otherAssets.filter(a => isCrypto(a.代號)).forEach((asset, idx) => {
+    products.push({ id: `crypto_${idx}`, symbol: asset.代號, name: asset.名稱 })
+  })
+  return products
+})
+
+// 當前商品的唯一 ID（用於追蹤導航位置）
+const currentProductId = ref('')
+
+// 當前商品在列表中的索引
+const currentProductIndex = computed(() => {
+  // 優先用 ID 查找（避免重複代號問題）
+  if (currentProductId.value) {
+    const idx = allProducts.value.findIndex(p => p.id === currentProductId.value)
+    if (idx >= 0) return idx
+  }
+  // 備用：用 symbol 查找
+  const idx = allProducts.value.findIndex(p => p.symbol === currentSymbol.value)
+  return idx >= 0 ? idx : 0
+})
+
+// 高亮的商品代號（只在 modal 打開時才高亮）
+// 注意：重複代號會同時高亮，這是預期行為
+const highlightSymbol = computed(() => {
+  return showNewsModal.value ? currentSymbol.value : ''
+})
+
+// 判斷是否為債券（用於彈窗標題）
+const isBondSymbol = (symbol) => {
+  if (!rawData.value) return false
+  return rawData.value.股票.some(bond => bond.代號 === symbol)
+}
+
+// 彈窗標題（非債券加上代號）
+const newsModalTitle = computed(() => {
+  if (!currentSymbol.value) return currentNewsTitle.value
+  if (isBondSymbol(currentSymbol.value)) {
+    return currentNewsTitle.value
+  }
+  return `${currentNewsTitle.value} (${currentSymbol.value})`
+})
+
+// 處理新聞彈窗的導航
+function handleNewsNavigate(direction) {
+  const products = allProducts.value
+  if (products.length <= 1) return
+
+  let newIndex = currentProductIndex.value + direction
+  // 循環導航
+  if (newIndex < 0) newIndex = products.length - 1
+  if (newIndex >= products.length) newIndex = 0
+
+  const product = products[newIndex]
+  // 更新 ID 追蹤（避免重複代號問題）
+  currentProductId.value = product.id
+  openNewsModal(product.symbol, product.name)
+}
+
+// 封裝開啟新聞 Modal（從表格點擊時用）
+function handleOpenNews(symbol, name) {
+  // 根據 symbol 找到對應的 product（如果有重複，取第一個）
+  const product = allProducts.value.find(p => p.symbol === symbol)
+  if (product) {
+    currentProductId.value = product.id
+  }
+  openNewsModal(symbol, name)
+}
 
 // 計算後的債券資料
 const calculatedBonds = computed(() => {
@@ -218,11 +334,39 @@ async function updateAllPrices() {
     rawData.value = { ...rawData.value }
     lastUpdateTime.value = new Date().toLocaleTimeString('zh-TW')
 
+    // 價格更新完成後，自動抓取所有商品的新聞
+    fetchAllNews()
+
   } catch (e) {
     console.error('價格更新失敗:', e)
   } finally {
     updating.value = false
   }
+}
+
+// 抓取所有商品的新聞
+async function fetchAllNews() {
+  if (!rawData.value) return
+
+  const newsQueries = []
+
+  // 海外債券
+  rawData.value.股票.forEach(bond => {
+    newsQueries.push({ symbol: bond.代號, name: bond.公司名稱 })
+  })
+
+  // ETF
+  rawData.value.ETF.forEach(etf => {
+    newsQueries.push({ symbol: etf.代號, name: etf.名稱 })
+  })
+
+  // 其它資產
+  rawData.value.其它資產.forEach(asset => {
+    newsQueries.push({ symbol: asset.代號, name: asset.名稱 })
+  })
+
+  // 批次抓取新聞
+  await fetchBatchNews(newsQueries)
 }
 
 async function loadData() {
@@ -321,13 +465,13 @@ onMounted(() => {
       </div>
 
       <!-- 股票(海外債券) -->
-      <StockTable :stocks="calculatedBonds" :subtotal="bondSubtotal" :loan-details="bondLoanDetails" :price-status="priceStatus" :total-assets="grandTotal.台幣資產" />
+      <StockTable :stocks="calculatedBonds" :subtotal="bondSubtotal" :loan-details="bondLoanDetails" :price-status="priceStatus" :total-assets="grandTotal.台幣資產" :news-data="newsData" :get-news-count="getNewsCount" :is-news-loading="isNewsLoading" :highlight-symbol="highlightSymbol" @open-news="handleOpenNews" />
 
       <!-- ETF -->
-      <EtfTable :etfs="calculatedEtfs" :subtotal="etfSubtotal" :loan-details="etfLoanDetails" :price-status="priceStatus" :total-assets="grandTotal.台幣資產" />
+      <EtfTable :etfs="calculatedEtfs" :subtotal="etfSubtotal" :loan-details="etfLoanDetails" :price-status="priceStatus" :total-assets="grandTotal.台幣資產" :news-data="newsData" :get-news-count="getNewsCount" :is-news-loading="isNewsLoading" :highlight-symbol="highlightSymbol" @open-news="handleOpenNews" />
 
       <!-- 其它資產 -->
-      <OtherAssetsTable :assets="calculatedOtherAssets" :subtotal="otherAssetSubtotal" :price-status="priceStatus" :total-assets="grandTotal.台幣資產" />
+      <OtherAssetsTable :assets="calculatedOtherAssets" :subtotal="otherAssetSubtotal" :price-status="priceStatus" :total-assets="grandTotal.台幣資產" :news-data="newsData" :get-news-count="getNewsCount" :is-news-loading="isNewsLoading" :highlight-symbol="highlightSymbol" @open-news="handleOpenNews" />
 
       <!-- 貸款 -->
       <LoanTable :loans="calculatedLoans" :total="loanTotal" />
@@ -341,6 +485,18 @@ onMounted(() => {
       <div class="update-date">
         資料更新日期: {{ rawData.資料更新日期 }}
       </div>
+
+      <!-- 新聞 Modal -->
+      <NewsModal
+        :visible="showNewsModal"
+        :title="newsModalTitle"
+        :news="currentNews"
+        :loading="newsLoading"
+        :current-index="currentProductIndex"
+        :total-count="allProducts.length"
+        @close="showNewsModal = false"
+        @navigate="handleNewsNavigate"
+      />
     </template>
   </div>
 </template>

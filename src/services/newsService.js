@@ -1,0 +1,302 @@
+/**
+ * 新聞服務模組
+ * 負責抓取與分析股票/資產相關新聞
+ */
+
+// CORS Proxy 設定
+const CORS_PROXY = 'https://corsproxy.io/?'
+
+// 共用 Headers
+const DEFAULT_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+}
+
+// ============================================================
+// 全域語系設定
+// ============================================================
+
+/**
+ * 支援的語系
+ */
+export const SUPPORTED_LOCALES = {
+  ZH_TW: 'zh-TW',
+  EN: 'en'
+}
+
+/**
+ * 當前語系（預設繁體中文）
+ */
+let currentLocale = SUPPORTED_LOCALES.ZH_TW
+
+/**
+ * 取得當前語系
+ * @returns {string} 當前語系
+ */
+export function getLocale() {
+  return currentLocale
+}
+
+/**
+ * 設定語系
+ * @param {string} locale - 語系代碼 ('zh-TW' 或 'en')
+ */
+export function setLocale(locale) {
+  if (Object.values(SUPPORTED_LOCALES).includes(locale)) {
+    currentLocale = locale
+  } else {
+    console.warn(`不支援的語系: ${locale}，維持使用 ${currentLocale}`)
+  }
+}
+
+// ============================================================
+// 負面關鍵字設定
+// ============================================================
+
+// 中文負面關鍵字
+const NEGATIVE_KEYWORDS_ZH = [
+  '下跌', '暴跌', '崩盤', '虧損', '裁員', '訴訟', '警示', '違約',
+  '破產', '倒閉', '負債', '調查', '罰款', '召回', '危機', '風險',
+  '下修', '降評', '減產', '停工', '延遲', '取消', '衰退', '萎縮',
+  '重挫', '跳水', '腰斬', '暴雷', '爆雷', '詐騙', '違規', '處分',
+  '停牌', '警告', '糾紛', '索賠', '清算', '重整'
+]
+
+// 英文負面關鍵字
+const NEGATIVE_KEYWORDS_EN = [
+  'drop', 'crash', 'loss', 'layoff', 'lawsuit', 'warning', 'default',
+  'bankruptcy', 'debt', 'investigation', 'fine', 'recall', 'crisis', 'risk',
+  'downgrade', 'cut', 'decline', 'delay', 'cancel', 'recession', 'slump',
+  'plunge', 'tumble', 'sink', 'fraud', 'scandal', 'penalty', 'violation',
+  'halt', 'suspend', 'probe', 'trouble', 'concern', 'fear', 'worry'
+]
+
+// 合併所有負面關鍵字
+const NEGATIVE_KEYWORDS = [...NEGATIVE_KEYWORDS_ZH, ...NEGATIVE_KEYWORDS_EN]
+
+// ============================================================
+// 新聞來源設定
+// ============================================================
+
+/**
+ * 新聞來源類型
+ */
+export const NEWS_SOURCES = {
+  GOOGLE_NEWS: 'google_news',
+  // 未來可擴展更多新聞來源
+  // YAHOO_FINANCE: 'yahoo_finance',
+  // CNYES: 'cnyes',
+}
+
+// ============================================================
+// 核心新聞抓取功能
+// ============================================================
+
+/**
+ * 從 Google News RSS 抓取股票相關新聞
+ * @param {string} query - 搜尋關鍵字（公司名稱或股票代號）
+ * @param {Object} options - 選項
+ * @param {number} options.days - 抓取幾天內的新聞（預設 7）
+ * @param {number} options.limit - 最多抓取幾則（預設 10）
+ * @returns {Promise<Array>} 新聞列表 [{title, link, pubDate, source, isNegative, negativeKeywords}]
+ */
+export async function fetchGoogleNews(query, options = {}) {
+  const { days = 7, limit = 10 } = options
+  // 使用全域語系設定
+  const lang = currentLocale
+
+  if (!query) return []
+
+  const encodedQuery = encodeURIComponent(query)
+  const glParam = lang === 'zh-TW' ? 'TW' : 'US'
+  const hlParam = lang === 'zh-TW' ? 'zh-TW' : 'en'
+  const url = `https://news.google.com/rss/search?q=${encodedQuery}&hl=${hlParam}&gl=${glParam}&ceid=${glParam}:${hlParam}`
+
+  try {
+    const response = await fetch(CORS_PROXY + encodeURIComponent(url), {
+      headers: DEFAULT_HEADERS
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+
+    const xmlText = await response.text()
+
+    // 解析 RSS XML
+    const parser = new DOMParser()
+    const xmlDoc = parser.parseFromString(xmlText, 'text/xml')
+    const items = xmlDoc.querySelectorAll('item')
+
+    const news = []
+    const now = new Date()
+    const cutoffDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
+
+    items.forEach((item, index) => {
+      if (news.length >= limit) return
+
+      const title = item.querySelector('title')?.textContent || ''
+      const link = item.querySelector('link')?.textContent || ''
+      const pubDateStr = item.querySelector('pubDate')?.textContent || ''
+      const pubDate = new Date(pubDateStr)
+
+      // 只取指定天數內的新聞
+      if (pubDate < cutoffDate) return
+
+      // 分析負面關鍵字
+      const analysis = analyzeNewsTitle(title)
+
+      news.push({
+        title,
+        link,
+        pubDate: pubDate.toLocaleDateString('zh-TW'),
+        pubDateRaw: pubDate,
+        source: NEWS_SOURCES.GOOGLE_NEWS,
+        isNegative: analysis.isNegative,
+        negativeKeywords: analysis.matchedKeywords
+      })
+    })
+
+    return news
+  } catch (e) {
+    console.error(`fetchGoogleNews error for ${query}:`, e)
+    return []
+  }
+}
+
+// ============================================================
+// 新聞分析功能
+// ============================================================
+
+/**
+ * 分析新聞標題是否包含負面關鍵字
+ * @param {string} title - 新聞標題
+ * @returns {Object} { isNegative, matchedKeywords }
+ */
+export function analyzeNewsTitle(title) {
+  if (!title) return { isNegative: false, matchedKeywords: [] }
+
+  const titleLower = title.toLowerCase()
+  const matchedKeywords = NEGATIVE_KEYWORDS.filter(keyword =>
+    titleLower.includes(keyword.toLowerCase())
+  )
+
+  return {
+    isNegative: matchedKeywords.length > 0,
+    matchedKeywords
+  }
+}
+
+/**
+ * 計算新聞風險分數（0-100）
+ * @param {Array} newsList - 新聞列表
+ * @returns {number} 風險分數
+ */
+export function calculateRiskScore(newsList) {
+  if (!newsList || newsList.length === 0) return 0
+
+  const negativeCount = newsList.filter(n => n.isNegative).length
+  const totalCount = newsList.length
+
+  // 基礎分數：負面新聞佔比
+  let score = (negativeCount / totalCount) * 100
+
+  // 加權：如果負面新聞較多，分數更高
+  if (negativeCount >= 3) score = Math.min(score * 1.2, 100)
+  if (negativeCount >= 5) score = Math.min(score * 1.5, 100)
+
+  return Math.round(score)
+}
+
+// ============================================================
+// 批次抓取功能
+// ============================================================
+
+/**
+ * 批次抓取多檔股票新聞
+ * @param {Array} queries - [{symbol, name}] 陣列
+ * @param {Object} options - 選項
+ * @returns {Promise<Object>} { symbol: { news, riskScore, hasNegative } }
+ */
+export async function fetchBatchNews(queries, options = {}) {
+  const results = {}
+
+  const promises = queries.map(async ({ symbol, name }) => {
+    const query = name || symbol
+    const news = await fetchGoogleNews(query, options)
+
+    results[symbol] = {
+      news,
+      riskScore: calculateRiskScore(news),
+      hasNegative: news.some(n => n.isNegative),
+      hasNews: news.length > 0,
+      fetchedAt: new Date()
+    }
+  })
+
+  await Promise.all(promises)
+  return results
+}
+
+// ============================================================
+// 新聞快取管理
+// ============================================================
+
+const newsCache = new Map()
+const CACHE_TTL = 15 * 60 * 1000 // 15 分鐘快取
+
+/**
+ * 從快取取得新聞，若無則抓取
+ * @param {string} symbol - 股票代號
+ * @param {string} name - 公司名稱
+ * @param {Object} options - 選項
+ * @returns {Promise<Object>} { news, riskScore, hasNegative, hasNews }
+ */
+export async function getNewsWithCache(symbol, name, options = {}) {
+  const cacheKey = `${symbol}_${currentLocale}`
+  const cached = newsCache.get(cacheKey)
+
+  // 檢查快取是否有效
+  if (cached && (Date.now() - cached.fetchedAt.getTime()) < CACHE_TTL) {
+    return cached
+  }
+
+  // 抓取新資料
+  const query = name || symbol
+  const news = await fetchGoogleNews(query, options)
+
+  const result = {
+    news,
+    riskScore: calculateRiskScore(news),
+    hasNegative: news.some(n => n.isNegative),
+    hasNews: news.length > 0,
+    fetchedAt: new Date()
+  }
+
+  // 存入快取
+  newsCache.set(cacheKey, result)
+
+  return result
+}
+
+/**
+ * 清除新聞快取
+ * @param {string} symbol - 指定股票代號，若無則清除全部
+ */
+export function clearNewsCache(symbol = null) {
+  if (symbol) {
+    // 清除指定股票的所有語言快取
+    for (const key of newsCache.keys()) {
+      if (key.startsWith(`${symbol}_`)) {
+        newsCache.delete(key)
+      }
+    }
+  } else {
+    newsCache.clear()
+  }
+}
+
+// ============================================================
+// 匯出負面關鍵字（供外部使用或擴展）
+// ============================================================
+
+export { NEGATIVE_KEYWORDS, NEGATIVE_KEYWORDS_ZH, NEGATIVE_KEYWORDS_EN }
