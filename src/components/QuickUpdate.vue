@@ -25,6 +25,11 @@ const progressSteps = ref([])
 const result = ref(null)
 const error = ref(null)
 
+// 確認問題狀態
+const clarificationQuestion = ref('')
+const clarificationInput = ref('')
+const originalInput = ref('')
+
 // 從設定檔讀取服務 URL
 const serverUrl = updateService.baseUrl
 const apiKey = updateService.apiKey
@@ -58,6 +63,9 @@ function closeProcessModal() {
   progressSteps.value = []
   result.value = null
   error.value = null
+  clarificationQuestion.value = ''
+  clarificationInput.value = ''
+  originalInput.value = ''
 }
 
 function handleImageSelect(event) {
@@ -212,10 +220,88 @@ function handleSSEMessage(data) {
       emit('updated', data.result)
       break
 
+    case 'clarification':
+      // 需要用戶確認/提供更多資訊
+      progressSteps.value.forEach(s => {
+        if (s.status === 'active') s.status = 'done'
+      })
+      addProgressStep('需要確認', 'done')
+      clarificationQuestion.value = data.question
+      originalInput.value = data.originalInput || ''
+      processing.value = false
+      break
+
     case 'error':
       error.value = data.message
       addProgressStep(data.message, 'error')
       break
+  }
+}
+
+// 提交確認回覆
+async function submitClarification() {
+  if (!clarificationInput.value.trim()) return
+
+  // 組合原始輸入與補充資訊
+  const combinedContent = `${originalInput.value}\n\n補充資訊：${clarificationInput.value.trim()}`
+
+  // 重置狀態
+  clarificationQuestion.value = ''
+  clarificationInput.value = ''
+  processing.value = true
+  progressStatus.value = '正在重新處理...'
+  addProgressStep('重新分析')
+
+  try {
+    const response = await fetch(`${serverUrl}/update/stream`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': apiKey
+      },
+      body: JSON.stringify({
+        user: props.username,
+        type: 'text',
+        content: combinedContent
+      })
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || '更新失敗')
+    }
+
+    // 讀取 SSE 串流
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.slice(6))
+            handleSSEMessage(data)
+          } catch (e) {
+            // 忽略解析錯誤
+          }
+        }
+      }
+    }
+
+  } catch (e) {
+    error.value = e.message || '連線失敗'
+    addProgressStep(e.message || '連線失敗', 'error')
+  } finally {
+    processing.value = false
+    progressStatus.value = ''
   }
 }
 
@@ -332,6 +418,28 @@ function handleSSEMessage(data) {
               {{ error }}
             </div>
 
+            <!-- 確認問題 -->
+            <div v-if="clarificationQuestion && !processing && !error && !result" class="clarification-section">
+              <div class="clarification-question">
+                <span class="question-icon">❓</span>
+                <p>{{ clarificationQuestion }}</p>
+              </div>
+              <div class="clarification-input">
+                <textarea
+                  v-model="clarificationInput"
+                  placeholder="請輸入補充資訊..."
+                  rows="2"
+                ></textarea>
+                <button
+                  class="submit-btn"
+                  @click="submitClarification"
+                  :disabled="!clarificationInput.trim()"
+                >
+                  確認送出
+                </button>
+              </div>
+            </div>
+
             <!-- 成功結果 -->
             <div v-if="result && !error && !processing" class="result-content">
               <!-- 詳細摘要 -->
@@ -355,7 +463,7 @@ function handleSSEMessage(data) {
             </div>
           </div>
 
-          <div v-if="!processing" class="modal-footer">
+          <div v-if="!processing && !clarificationQuestion" class="modal-footer">
             <button class="submit-btn" @click="closeProcessModal">
               完成
             </button>
@@ -668,6 +776,57 @@ function handleSSEMessage(data) {
   color: #e74c3c;
   font-size: 14px;
   text-align: center;
+}
+
+/* 確認問題區塊 */
+.clarification-section {
+  padding: 16px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 8px;
+}
+
+.clarification-question {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.question-icon {
+  font-size: 20px;
+}
+
+.clarification-question p {
+  margin: 0;
+  color: #ffc107;
+  line-height: 1.5;
+}
+
+.clarification-input {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.clarification-input textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  background: #2a2a3e;
+  color: #fff;
+  font-size: 14px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.clarification-input textarea:focus {
+  outline: none;
+  border-color: #ffc107;
+}
+
+.clarification-input .submit-btn {
+  align-self: flex-end;
 }
 
 /* 結果區塊 */

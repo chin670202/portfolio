@@ -167,6 +167,18 @@ router.post('/stream', async (req, res) => {
       return sendError(analysis.error || '分析失敗');
     }
 
+    // 檢查是否需要確認（模糊輸入）
+    if (analysis.summary && analysis.summary.includes('需要確認')) {
+      const question = analysis.summary.replace(/^需要確認[：:]\s*/, '');
+      res.write(`data: ${JSON.stringify({
+        type: 'clarification',
+        question: question,
+        originalInput: content
+      })}\n\n`);
+      res.end();
+      return;
+    }
+
     // 檢查是否被拒絕執行（summary 包含「無法執行」）
     if (analysis.summary && analysis.summary.includes('無法執行')) {
       const duration = Date.now() - startTime;
