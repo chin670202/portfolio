@@ -8,6 +8,7 @@ import LoanTable from '../components/LoanTable.vue'
 import AssetHistoryTable from '../components/AssetHistoryTable.vue'
 import AssetHistoryChart from '../components/AssetHistoryChart.vue'
 import NewsModal from '../components/NewsModal.vue'
+import QuickUpdate from '../components/QuickUpdate.vue'
 import { formatNumber, formatWan } from '../utils/format'
 import {
   calculateBondDerivedData,
@@ -438,6 +439,7 @@ onMounted(() => {
         >
           {{ updating ? '更新中...' : '更新價格' }}
         </button>
+        <QuickUpdate :username="currentUsername" @updated="loadData" />
         <span class="version">v{{ appVersion }}</span>
       </div>
     </div>

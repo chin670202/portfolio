@@ -24,7 +24,27 @@
       "Bash(timeout:*)",
       "Bash(git pull:*)",
       "Bash(git stash:*)",
-      "Bash(powershell -Command \"Write-Host $env:USERPROFILE\\\\.vscode\\\\extensions\")"
+      "Bash(powershell -Command \"Write-Host $env:USERPROFILE\\\\.vscode\\\\extensions\")",
+      "Bash(powershell -Command \"[Environment]::GetFolderPath\\(''UserProfile''\\) + ''\\\\.vscode\\\\extensions''\")",
+      "Bash(tree:*)",
+      "Bash(npm start)",
+      "Bash(winget install:*)",
+      "Bash(cloudflared tunnel:*)",
+      "Bash(where:*)",
+      "Bash(dir \"C:\\\\Program Files\\\\cloudflared\")",
+      "Bash(dir \"C:\\\\Program Files \\(x86\\)\\\\Cloudflare\")",
+      "Bash(powershell -Command:*)",
+      "Bash(cmd /c \"dir /s /b C:\\\\cloudflared.exe 2>nul\")",
+      "Bash(cmd /c \"dir /s /b \"\"C:\\\\Program Files\\\\cloudflared.exe\"\" 2>nul\")",
+      "Bash(cmd /c \"\"\"C:\\\\Program Files \\(x86\\)\\\\cloudflared\\\\cloudflared.exe\"\" --version\")",
+      "Bash(cmd /c \"\"\"C:\\\\Program Files\\\\cloudflared\\\\cloudflared.exe\"\" --version\")",
+      "Bash(cmd /c \"cloudflared tunnel --url http://localhost:3001\")",
+      "Bash(ssh:*)",
+      "Bash(cmd /c \"for /f \"\"tokens=5\"\" %a in \\(''netstat -aon ^| findstr :3001''\\) do taskkill /F /PID %a\")",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(cmd /c \"taskkill /F /PID 37800\")",
+      "Bash(claude --version:*)"
     ]
   }
 }
