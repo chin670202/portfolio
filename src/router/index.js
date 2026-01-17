@@ -13,7 +13,7 @@ const routes = [
   },
   {
     path: '/app',
-    redirect: '/chin'
+    redirect: '/demo'
   },
   {
     path: '/:username',

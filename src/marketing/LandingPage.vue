@@ -136,8 +136,8 @@
     <!-- Demo Section -->
     <section class="demo" id="demo">
       <h2>立即體驗</h2>
-      <p class="demo-description">點擊下方按鈕，查看示範帳戶的投資組合</p>
-      <router-link to="/chin" class="btn-demo">
+      <p class="demo-description">點擊下方按鈕，查看王小明的示範投資組合</p>
+      <router-link to="/demo" class="btn-demo">
         查看示範 Demo
       </router-link>
     </section>
@@ -251,7 +251,7 @@
     <section class="cta">
       <h2>開始管理您的投資組合</h2>
       <p>免費試用，無需信用卡</p>
-      <router-link to="/chin" class="btn-cta">
+      <router-link to="/demo" class="btn-cta">
         立即開始
       </router-link>
     </section>
