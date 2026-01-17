@@ -3,8 +3,14 @@
  * 負責抓取與分析股票/資產相關新聞
  */
 
+import { analyzeSentiment, analyzeBatch, initEngine, setEngine, getStatus } from './sentiment/index.js'
+
 // CORS Proxy 設定
 const CORS_PROXY = 'https://corsproxy.io/?'
+
+// 情緒分析設定
+let sentimentEnabled = true
+let sentimentInitialized = false
 
 // 共用 Headers
 const DEFAULT_HEADERS = {
@@ -74,6 +80,54 @@ const NEGATIVE_KEYWORDS_EN = [
 const NEGATIVE_KEYWORDS = [...NEGATIVE_KEYWORDS_ZH, ...NEGATIVE_KEYWORDS_EN]
 
 // ============================================================
+// 情緒分析設定
+// ============================================================
+
+/**
+ * 啟用/停用 AI 情緒分析
+ * @param {boolean} enabled - 是否啟用
+ */
+export function enableSentimentAnalysis(enabled) {
+  sentimentEnabled = enabled
+}
+
+/**
+ * 設定情緒分析引擎
+ * @param {'transformers'|'keywords'|'api'} engine - 引擎名稱
+ */
+export function setSentimentEngine(engine) {
+  setEngine(engine)
+  sentimentInitialized = false // 重置初始化狀態
+}
+
+/**
+ * 取得情緒分析狀態
+ * @returns {Promise<Object>}
+ */
+export async function getSentimentStatus() {
+  return {
+    enabled: sentimentEnabled,
+    initialized: sentimentInitialized,
+    ...(await getStatus())
+  }
+}
+
+/**
+ * 初始化情緒分析引擎（預載模型）
+ * @returns {Promise<void>}
+ */
+export async function initSentimentEngine() {
+  if (!sentimentEnabled || sentimentInitialized) return
+  try {
+    await initEngine()
+    sentimentInitialized = true
+    console.log('[News] 情緒分析引擎初始化完成')
+  } catch (error) {
+    console.error('[News] 情緒分析引擎初始化失敗:', error)
+  }
+}
+
+// ============================================================
 // 新聞來源設定
 // ============================================================
 
@@ -97,10 +151,11 @@ export const NEWS_SOURCES = {
  * @param {Object} options - 選項
  * @param {number} options.days - 抓取幾天內的新聞（預設 7）
  * @param {number} options.limit - 最多抓取幾則（預設 10）
- * @returns {Promise<Array>} 新聞列表 [{title, link, pubDate, source, isNegative, negativeKeywords}]
+ * @param {boolean} options.useSentiment - 是否使用 AI 情緒分析（預設 true）
+ * @returns {Promise<Array>} 新聞列表 [{title, link, pubDate, source, isNegative, sentiment, ...}]
  */
 export async function fetchGoogleNews(query, options = {}) {
-  const { days = 7, limit = 10 } = options
+  const { days = 7, limit = 10, useSentiment = true } = options
   // 使用全域語系設定
   const lang = currentLocale
 
@@ -142,7 +197,7 @@ export async function fetchGoogleNews(query, options = {}) {
       // 只取指定天數內的新聞
       if (pubDate < cutoffDate) return
 
-      // 分析負面關鍵字
+      // 分析負面關鍵字（保留舊方法作為備用）
       const analysis = analyzeNewsTitle(title)
 
       news.push({
@@ -152,9 +207,34 @@ export async function fetchGoogleNews(query, options = {}) {
         pubDateRaw: pubDate,
         source: NEWS_SOURCES.GOOGLE_NEWS,
         isNegative: analysis.isNegative,
-        negativeKeywords: analysis.matchedKeywords
+        negativeKeywords: analysis.matchedKeywords,
+        // AI 情緒分析欄位（稍後填入）
+        sentiment: null,
+        sentimentConfidence: 0,
+        sentimentLabel: null
       })
     })
+
+    // 使用 AI 情緒分析
+    if (sentimentEnabled && useSentiment && news.length > 0) {
+      try {
+        const titles = news.map(n => n.title)
+        const sentiments = await analyzeBatch(titles)
+
+        sentiments.forEach((result, i) => {
+          news[i].sentiment = result.sentiment
+          news[i].sentimentConfidence = result.confidence
+          news[i].sentimentLabel = result.label
+
+          // 如果 AI 判斷為 bearish，也標記為負面
+          if (result.sentiment === 'bearish' && result.confidence > 0.6) {
+            news[i].isNegative = true
+          }
+        })
+      } catch (error) {
+        console.warn('[News] AI 情緒分析失敗，使用關鍵字分析:', error)
+      }
+    }
 
     return news
   } catch (e) {

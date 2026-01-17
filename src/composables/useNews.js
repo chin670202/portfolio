@@ -7,13 +7,18 @@ import { ref, computed } from 'vue'
 import {
   getNewsWithCache,
   clearNewsCache,
-  calculateRiskScore
+  calculateRiskScore,
+  initSentimentEngine,
+  getSentimentStatus
 } from '../services/newsService'
 
 /**
  * 新聞管理 Composable
  * @returns {Object} 新聞相關狀態和方法
  */
+// 新聞篩選模式
+const NEWS_FILTER_KEY = 'newsFilterMode'
+
 export function useNews() {
   // 狀態
   const newsData = ref({}) // { symbol: { news, riskScore, hasNegative, hasNews, fetchedAt } }
@@ -23,17 +28,35 @@ export function useNews() {
   const currentTitle = ref('')
   const modalLoading = ref(false)
 
+  // 新聞篩選模式: 'all' | 'bullish' | 'bearish'
+  const filterMode = ref(localStorage.getItem(NEWS_FILTER_KEY) || 'all')
+
   // ============================================================
   // 計算屬性
   // ============================================================
 
   /**
-   * 當前顯示的新聞列表
+   * 當前顯示的新聞列表（根據篩選模式過濾）
    */
   const currentNews = computed(() => {
     const data = newsData.value[currentSymbol.value]
-    return data?.news || []
+    if (!data?.news) return []
+    return filterNewsList(data.news)
   })
+
+  /**
+   * 根據篩選模式過濾新聞列表
+   */
+  function filterNewsList(newsList) {
+    if (!newsList || filterMode.value === 'all') return newsList
+    if (filterMode.value === 'bullish') {
+      return newsList.filter(n => n.sentiment === 'bullish')
+    }
+    if (filterMode.value === 'bearish') {
+      return newsList.filter(n => n.sentiment === 'bearish' || n.isNegative)
+    }
+    return newsList
+  }
 
   /**
    * 當前股票的風險分數
@@ -57,12 +80,43 @@ export function useNews() {
   }
 
   /**
-   * 檢查是否有負面新聞
+   * 檢查是否有負面新聞（看跌）
    * @param {string} symbol - 股票代號
    * @returns {boolean}
    */
   function hasNegativeNews(symbol) {
-    return newsData.value[symbol]?.hasNegative || false
+    const data = newsData.value[symbol]
+    if (!data?.news) return false
+    // 檢查是否有 bearish 情緒或舊版的 isNegative
+    return data.news.some(n => n.sentiment === 'bearish' || n.isNegative)
+  }
+
+  /**
+   * 檢查是否有正面新聞（看漲）
+   * @param {string} symbol - 股票代號
+   * @returns {boolean}
+   */
+  function hasBullishNews(symbol) {
+    const data = newsData.value[symbol]
+    if (!data?.news) return false
+    return data.news.some(n => n.sentiment === 'bullish')
+  }
+
+  /**
+   * 取得新聞情緒統計
+   * @param {string} symbol - 股票代號
+   * @returns {Object} { bullish, bearish, neutral }
+   */
+  function getSentimentStats(symbol) {
+    const data = newsData.value[symbol]
+    if (!data?.news) return { bullish: 0, bearish: 0, neutral: 0 }
+
+    return data.news.reduce((acc, n) => {
+      if (n.sentiment === 'bullish') acc.bullish++
+      else if (n.sentiment === 'bearish') acc.bearish++
+      else acc.neutral++
+      return acc
+    }, { bullish: 0, bearish: 0, neutral: 0 })
   }
 
   /**
@@ -84,12 +138,40 @@ export function useNews() {
   }
 
   /**
-   * 取得股票的新聞數量
+   * 取得股票的新聞數量（根據篩選模式）
    * @param {string} symbol - 股票代號
    * @returns {number}
    */
   function getNewsCount(symbol) {
+    const data = newsData.value[symbol]
+    if (!data?.news) return 0
+    return filterNewsList(data.news).length
+  }
+
+  /**
+   * 取得股票的原始新聞數量（不受篩選影響）
+   * @param {string} symbol - 股票代號
+   * @returns {number}
+   */
+  function getRawNewsCount(symbol) {
     return newsData.value[symbol]?.news?.length || 0
+  }
+
+  /**
+   * 設定篩選模式
+   * @param {'all'|'bullish'|'bearish'} mode - 篩選模式
+   */
+  function setFilterMode(mode) {
+    filterMode.value = mode
+    localStorage.setItem(NEWS_FILTER_KEY, mode)
+  }
+
+  /**
+   * 取得當前篩選模式
+   * @returns {string}
+   */
+  function getFilterMode() {
+    return filterMode.value
   }
 
   /**
@@ -199,6 +281,24 @@ export function useNews() {
     return { total, withNews, withNegative, avgRiskScore }
   }
 
+  /**
+   * 初始化情緒分析引擎
+   */
+  async function initSentiment() {
+    try {
+      await initSentimentEngine()
+    } catch (error) {
+      console.warn('[useNews] 情緒分析引擎初始化失敗:', error)
+    }
+  }
+
+  /**
+   * 取得情緒分析狀態
+   */
+  async function getSentimentInfo() {
+    return getSentimentStatus()
+  }
+
   return {
     // 狀態
     newsData,
@@ -207,6 +307,7 @@ export function useNews() {
     currentSymbol,
     currentTitle,
     modalLoading,
+    filterMode,
 
     // 計算屬性
     currentNews,
@@ -215,6 +316,11 @@ export function useNews() {
     // 方法
     hasNews,
     hasNegativeNews,
+    hasBullishNews,
+    getSentimentStats,
+    setFilterMode,
+    getFilterMode,
+    getRawNewsCount,
     getRiskScore,
     getNews,
     getNewsCount,
@@ -224,6 +330,8 @@ export function useNews() {
     openModal,
     closeModal,
     refresh,
-    getSummary
+    getSummary,
+    initSentiment,
+    getSentimentInfo
   }
 }

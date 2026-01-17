@@ -51,7 +51,9 @@ const {
   hasNegativeNews,
   getNewsCount,
   isLoading: isNewsLoading,
-  fetchBatchNews
+  fetchBatchNews,
+  filterMode: newsFilterMode,
+  setFilterMode: setNewsFilterMode
 } = useNews()
 
 // 美股代號列表（與 OtherAssetsTable 一致）
@@ -410,6 +412,22 @@ onMounted(() => {
     <div class="header">
       <h1>{{ currentUsername }} 的投資現況</h1>
       <div class="header-actions">
+        <!-- 新聞篩選切換 -->
+        <div class="news-filter">
+          <span class="filter-label">新聞:</span>
+          <button
+            :class="['filter-btn', { active: newsFilterMode === 'all' }]"
+            @click="setNewsFilterMode('all')"
+          >全部</button>
+          <button
+            :class="['filter-btn', 'bullish', { active: newsFilterMode === 'bullish' }]"
+            @click="setNewsFilterMode('bullish')"
+          >看漲</button>
+          <button
+            :class="['filter-btn', 'bearish', { active: newsFilterMode === 'bearish' }]"
+            @click="setNewsFilterMode('bearish')"
+          >看跌</button>
+        </div>
         <span v-if="lastUpdateTime" class="last-update">
           最後更新: {{ lastUpdateTime }}
         </span>

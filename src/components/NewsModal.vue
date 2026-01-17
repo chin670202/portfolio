@@ -16,12 +16,21 @@
           最近 7 天內無相關新聞
         </div>
         <ul v-else class="news-list">
-          <li v-for="(item, index) in news" :key="index" :class="{ 'negative-news': item.isNegative }">
-            <a :href="item.link" target="_blank" rel="noopener noreferrer">
-              <span v-if="item.isNegative" class="warning-badge">!</span>
-              {{ item.title }}
-            </a>
-            <span class="news-date">{{ item.pubDate }}</span>
+          <li v-for="(item, index) in news" :key="index" :class="getNewsClass(item)">
+            <div class="news-title-row">
+              <span v-if="item.sentiment" :class="['sentiment-badge', `sentiment-${item.sentiment}`]">
+                {{ item.sentimentLabel }}
+              </span>
+              <a :href="item.link" target="_blank" rel="noopener noreferrer">
+                {{ item.title }}
+              </a>
+            </div>
+            <div class="news-meta">
+              <span class="news-date">{{ item.pubDate }}</span>
+              <span v-if="item.sentimentConfidence > 0" class="confidence">
+                (信心度: {{ Math.round(item.sentimentConfidence * 100) }}%)
+              </span>
+            </div>
           </li>
         </ul>
       </div>
@@ -66,6 +75,17 @@ function handleWheel(event) {
   } else if (event.deltaY < 0) {
     emit('navigate', -1) // 上一個
   }
+}
+
+// 取得新聞項目的 CSS 類別
+function getNewsClass(item) {
+  const classes = []
+  if (item.sentiment === 'bullish') {
+    classes.push('bullish-news')
+  } else if (item.sentiment === 'bearish' || item.isNegative) {
+    classes.push('bearish-news')
+  }
+  return classes
 }
 </script>
 
@@ -176,12 +196,72 @@ function handleWheel(event) {
   text-decoration: underline;
 }
 
+.news-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.news-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .news-date {
   font-size: 12px;
   color: #999;
 }
 
-.negative-news {
+.confidence {
+  font-size: 11px;
+  color: #aaa;
+}
+
+/* 情緒標籤 */
+.sentiment-badge {
+  flex-shrink: 0;
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.sentiment-bullish {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+}
+
+.sentiment-bearish {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+}
+
+.sentiment-neutral {
+  background: #f5f5f5;
+  color: #757575;
+  border: 1px solid #e0e0e0;
+}
+
+/* 看漲新聞樣式 */
+.bullish-news {
+  background: #f1f8e9;
+  margin: 0 -20px;
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+  border-left: 3px solid #8bc34a;
+}
+
+.bullish-news a {
+  color: #33691e;
+}
+
+/* 看跌新聞樣式 */
+.bearish-news {
   background: #fff5f5;
   margin: 0 -20px;
   padding-left: 20px !important;
@@ -189,21 +269,7 @@ function handleWheel(event) {
   border-left: 3px solid #ff6b6b;
 }
 
-.negative-news a {
+.bearish-news a {
   color: #c62828;
-}
-
-.warning-badge {
-  display: inline-block;
-  background: #ff6b6b;
-  color: white;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  text-align: center;
-  font-size: 12px;
-  font-weight: bold;
-  line-height: 18px;
-  margin-right: 6px;
 }
 </style>

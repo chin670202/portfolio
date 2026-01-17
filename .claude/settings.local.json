@@ -20,7 +20,11 @@
       "Bash(git commit:*)",
       "Bash(git fetch:*)",
       "Bash(node compare-data.js:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(timeout:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(powershell -Command \"Write-Host $env:USERPROFILE\\\\.vscode\\\\extensions\")"
     ]
   }
 }

@@ -371,3 +371,50 @@ th {
   visibility: visible;
   opacity: 1;
 }
+
+/* 新聞篩選按鈕組 */
+.news-filter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.news-filter .filter-label {
+  font-size: 14px;
+  color: #666;
+  margin-right: 4px;
+}
+
+.news-filter .filter-btn {
+  padding: 4px 10px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  background: white;
+  color: #666;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.news-filter .filter-btn:hover {
+  background: #e8e8e8;
+}
+
+.news-filter .filter-btn.active {
+  background: #4472c4;
+  color: white;
+  border-color: #4472c4;
+}
+
+.news-filter .filter-btn.bullish.active {
+  background: #2e7d32;
+  border-color: #2e7d32;
+}
+
+.news-filter .filter-btn.bearish.active {
+  background: #c62828;
+  border-color: #c62828;
+}
