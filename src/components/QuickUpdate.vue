@@ -113,6 +113,10 @@ function formatSummary(text) {
 function addProgressStep(step, status = 'active') {
   const existingIndex = progressSteps.value.findIndex(s => s.step === step)
   if (existingIndex >= 0) {
+    // 如果步驟已存在且狀態是 done，不要改回 active（保持打勾狀態）
+    if (progressSteps.value[existingIndex].status === 'done' && status === 'active') {
+      return
+    }
     progressSteps.value[existingIndex].status = status
   } else {
     // 將之前的 active 改為 done
@@ -245,11 +249,13 @@ async function submitClarification() {
   // 組合原始輸入與補充資訊
   const combinedContent = `${originalInput.value}\n\n補充資訊：${clarificationInput.value.trim()}`
 
-  // 重置狀態
+  // 重置確認問題狀態，但保留已完成的步驟
   clarificationQuestion.value = ''
   clarificationInput.value = ''
   processing.value = true
-  progressStatus.value = '正在重新處理...'
+  progressStatus.value = ''
+  // 移除「需要確認」步驟，加入「重新分析」
+  progressSteps.value = progressSteps.value.filter(s => s.step !== '需要確認')
   addProgressStep('重新分析')
 
   try {
@@ -409,7 +415,7 @@ async function submitClarification() {
             </div>
 
             <!-- 處理中狀態 -->
-            <div v-if="processing" class="processing-status">
+            <div v-if="processing && progressStatus" class="processing-status">
               {{ progressStatus }}
             </div>
 
@@ -798,7 +804,7 @@ async function submitClarification() {
 
 .clarification-question p {
   margin: 0;
-  color: #ffc107;
+  color: #fff;
   line-height: 1.5;
 }
 

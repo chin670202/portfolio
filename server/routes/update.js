@@ -152,12 +152,10 @@ router.post('/stream', async (req, res) => {
     console.log(`\n[${new Date().toISOString()}] 收到 SSE 更新請求`);
     console.log(`用戶: ${user}, 類型: ${type}`);
 
-    sendProgress('讀取資料', '正在讀取現有投資資料...');
-
     // 讀取現有 JSON
     const currentData = JSON.parse(await fs.readFile(jsonPath, 'utf-8'));
 
-    sendProgress('AI 分析中', '正在使用 Claude 分析您的指令...');
+    sendProgress('分析中', '');
 
     // 呼叫 Claude CLI 分析
     console.log('\n呼叫 Claude CLI 分析中...');
@@ -190,10 +188,6 @@ router.post('/stream', async (req, res) => {
       const duration = Date.now() - startTime;
       return sendError('無法識別有效的交易指令，請確認輸入內容包含買入/賣出操作');
     }
-
-    sendProgress('更新檔案', '正在更新投資組合檔案...');
-
-    sendProgress('推送 GitHub', '正在同步到 GitHub...');
 
     // 推送到 GitHub
     console.log('\n推送到 GitHub...');
