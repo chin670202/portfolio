@@ -11,6 +11,9 @@ const props = defineProps({
 
 const emit = defineEmits(['updated', 'dashboard-updated'])
 
+// 頁籤狀態：'position' = 部位更新, 'dashboard' = 儀表板調整
+const activeTab = ref('position')
+
 // 輸入視窗狀態
 const showInputModal = ref(false)
 const updateContent = ref('')
@@ -198,7 +201,7 @@ async function submitUpdate() {
       content = imageToSend
     }
 
-    // 使用 SSE 端點
+    // 使用 SSE 端點，根據頁籤決定 mode
     const response = await fetch(`${serverUrl}/update/stream`, {
       method: 'POST',
       headers: {
@@ -208,7 +211,8 @@ async function submitUpdate() {
       body: JSON.stringify({
         user: props.username,
         type,
-        content
+        content,
+        mode: activeTab.value  // 'position' 或 'dashboard'
       })
     })
 
@@ -385,38 +389,82 @@ async function submitClarification() {
           </div>
 
           <div class="modal-body">
-            <!-- 輸入區 -->
-            <div class="input-section">
-              <label>輸入指令：</label>
-              <textarea
-                v-model="updateContent"
-                placeholder="例如：買入 NVDA 10股 @140&#10;或：把債券移到最上面"
-                rows="4"
-              ></textarea>
+            <!-- 頁籤 -->
+            <div class="tabs">
+              <button
+                class="tab-btn"
+                :class="{ active: activeTab === 'position' }"
+                @click="activeTab = 'position'"
+              >
+                <span class="tab-icon">📊</span>
+                部位更新
+              </button>
+              <button
+                class="tab-btn"
+                :class="{ active: activeTab === 'dashboard' }"
+                @click="activeTab = 'dashboard'"
+              >
+                <span class="tab-icon">🎨</span>
+                儀表板調整
+              </button>
             </div>
 
-            <div class="divider">
-              <span>或</span>
-            </div>
-
-            <div class="image-section">
-              <label>上傳截圖：</label>
-              <div v-if="imagePreview" class="image-preview">
-                <img :src="imagePreview" alt="預覽" />
-                <button class="remove-image" @click="removeImage">
-                  移除
-                </button>
+            <!-- 部位更新頁籤內容 -->
+            <div v-if="activeTab === 'position'" class="tab-content">
+              <div class="input-section">
+                <label>輸入交易指令：</label>
+                <textarea
+                  v-model="updateContent"
+                  placeholder="例如：&#10;買入 NVDA 10股 @140&#10;賣出 00725B 5張&#10;加碼 台積電 2張 @1050"
+                  rows="4"
+                ></textarea>
               </div>
-              <input
-                v-else
-                type="file"
-                accept="image/*"
-                @change="handleImageSelect"
-              />
+
+              <div class="divider">
+                <span>或</span>
+              </div>
+
+              <div class="image-section">
+                <label>上傳交易截圖：</label>
+                <div v-if="imagePreview" class="image-preview">
+                  <img :src="imagePreview" alt="預覽" />
+                  <button class="remove-image" @click="removeImage">
+                    移除
+                  </button>
+                </div>
+                <input
+                  v-else
+                  type="file"
+                  accept="image/*"
+                  @change="handleImageSelect"
+                />
+              </div>
+
+              <div class="input-hint">
+                支援買入、賣出、加碼、出清等交易指令
+              </div>
             </div>
 
-            <div class="input-hint">
-              支援投資部位更新、儀表板調整等指令
+            <!-- 儀表板調整頁籤內容 -->
+            <div v-if="activeTab === 'dashboard'" class="tab-content">
+              <div class="input-section">
+                <label>輸入調整指令：</label>
+                <textarea
+                  v-model="updateContent"
+                  placeholder="例如：&#10;把債券移到最上面&#10;隱藏貸款區塊&#10;把新聞欄位移到最左邊&#10;新增一個顯示持倉數量的卡片"
+                  rows="4"
+                ></textarea>
+              </div>
+
+              <div class="input-hint dashboard-hint">
+                <div class="hint-title">可調整項目：</div>
+                <ul>
+                  <li>區塊順序（移到最上面、放在 ETF 後面）</li>
+                  <li>顯示/隱藏區塊或欄位</li>
+                  <li>欄位順序調整</li>
+                  <li>新增自訂卡片</li>
+                </ul>
+              </div>
             </div>
           </div>
 
@@ -763,6 +811,56 @@ async function submitClarification() {
   font-size: 12px;
 }
 
+/* 頁籤樣式 */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #888;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  color: #ccc;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  font-weight: 500;
+}
+
+.tab-icon {
+  font-size: 16px;
+}
+
+.tab-content {
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .input-hint {
   margin-top: 16px;
   padding: 10px 12px;
@@ -772,6 +870,28 @@ async function submitClarification() {
   color: #ffc107;
   font-size: 12px;
   text-align: center;
+}
+
+.input-hint.dashboard-hint {
+  text-align: left;
+  background: rgba(102, 126, 234, 0.1);
+  border-color: rgba(102, 126, 234, 0.3);
+  color: #a8b4f0;
+}
+
+.dashboard-hint .hint-title {
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #667eea;
+}
+
+.dashboard-hint ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.dashboard-hint li {
+  margin: 4px 0;
 }
 
 /* 進度步驟 */

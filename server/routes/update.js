@@ -221,12 +221,15 @@ router.post('/stream', async (req, res) => {
   };
 
   try {
-    const { user, type, content } = req.body;
+    const { user, type, content, mode } = req.body;
 
     // 驗證參數
     if (!user || !type || !content) {
       return sendError('缺少必要參數: user, type, content');
     }
+
+    // mode: 'position' = 部位更新, 'dashboard' = 儀表板調整
+    const updateMode = mode || 'position';
 
     sendProgress('驗證用戶', '正在驗證用戶資料...');
 
@@ -243,8 +246,17 @@ router.post('/stream', async (req, res) => {
     }
 
     console.log(`\n[${new Date().toISOString()}] 收到 SSE 更新請求`);
-    console.log(`用戶: ${user}, 類型: ${type}`);
+    console.log(`用戶: ${user}, 類型: ${type}, 模式: ${updateMode}`);
 
+    // 根據 mode 直接分流
+    if (updateMode === 'dashboard') {
+      // === 儀表板調整模式 ===
+      console.log('\n執行儀表板調整流程...');
+      await handleDashboardUpdate(user, content, sendProgress, sendComplete, sendError, startTime, PROJECT_ROOT);
+      return;
+    }
+
+    // === 部位更新模式 ===
     // 讀取現有 JSON
     const currentData = JSON.parse(await fs.readFile(jsonPath, 'utf-8'));
 
@@ -267,18 +279,6 @@ router.post('/stream', async (req, res) => {
         originalInput: content
       })}\n\n`);
       res.end();
-      return;
-    }
-
-    // 檢查是否是儀表板調整（summary 包含「儀表板調整」）
-    if (analysis.summary && analysis.summary.includes('儀表板調整')) {
-      console.log('\n偵測到儀表板調整請求，切換到儀表板更新流程...');
-
-      // 取得儀表板調整指令描述
-      const dashboardInstruction = analysis.summary.replace(/^儀表板調整[：:]\s*/, '');
-
-      // 執行儀表板更新
-      await handleDashboardUpdate(user, dashboardInstruction, sendProgress, sendComplete, sendError, startTime, PROJECT_ROOT);
       return;
     }
 

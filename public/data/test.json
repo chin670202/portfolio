@@ -514,16 +514,35 @@
     {
       "uid": "overseas-bonds",
       "enabled": true,
-      "order": 2,
+      "order": 1,
       "options": {
         "showLoanDetails": true,
         "showDividendInfo": true
-      }
+      },
+      "columns": [
+        { "key": "news", "order": 0, "visible": true },
+        { "key": "companyName", "order": 1, "visible": true },
+        { "key": "symbol", "order": 2, "visible": true },
+        { "key": "buyPrice", "order": 3, "visible": true },
+        { "key": "units", "order": 4, "visible": true },
+        { "key": "latestPrice", "order": 5, "visible": true },
+        { "key": "profitPercent", "order": 6, "visible": true },
+        { "key": "twdAsset", "order": 7, "visible": true },
+        { "key": "ratio", "order": 8, "visible": true },
+        { "key": "couponRate", "order": 9, "visible": true },
+        { "key": "yield", "order": 10, "visible": true },
+        { "key": "annualInterest", "order": 11, "visible": true },
+        { "key": "paymentDate", "order": 12, "visible": true },
+        { "key": "daysToPayment", "order": 13, "visible": true },
+        { "key": "nextPayment", "order": 14, "visible": true },
+        { "key": "maturityDate", "order": 15, "visible": true },
+        { "key": "yearsToMaturity", "order": 16, "visible": true }
+      ]
     },
     {
       "uid": "stocks-etf",
       "enabled": true,
-      "order": 1,
+      "order": 2,
       "options": {
         "showLoanDetails": true,
         "showDividendInfo": true
