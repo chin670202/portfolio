@@ -514,7 +514,7 @@
     {
       "uid": "overseas-bonds",
       "enabled": true,
-      "order": 1,
+      "order": 2,
       "options": {
         "showLoanDetails": true,
         "showDividendInfo": true
@@ -523,7 +523,7 @@
     {
       "uid": "stocks-etf",
       "enabled": true,
-      "order": 2,
+      "order": 1,
       "options": {
         "showLoanDetails": true,
         "showDividendInfo": true
