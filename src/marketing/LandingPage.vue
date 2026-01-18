@@ -61,26 +61,42 @@
               <div class="table-row header">
                 <span>名稱</span>
                 <span>現價</span>
+                <span>台幣市值</span>
                 <span>報酬</span>
+                <span>殖利率</span>
                 <span>新聞</span>
               </div>
               <div class="table-row">
-                <span>渣打 6.296</span>
+                <span>渣打 6.296%</span>
                 <span>107.76</span>
+                <span>681萬</span>
                 <span class="positive">+7.76%</span>
+                <span>5.84%</span>
                 <span class="news bullish">看漲</span>
               </div>
               <div class="table-row">
                 <span>元大 00720B</span>
                 <span>34.15</span>
-                <span class="negative">-0.20%</span>
+                <span>300萬</span>
+                <span class="negative">-0.98%</span>
+                <span>5.16%</span>
                 <span class="news neutral">中立</span>
               </div>
               <div class="table-row">
                 <span>特斯拉 TSLA</span>
                 <span>426.50</span>
-                <span class="positive">+24.1%</span>
+                <span>216萬</span>
+                <span class="positive">+11.5%</span>
+                <span>-</span>
                 <span class="news bearish">看跌</span>
+              </div>
+              <div class="table-row">
+                <span>國泰 00878</span>
+                <span>23.85</span>
+                <span>23萬</span>
+                <span class="positive">+10.3%</span>
+                <span>6.71%</span>
+                <span class="news bullish">看漲</span>
               </div>
             </div>
           </div>
@@ -788,68 +804,71 @@ section {
 
 /* Dashboard Mockup */
 .dashboard-mockup {
-  background: #0f172a;
+  background: #f8fafc;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e2e8f0;
 }
 
 .mockup-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 20px;
-  background: var(--gray-800);
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
 }
 
 .mockup-dots {
   display: flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .mockup-dots span {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: var(--gray-600);
 }
 
-.mockup-dots span:nth-child(1) { background: #ef4444; }
-.mockup-dots span:nth-child(2) { background: #f59e0b; }
-.mockup-dots span:nth-child(3) { background: #22c55e; }
+.mockup-dots span:nth-child(1) { background: #fca5a5; }
+.mockup-dots span:nth-child(2) { background: #fcd34d; }
+.mockup-dots span:nth-child(3) { background: #86efac; }
 
 .mockup-title {
-  color: var(--gray-400);
+  color: white;
   font-size: 13px;
+  font-weight: 500;
 }
 
 .mockup-body {
-  padding: 24px;
+  padding: 20px;
+  background: white;
 }
 
 .mockup-summary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .summary-card {
-  padding: 16px;
-  border-radius: 10px;
+  padding: 16px 12px;
+  border-radius: 12px;
   text-align: center;
 }
 
 .summary-card .label {
   display: block;
-  font-size: 12px;
-  color: rgba(255,255,255,0.7);
+  font-size: 11px;
+  color: rgba(255,255,255,0.85);
   margin-bottom: 4px;
+  font-weight: 500;
 }
 
 .summary-card .value {
   display: block;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   color: white;
 }
@@ -859,18 +878,20 @@ section {
 .summary-card.orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
 
 .mockup-table {
-  background: var(--gray-800);
-  border-radius: 10px;
+  background: white;
+  border-radius: 12px;
   overflow: hidden;
+  border: 1px solid #e2e8f0;
 }
 
 .table-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  padding: 12px 16px;
-  font-size: 13px;
-  color: var(--gray-400);
-  border-bottom: 1px solid var(--gray-700);
+  grid-template-columns: 1.8fr 1fr 1fr 1fr 1fr 0.8fr;
+  padding: 10px 12px;
+  font-size: 11px;
+  color: #334155;
+  border-bottom: 1px solid #f1f5f9;
+  align-items: center;
 }
 
 .table-row:last-child {
@@ -878,24 +899,24 @@ section {
 }
 
 .table-row.header {
-  background: rgba(255,255,255,0.05);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   font-weight: 600;
-  color: var(--gray-400);
+  color: white;
 }
 
-.table-row .positive { color: #22c55e; }
-.table-row .negative { color: #ef4444; }
+.table-row .positive { color: #16a34a; font-weight: 600; }
+.table-row .negative { color: #dc2626; font-weight: 600; }
 
 .table-row .news {
   padding: 2px 8px;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
 }
 
-.news.bullish { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
-.news.bearish { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
-.news.neutral { background: rgba(148, 163, 184, 0.2); color: #94a3b8; }
+.news.bullish { background: #dcfce7; color: #16a34a; }
+.news.bearish { background: #fee2e2; color: #dc2626; }
+.news.neutral { background: #f1f5f9; color: #64748b; }
 
 /* Problems Section */
 .problems {

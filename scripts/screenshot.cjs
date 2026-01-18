@@ -31,10 +31,11 @@ async function takeScreenshot() {
       fullPage = true;
     } else if (arg === '--mobile') {
       mobile = true;
-    } else if (arg.startsWith('/')) {
-      urlPath = arg;
     } else if (arg.endsWith('.png')) {
       outputName = arg;
+    } else if (arg.startsWith('/') || arg.startsWith('path:')) {
+      // 支援 path:demo 格式避免 Git Bash 路徑轉換問題
+      urlPath = arg.startsWith('path:') ? '/' + arg.slice(5) : arg;
     }
   }
 
@@ -53,7 +54,8 @@ async function takeScreenshot() {
     : { width: 1440, height: 900 };
 
   console.log(`📸 截圖設定：`);
-  console.log(`   URL: ${url}`);
+  console.log(`   URL Path: ${urlPath}`);
+  console.log(`   Full URL: ${url}`);
   console.log(`   輸出: ${outputPath}`);
   console.log(`   完整頁面: ${fullPage}`);
   console.log(`   手機模式: ${mobile}`);
