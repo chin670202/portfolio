@@ -25,11 +25,17 @@ export function getColorClass(value) {
   return ''
 }
 
-// 格式化為萬元單位 (x,xxx萬)
+// 格式化為萬元單位 (x,xxx萬)，10萬以下顯示完整數字
 export function formatWan(num) {
   if (num === null || num === undefined) return '-'
   if (typeof num === 'string') return num
   if (typeof num !== 'number' || isNaN(num)) return '-'
+
+  // 10萬以下顯示完整數字
+  if (Math.abs(num) < 100000) {
+    return Math.round(num).toLocaleString('zh-TW')
+  }
+
   const wan = Math.round(num / 10000)
   return wan.toLocaleString('zh-TW') + '萬'
 }

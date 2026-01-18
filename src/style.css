@@ -56,40 +56,45 @@ h1 {
   border-radius: 4px;
 }
 
-.update-btn {
-  background: #4472c4;
+.module-gallery-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  padding: 12px 24px;
-  border-radius: 4px;
+  padding: 10px 18px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 20px;
-  font-weight: bold;
-  transition: background 0.2s;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
-.update-btn:hover:not(:disabled) {
-  background: #365a9e;
+.module-gallery-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
 }
 
-.update-btn:disabled {
-  background: #999;
-  cursor: not-allowed;
+.module-gallery-btn:active {
+  transform: translateY(0);
 }
 
-.module-edit-btn {
-  background: transparent;
-  border: 1px solid #ccc;
-  padding: 8px 12px;
-  border-radius: 4px;
+.settings-btn {
+  width: 42px;
+  height: 42px;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 50%;
   cursor: pointer;
   font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s;
 }
 
-.module-edit-btn:hover {
-  background: #f0f0f0;
-  border-color: #999;
+.settings-btn:hover {
+  background: #e0e0e0;
+  transform: rotate(30deg);
 }
 
 /* 頂部摘要列 */

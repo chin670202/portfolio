@@ -5,6 +5,18 @@
 
 // 內建模組定義
 export const builtInModules = {
+  'summary-cards': {
+    uid: 'summary-cards',
+    name: '摘要卡片',
+    description: '顯示關鍵財務指標：總資產、淨值、年收益等',
+    component: 'SummaryCardsModule',
+    icon: '📋',
+    defaultEnabled: true,
+    defaultOrder: 0,
+    requiredData: ['匯率'],
+    options: {}
+    // 欄位配置由 columnDefinitions.js 管理
+  },
   'overseas-bonds': {
     uid: 'overseas-bonds',
     name: '海外債券',
@@ -105,6 +117,38 @@ export function getDefaultModuleConfig() {
       uid: m.uid,
       enabled: true,
       order: m.defaultOrder,
-      options: { ...m.options }
+      options: { ...m.options },
+      columns: m.columns ? [...m.columns] : undefined
     }))
+}
+
+/**
+ * 合併用戶配置與內建模組（自動加入新模組）
+ * @param {Array} userConfig - 用戶現有的模組配置
+ * @returns {Array} 合併後的配置
+ */
+export function mergeModuleConfig(userConfig) {
+  if (!userConfig || !Array.isArray(userConfig)) {
+    return getDefaultModuleConfig()
+  }
+
+  const existingUids = new Set(userConfig.map(m => m.uid))
+  const mergedConfig = [...userConfig]
+
+  // 檢查所有內建模組，若用戶配置中沒有則加入
+  for (const module of getAllModules()) {
+    if (!existingUids.has(module.uid) && module.defaultEnabled) {
+      // 新模組插入到對應的預設位置
+      mergedConfig.push({
+        uid: module.uid,
+        enabled: true,
+        order: module.defaultOrder,
+        options: { ...module.options },
+        columns: module.columns ? [...module.columns] : undefined
+      })
+    }
+  }
+
+  // 按 order 排序
+  return mergedConfig.sort((a, b) => a.order - b.order)
 }

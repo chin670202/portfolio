@@ -9,6 +9,7 @@ const cors = require('cors');
 const updateRouter = require('./routes/update');
 const backupRouter = require('./routes/backup');
 const configRouter = require('./routes/config');
+const moduleStatsRouter = require('./routes/moduleStats');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -60,6 +61,7 @@ const apiKeyAuth = (req, res, next) => {
 app.use('/update', apiKeyAuth, updateRouter);
 app.use('/backup', apiKeyAuth, backupRouter);
 app.use('/config', apiKeyAuth, configRouter);
+app.use('/modules', apiKeyAuth, moduleStatsRouter);
 
 // 健康檢查
 app.get('/health', (req, res) => {
@@ -107,6 +109,8 @@ API 端點:
   POST /backup/:user/restore - 還原備份
   GET  /config/:user/modules - 取得模組配置
   PUT  /config/:user/modules - 更新模組配置
+  GET  /modules/stats - 取得模組使用統計
+  GET  /modules/all - 取得所有可用模組
   GET  /health - 健康檢查
   `);
 });

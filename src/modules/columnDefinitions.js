@@ -3,6 +3,17 @@
  * 用於欄位配置編輯器和表格動態渲染
  */
 
+// 摘要卡片欄位定義（預設全部顯示）
+export const summaryCardsColumns = [
+  { key: 'usdRate', label: '美元匯率', dataKey: '美元匯率', defaultVisible: true, defaultOrder: 1 },
+  { key: 'totalAssets', label: '台幣資產', dataKey: '台幣資產', defaultVisible: true, defaultOrder: 2 },
+  { key: 'totalLiability', label: '台幣負債', dataKey: '貸款餘額', defaultVisible: true, defaultOrder: 3 },
+  { key: 'netWorth', label: '台幣淨值', dataKey: null, defaultVisible: true, defaultOrder: 4, isCalculated: true },
+  { key: 'annualInterestIncome', label: '每年收息', dataKey: '每年利息', defaultVisible: true, defaultOrder: 5 },
+  { key: 'annualInterestExpense', label: '每年付息', dataKey: '每年利息', defaultVisible: true, defaultOrder: 6 },
+  { key: 'annualIncome', label: '全年淨收', dataKey: null, defaultVisible: true, defaultOrder: 7, isCalculated: true }
+]
+
 // 海外債券欄位定義
 export const overseasBondsColumns = [
   { key: 'companyName', label: '公司名稱', dataKey: '公司名稱', defaultVisible: true, defaultOrder: 1, align: 'left' },
@@ -83,6 +94,7 @@ export const assetHistoryColumns = [
 
 // 模組 UID 與欄位定義的對應
 export const moduleColumnDefinitions = {
+  'summary-cards': summaryCardsColumns,
   'overseas-bonds': overseasBondsColumns,
   'stocks-etf': stocksEtfColumns,
   'other-assets': otherAssetsColumns,

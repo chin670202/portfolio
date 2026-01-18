@@ -3,10 +3,11 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import NewsModal from '../components/NewsModal.vue'
 import QuickUpdate from '../components/QuickUpdate.vue'
-import { ModuleContainer, getDefaultModuleConfig } from '../modules'
+import { ModuleContainer, getDefaultModuleConfig, mergeModuleConfig } from '../modules'
 import ModuleEditor from '../modules/ModuleEditor.vue'
+import ModuleGallery from '../modules/ModuleGallery.vue'
+import SettingsModal from '../components/SettingsModal.vue'
 import { updateService } from '../config'
-import { formatNumber, formatWan } from '../utils/format'
 import {
   calculateBondDerivedData,
   calculateEtfDerivedData,
@@ -43,6 +44,13 @@ const moduleConfig = ref(getDefaultModuleConfig())
 // 模組編輯器狀態
 const showModuleEditor = ref(false)
 const savingModuleConfig = ref(false)
+
+// 模組畫廊狀態
+const showModuleGallery = ref(false)
+const moduleStats = ref({})
+
+// 設定視窗狀態
+const showSettings = ref(false)
 
 // 新聞管理（使用 composable）
 const {
@@ -249,6 +257,13 @@ const etfLoanDetails = computed(() => {
 
 // 傳遞給 ModuleContainer 的所有 props
 const moduleProps = computed(() => ({
+  // 摘要卡片模組需要的資料
+  exchangeRate: rawData.value?.匯率 || {},
+  grandTotal: grandTotal.value,
+  loanTotal: loanTotal.value,
+  netIncome: netIncome.value,
+  updating: updating.value,
+
   // 海外債券模組需要的資料
   calculatedBonds: calculatedBonds.value,
   bondSubtotal: bondSubtotal.value,
@@ -427,12 +442,8 @@ async function loadData() {
     }
     rawData.value = await response.json()
 
-    // 載入模組配置（若用戶 JSON 中有配置則使用，否則使用預設）
-    if (rawData.value.模組配置 && Array.isArray(rawData.value.模組配置)) {
-      moduleConfig.value = rawData.value.模組配置
-    } else {
-      moduleConfig.value = getDefaultModuleConfig()
-    }
+    // 載入模組配置（合併用戶配置與新內建模組）
+    moduleConfig.value = mergeModuleConfig(rawData.value.模組配置)
 
     // 載入完成後自動更新價格
     updateAllPrices()
@@ -486,6 +497,56 @@ async function saveModuleConfig(newConfig) {
   }
 }
 
+// 載入模組統計（熱門度）
+async function loadModuleStats() {
+  try {
+    const response = await fetch(`${updateService.baseUrl}/modules/stats`, {
+      headers: {
+        'X-API-Key': updateService.apiKey
+      }
+    })
+    if (response.ok) {
+      const data = await response.json()
+      moduleStats.value = data.stats || {}
+    }
+  } catch (e) {
+    console.warn('[Portfolio] 載入模組統計失敗:', e)
+  }
+}
+
+// 處理模組畫廊的選擇更新
+async function handleGalleryUpdate(selectedUids) {
+  // 建立新的配置
+  const newConfig = moduleConfig.value.map(m => {
+    const shouldEnable = selectedUids.includes(m.uid)
+    return {
+      ...m,
+      enabled: shouldEnable
+    }
+  })
+
+  // 檢查是否有新選的模組（不在現有配置中）
+  const existingUids = new Set(moduleConfig.value.map(m => m.uid))
+  const newUids = selectedUids.filter(uid => !existingUids.has(uid))
+
+  // 如果有新模組，加到最後
+  if (newUids.length > 0) {
+    const maxOrder = Math.max(...moduleConfig.value.map(m => m.order), 0)
+    newUids.forEach((uid, index) => {
+      newConfig.push({
+        uid,
+        enabled: true,
+        order: maxOrder + index + 1,
+        options: {}
+      })
+    })
+  }
+
+  // 儲存配置
+  await saveModuleConfig(newConfig)
+  showModuleGallery.value = false
+}
+
 // 監聽路由變化，重新載入資料
 watch(() => route.params.username, () => {
   loadData()
@@ -493,6 +554,7 @@ watch(() => route.params.username, () => {
 
 onMounted(() => {
   loadData()
+  loadModuleStats()
 })
 </script>
 
@@ -501,37 +563,16 @@ onMounted(() => {
     <div class="header">
       <h1>{{ displayName }} 的投資現況</h1>
       <div class="header-actions">
-        <!-- 新聞篩選切換 -->
-        <div class="news-filter">
-          <span class="filter-label">新聞:</span>
-          <button
-            :class="['filter-btn', { active: newsFilterMode === 'all' }]"
-            @click="setNewsFilterMode('all')"
-          >全部</button>
-          <button
-            :class="['filter-btn', 'bullish', { active: newsFilterMode === 'bullish' }]"
-            @click="setNewsFilterMode('bullish')"
-          >看漲</button>
-          <button
-            :class="['filter-btn', 'bearish', { active: newsFilterMode === 'bearish' }]"
-            @click="setNewsFilterMode('bearish')"
-          >看跌</button>
-        </div>
         <span v-if="lastUpdateTime" class="last-update">
           最後更新: {{ lastUpdateTime }}
         </span>
-        <button
-          class="update-btn"
-          :disabled="updating || loading"
-          @click="updateAllPrices"
-        >
-          {{ updating ? '更新中...' : '更新價格' }}
-        </button>
         <QuickUpdate :username="currentUsername" @updated="loadData" />
-        <button class="module-edit-btn" @click="showModuleEditor = true" title="編輯模組配置">
+        <button class="module-gallery-btn" @click="showModuleGallery = true" title="儀表模組">
+          📊 儀表模組
+        </button>
+        <button class="settings-btn" @click="showSettings = true" title="設定">
           ⚙️
         </button>
-        <span class="version">v{{ appVersion }}</span>
       </div>
     </div>
 
@@ -539,43 +580,7 @@ onMounted(() => {
     <div v-else-if="error" class="error">錯誤: {{ error }}</div>
 
     <template v-else-if="rawData">
-      <!-- 頂部摘要列 -->
-      <div class="top-summary">
-        <span class="summary-item">
-          美元匯率: <span class="calculated">{{ rawData.匯率.美元匯率 }}</span>
-          <span v-if="updating" class="spinner"></span>
-        </span>
-        <span class="summary-item asset tooltip-container">
-          台幣資產: <span v-if="updating" class="calculated-value">--<span class="spinner"></span></span>
-          <span v-else class="calculated-value">{{ formatWan(grandTotal.台幣資產) }}</span>
-          <span class="tooltip-text">台幣資產: {{ formatNumber(grandTotal.台幣資產) }} 元</span>
-        </span>
-        <span class="summary-item liability tooltip-container">
-          台幣負債: <span class="calculated-value">{{ formatWan(loanTotal.貸款餘額) }}</span>
-          <span class="tooltip-text">台幣負債: {{ formatNumber(loanTotal.貸款餘額) }} 元</span>
-        </span>
-        <span class="summary-item equity tooltip-container">
-          台幣淨值: <span v-if="updating" class="calculated-value">--<span class="spinner"></span></span>
-          <span v-else class="calculated-value">{{ formatWan(grandTotal.台幣資產 - loanTotal.貸款餘額) }}</span>
-          <span class="tooltip-text">台幣淨值: {{ formatNumber(grandTotal.台幣資產 - loanTotal.貸款餘額) }} 元</span>
-        </span>
-        <span class="summary-item interest tooltip-container">
-          每年收息: <span v-if="updating" class="calculated-value">--<span class="spinner"></span></span>
-          <span v-else class="calculated-value">{{ formatWan(grandTotal.每年利息) }}</span>
-          <span class="tooltip-text">每年收息: {{ formatNumber(grandTotal.每年利息) }} 元</span>
-        </span>
-        <span class="summary-item expense tooltip-container">
-          每年付息: <span class="calculated-value">{{ formatWan(loanTotal.每年利息) }}</span>
-          <span class="tooltip-text">每年付息: {{ formatNumber(loanTotal.每年利息) }} 元</span>
-        </span>
-        <span class="summary-item income tooltip-container">
-          全年淨收: <span v-if="updating" class="calculated-value">--<span class="spinner"></span></span>
-          <span v-else class="calculated-value">{{ formatWan(netIncome) }}</span>
-          <span class="tooltip-text">全年淨收: {{ formatNumber(netIncome) }} 元</span>
-        </span>
-      </div>
-
-      <!-- 模組化區塊 -->
+      <!-- 模組化區塊（包含摘要卡片模組） -->
       <ModuleContainer
         :module-config="moduleConfig"
         :module-props="moduleProps"
@@ -607,6 +612,26 @@ onMounted(() => {
         @save="saveModuleConfig"
         @preview="previewModuleConfig"
         @cancel="restoreModuleConfig"
+      />
+
+      <!-- 模組畫廊 -->
+      <ModuleGallery
+        :visible="showModuleGallery"
+        :current-config="moduleConfig"
+        :module-stats="moduleStats"
+        @close="showModuleGallery = false"
+        @update="handleGalleryUpdate"
+        @open-editor="showModuleEditor = true"
+      />
+
+      <!-- 設定視窗 -->
+      <SettingsModal
+        :visible="showSettings"
+        :username="currentUsername"
+        :display-name="displayName"
+        :news-filter-mode="newsFilterMode"
+        @close="showSettings = false"
+        @update:news-filter-mode="setNewsFilterMode"
       />
     </template>
   </div>

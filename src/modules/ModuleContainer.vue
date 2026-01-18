@@ -26,6 +26,7 @@ function handleOpenNews(symbol, name) {
 
 // 動態載入模組元件
 const moduleComponents = {
+  'summary-cards': defineAsyncComponent(() => import('./SummaryCardsModule.vue')),
   'overseas-bonds': defineAsyncComponent(() => import('./OverseasBondsModule.vue')),
   'stocks-etf': defineAsyncComponent(() => import('./StocksEtfModule.vue')),
   'other-assets': defineAsyncComponent(() => import('./OtherAssetsModule.vue')),

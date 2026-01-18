@@ -90,7 +90,7 @@
 
     <!-- Problem Section -->
     <section class="problems">
-      <div class="section-header">
+      <div class="section-title">
         <h2>投資管理的<span class="text-danger">四大痛點</span></h2>
         <p>這些問題是否也困擾著您？</p>
       </div>
@@ -202,7 +202,7 @@
 
     <!-- Features Section -->
     <section class="features" id="features">
-      <div class="section-header">
+      <div class="section-title">
         <h2>核心功能</h2>
         <p>專為專業投資人設計的完整功能</p>
       </div>
@@ -354,7 +354,7 @@
 
     <!-- Testimonials -->
     <section class="testimonials">
-      <div class="section-header">
+      <div class="section-title">
         <h2>用戶心聲</h2>
         <p>聽聽他們怎麼說</p>
       </div>
@@ -398,9 +398,125 @@
       </div>
     </section>
 
+    <!-- Pricing Section -->
+    <section class="pricing-section" id="pricing">
+      <div class="section-title">
+        <h2>選擇方案</h2>
+        <p>依照您的需求，選擇最適合的方案</p>
+      </div>
+      <div class="pricing-grid">
+        <!-- Free Plan -->
+        <div class="pricing-card">
+          <div class="pricing-header">
+            <h3>免費版</h3>
+            <div class="pricing-price">
+              <span class="price-amount">$0</span>
+              <span class="price-period">/月</span>
+            </div>
+            <p class="pricing-desc">適合剛開始管理投資的您</p>
+          </div>
+          <ul class="pricing-features">
+            <li class="included">
+              <span class="feature-icon">✓</span>
+              <span>多資產整合追蹤</span>
+            </li>
+            <li class="included">
+              <span class="feature-icon">✓</span>
+              <span>手動更新部位</span>
+            </li>
+            <li class="included">
+              <span class="feature-icon">✓</span>
+              <span>基本損益計算</span>
+            </li>
+            <li class="included">
+              <span class="feature-icon">✓</span>
+              <span>配息追蹤</span>
+            </li>
+            <li class="included">
+              <span class="feature-icon">✓</span>
+              <span>資產變化歷史記錄</span>
+            </li>
+            <li class="not-included">
+              <span class="feature-icon">✗</span>
+              <span>AI 新聞情緒分析</span>
+            </li>
+            <li class="not-included">
+              <span class="feature-icon">✗</span>
+              <span>看漲/看跌警示</span>
+            </li>
+            <li class="not-included">
+              <span class="feature-icon">✗</span>
+              <span>暴漲暴跌即時提示</span>
+            </li>
+            <li class="not-included">
+              <span class="feature-icon">✗</span>
+              <span>價格即時自動更新</span>
+            </li>
+          </ul>
+          <a href="/portfolio/demo" target="_blank" class="btn-pricing free">
+            免費開始
+          </a>
+        </div>
+
+        <!-- Pro Plan -->
+        <div class="pricing-card featured">
+          <div class="pricing-badge">推薦</div>
+          <div class="pricing-header">
+            <h3>專業版</h3>
+            <div class="pricing-price">
+              <span class="price-amount">$299</span>
+              <span class="price-period">/月</span>
+            </div>
+            <p class="pricing-desc">完整功能，掌握市場先機</p>
+          </div>
+          <ul class="pricing-features">
+            <li class="included">
+              <span class="feature-icon">✓</span>
+              <span>多資產整合追蹤</span>
+            </li>
+            <li class="included">
+              <span class="feature-icon">✓</span>
+              <span>語音式快速更新</span>
+            </li>
+            <li class="included">
+              <span class="feature-icon">✓</span>
+              <span>進階損益分析</span>
+            </li>
+            <li class="included">
+              <span class="feature-icon">✓</span>
+              <span>配息追蹤 + 日曆提醒</span>
+            </li>
+            <li class="included">
+              <span class="feature-icon">✓</span>
+              <span>資產變化歷史記錄</span>
+            </li>
+            <li class="included highlight">
+              <span class="feature-icon">✓</span>
+              <span>AI 新聞情緒分析</span>
+            </li>
+            <li class="included highlight">
+              <span class="feature-icon">✓</span>
+              <span>看漲/看跌警示</span>
+            </li>
+            <li class="included highlight">
+              <span class="feature-icon">✓</span>
+              <span>暴漲暴跌即時提示</span>
+            </li>
+            <li class="included highlight">
+              <span class="feature-icon">✓</span>
+              <span>價格即時自動更新</span>
+            </li>
+          </ul>
+          <a href="/portfolio/demo" target="_blank" class="btn-pricing pro">
+            立即訂閱
+          </a>
+        </div>
+      </div>
+    </section>
+
     <!-- FAQ -->
     <section class="faq-section">
-      <div class="section-header">
+      <div class="section-title">
         <h2>常見問題</h2>
       </div>
       <div class="faq-container">
@@ -502,8 +618,8 @@ function scrollToFeatures() {
 </script>
 
 <style scoped>
-/* 基礎變數 */
-:root {
+/* 基礎變數 - 定義在 .landing-page 上讓 scoped 能正確運作 */
+.landing-page {
   --primary: #2563eb;
   --primary-dark: #1d4ed8;
   --secondary: #0f172a;
@@ -515,11 +631,10 @@ function scrollToFeatures() {
   --gray-200: #e2e8f0;
   --gray-400: #94a3b8;
   --gray-600: #475569;
+  --gray-700: #374151;
   --gray-800: #1e293b;
   --gray-900: #0f172a;
-}
 
-.landing-page {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei', sans-serif;
   color: var(--gray-800);
   line-height: 1.6;
@@ -532,24 +647,24 @@ section {
   margin: 0 auto;
 }
 
-.section-header {
+.section-title {
   text-align: center;
   margin-bottom: 60px;
 }
 
-.section-header h2 {
+.section-title h2 {
   font-size: 40px;
   font-weight: 800;
-  color: var(--gray-900);
+  color: #0f172a;
   margin-bottom: 12px;
 }
 
-.section-header p {
+.section-title p {
   font-size: 18px;
-  color: var(--gray-600);
+  color: #475569;
 }
 
-.text-danger { color: var(--danger); }
+.text-danger { color: #ef4444; }
 
 /* Hero */
 .hero {
@@ -628,7 +743,7 @@ section {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: var(--primary);
+  background: #2563eb;
   color: white;
   padding: 16px 32px;
   font-size: 17px;
@@ -641,7 +756,7 @@ section {
 }
 
 .btn-primary:hover {
-  background: var(--primary-dark);
+  background: #1d4ed8;
   transform: translateY(-2px);
   box-shadow: 0 12px 24px rgba(37, 99, 235, 0.3);
 }
@@ -673,7 +788,7 @@ section {
 
 /* Dashboard Mockup */
 .dashboard-mockup {
-  background: var(--gray-900);
+  background: #0f172a;
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 40px 80px rgba(0, 0, 0, 0.3);
@@ -784,7 +899,7 @@ section {
 
 /* Problems Section */
 .problems {
-  background: var(--gray-50);
+  background: #f8fafc;
   border-radius: 32px;
   margin: 0 auto;
   max-width: calc(1200px - 48px);
@@ -947,7 +1062,7 @@ section {
 
 /* Features Grid */
 .features {
-  background: var(--gray-50);
+  background: #f8fafc;
   border-radius: 32px;
   margin: 0 auto;
   max-width: calc(1200px - 48px);
@@ -974,7 +1089,7 @@ section {
 }
 
 .feature-card.featured {
-  border-color: var(--primary);
+  border-color: #2563eb;
   background: linear-gradient(135deg, #eff6ff 0%, #fff 50%);
 }
 
@@ -982,7 +1097,7 @@ section {
   position: absolute;
   top: -10px;
   right: 20px;
-  background: var(--primary);
+  background: #2563eb;
   color: white;
   padding: 4px 12px;
   border-radius: 6px;
@@ -1029,11 +1144,12 @@ section {
 
 /* Demo Section */
 .demo-section {
-  background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
   border-radius: 32px;
   margin: 60px auto;
   max-width: calc(1200px - 48px);
   padding: 80px;
+  border: 1px solid #bbf7d0;
 }
 
 .demo-content {
@@ -1046,13 +1162,13 @@ section {
 .demo-text h2 {
   font-size: 40px;
   font-weight: 800;
-  color: white;
+  color: #166534;
   margin-bottom: 16px;
 }
 
 .demo-text p {
   font-size: 18px;
-  color: rgba(255, 255, 255, 0.8);
+  color: #166534;
   margin-bottom: 32px;
   line-height: 1.7;
 }
@@ -1061,8 +1177,8 @@ section {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: white;
-  color: var(--primary);
+  background: #16a34a;
+  color: white;
   padding: 16px 40px;
   font-size: 18px;
   font-weight: 700;
@@ -1072,14 +1188,15 @@ section {
 }
 
 .btn-demo:hover {
+  background: #15803d;
   transform: scale(1.05);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 12px 32px rgba(22, 163, 74, 0.3);
 }
 
 .demo-note {
   margin-top: 16px;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.6);
+  color: #4ade80;
 }
 
 .demo-features {
@@ -1092,34 +1209,198 @@ section {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: rgba(255, 255, 255, 0.1);
+  background: white;
   padding: 16px 20px;
   border-radius: 12px;
-  color: white;
+  color: #166534;
   font-size: 15px;
+  border: 1px solid #bbf7d0;
 }
 
 .demo-check {
-  color: #86efac;
+  color: #16a34a;
   font-weight: 700;
+}
+
+/* Pricing Section */
+.pricing-section {
+  padding: 100px 24px;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 32px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.pricing-card {
+  background: white;
+  border-radius: 24px;
+  padding: 40px;
+  border: 2px solid #e2e8f0;
+  position: relative;
+  transition: all 0.3s;
+}
+
+.pricing-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+.pricing-card.featured {
+  border-color: #2563eb;
+  background: linear-gradient(135deg, #eff6ff 0%, #fff 50%);
+}
+
+.pricing-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2563eb;
+  color: white;
+  padding: 6px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pricing-header {
+  text-align: center;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 24px;
+}
+
+.pricing-header h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 16px;
+}
+
+.pricing-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.price-amount {
+  font-size: 48px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.pricing-card.featured .price-amount {
+  color: #2563eb;
+}
+
+.price-period {
+  font-size: 18px;
+  color: #64748b;
+}
+
+.pricing-desc {
+  font-size: 15px;
+  color: #64748b;
+}
+
+.pricing-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 32px 0;
+}
+
+.pricing-features li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  font-size: 15px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.pricing-features li:last-child {
+  border-bottom: none;
+}
+
+.pricing-features li.included {
+  color: #334155;
+}
+
+.pricing-features li.included .feature-icon {
+  color: #22c55e;
+  font-weight: 700;
+}
+
+.pricing-features li.included.highlight {
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.pricing-features li.included.highlight .feature-icon {
+  color: #2563eb;
+}
+
+.pricing-features li.not-included {
+  color: #94a3b8;
+}
+
+.pricing-features li.not-included .feature-icon {
+  color: #cbd5e1;
+}
+
+.btn-pricing {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.btn-pricing.free {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.btn-pricing.free:hover {
+  background: #e2e8f0;
+}
+
+.btn-pricing.pro {
+  background: #2563eb;
+  color: white;
+}
+
+.btn-pricing.pro:hover {
+  background: #1d4ed8;
+  transform: scale(1.02);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
 }
 
 /* Testimonials */
 .testimonials {
-  background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+  background: #f8fafc;
   border-radius: 32px;
   margin: 0 auto 60px;
   max-width: calc(1200px - 48px);
   padding: 80px;
 }
 
-.testimonials .section-header h2,
-.testimonials .section-header p {
-  color: white;
+.testimonials .section-title h2 {
+  color: #0f172a;
 }
 
-.testimonials .section-header p {
-  opacity: 0.8;
+.testimonials .section-title p {
+  color: #475569;
 }
 
 .testimonials-grid {
@@ -1151,7 +1432,7 @@ section {
 .author-avatar {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
   color: white;
   border-radius: 50%;
   display: flex;
@@ -1241,30 +1522,31 @@ section {
 
 /* Final CTA */
 .final-cta {
-  background: var(--gray-900);
+  background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
   border-radius: 32px;
   margin: 60px auto;
   max-width: calc(1200px - 48px);
   padding: 80px;
   text-align: center;
+  border: 1px solid #bfdbfe;
 }
 
 .cta-content h2 {
   font-size: 40px;
   font-weight: 800;
-  color: white;
+  color: #1e40af;
   margin-bottom: 12px;
 }
 
 .cta-content p {
   font-size: 18px;
-  color: var(--gray-400);
+  color: #3b82f6;
   margin-bottom: 32px;
 }
 
 .btn-cta {
   display: inline-block;
-  background: var(--primary);
+  background: #2563eb;
   color: white;
   padding: 18px 48px;
   font-size: 18px;
@@ -1275,14 +1557,14 @@ section {
 }
 
 .btn-cta:hover {
-  background: var(--primary-dark);
+  background: #1d4ed8;
   transform: scale(1.05);
   box-shadow: 0 12px 32px rgba(37, 99, 235, 0.4);
 }
 
 /* Footer */
 .landing-footer {
-  background: var(--gray-900);
+  background: #0f172a;
   padding: 60px 24px 30px;
 }
 
@@ -1303,7 +1585,7 @@ section {
 }
 
 .footer-brand p {
-  color: var(--gray-500);
+  color: #94a3b8;
 }
 
 .footer-links h4 {
@@ -1316,7 +1598,7 @@ section {
 
 .footer-links a {
   display: block;
-  color: var(--gray-500);
+  color: #94a3b8;
   text-decoration: none;
   padding: 6px 0;
   font-size: 15px;
@@ -1335,7 +1617,7 @@ section {
 }
 
 .footer-bottom p {
-  color: var(--gray-600);
+  color: #94a3b8;
   font-size: 14px;
 }
 
@@ -1396,12 +1678,30 @@ section {
     padding: 60px 16px;
   }
 
-  .hero-title {
-    font-size: 36px;
+  .hero {
+    padding-top: 40px;
+    min-height: auto;
   }
 
-  .section-header h2 {
-    font-size: 28px;
+  .hero-title {
+    font-size: 32px;
+  }
+
+  .hero-subtitle {
+    font-size: 16px;
+  }
+
+  .hero-badge {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .section-title h2 {
+    font-size: 26px;
+  }
+
+  .section-title p {
+    font-size: 15px;
   }
 
   .problems-grid,
@@ -1410,21 +1710,242 @@ section {
   }
 
   .hero-stats {
-    flex-direction: column;
-    gap: 16px;
+    flex-direction: row;
+    justify-content: center;
+    gap: 24px;
+    padding: 20px 0;
   }
 
+  .stat-item {
+    align-items: center;
+  }
+
+  .stat-number {
+    font-size: 22px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+  }
+
+  .hero-cta {
+    flex-direction: column;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 24px;
+    font-size: 16px;
+  }
+
+  /* Dashboard Mockup - 手機版 */
+  .dashboard-mockup {
+    margin: 0 -16px;
+    border-radius: 12px;
+  }
+
+  .mockup-summary {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .summary-card {
+    padding: 12px;
+  }
+
+  .summary-card .value {
+    font-size: 18px;
+  }
+
+  .table-row {
+    font-size: 11px;
+    padding: 8px 12px;
+  }
+
+  /* Solution - 手機版 */
+  .solution {
+    padding: 60px 16px;
+  }
+
+  .solution-text h2 {
+    font-size: 26px;
+  }
+
+  .solution-desc {
+    font-size: 15px;
+  }
+
+  .solution-benefits li {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .benefit-check {
+    margin: 0 auto;
+  }
+
+  .feature-showcase {
+    display: none;
+  }
+
+  /* Feature cards - 手機版 */
+  .feature-card {
+    padding: 24px;
+  }
+
+  .feature-emoji {
+    font-size: 32px;
+  }
+
+  .feature-card h3 {
+    font-size: 18px;
+  }
+
+  .feature-card p {
+    font-size: 14px;
+  }
+
+  /* Demo section - 手機版 */
   .demo-section {
-    padding: 48px 24px;
+    padding: 48px 20px;
+    margin: 40px 16px;
+    border-radius: 24px;
+  }
+
+  .demo-text h2 {
+    font-size: 28px;
+  }
+
+  .demo-text p {
+    font-size: 15px;
+  }
+
+  .btn-demo {
+    padding: 14px 32px;
+    font-size: 16px;
+    width: 100%;
+    justify-content: center;
   }
 
   .demo-features {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .demo-feature {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  /* Pricing - 手機版 */
+  .pricing-section {
+    padding: 60px 16px;
+  }
+
+  .pricing-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .pricing-card {
+    padding: 32px 24px;
+  }
+
+  .price-amount {
+    font-size: 40px;
+  }
+
+  .pricing-features li {
+    font-size: 14px;
+    padding: 10px 0;
+  }
+
+  /* Testimonials - 手機版 */
+  .testimonials {
+    padding: 48px 20px;
+    margin: 0 16px 40px;
+    border-radius: 24px;
+  }
+
+  .testimonial-card {
+    padding: 24px;
+  }
+
+  .testimonial-content p {
+    font-size: 14px;
+  }
+
+  .author-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+
+  .author-name {
+    font-size: 14px;
+  }
+
+  .author-title {
+    font-size: 12px;
+  }
+
+  /* FAQ - 手機版 */
+  .faq-question {
+    font-size: 15px;
+    padding: 20px 0;
+  }
+
+  .faq-answer {
+    font-size: 14px;
+  }
+
+  /* Final CTA - 手機版 */
+  .final-cta {
+    padding: 48px 20px;
+    margin: 40px 16px;
+    border-radius: 24px;
+  }
+
+  .cta-content h2 {
+    font-size: 22px;
+    line-height: 1.4;
+  }
+
+  .cta-content p {
+    font-size: 14px;
+  }
+
+  .btn-cta {
+    padding: 14px 32px;
+    font-size: 16px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Footer - 手機版 */
+  .landing-footer {
+    padding: 40px 16px 24px;
   }
 
   .footer-content {
     grid-template-columns: 1fr;
     text-align: center;
+    gap: 32px;
+  }
+
+  .footer-brand h3 {
+    font-size: 18px;
+  }
+
+  .footer-links h4 {
+    margin-bottom: 12px;
+  }
+
+  .footer-links a {
+    font-size: 14px;
   }
 }
 </style>
