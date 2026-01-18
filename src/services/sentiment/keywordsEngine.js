@@ -149,5 +149,71 @@ export class KeywordsEngine {
   }
 }
 
+// ============================================================
+// 債券相關性過濾（用於過濾掉公司對別人發表意見的新聞）
+// ============================================================
+
+// 表示「發表意見/看法」的關鍵字（這類新聞通常是公司對別人的評論，不是公司本身的財務狀況）
+const OPINION_INDICATORS = {
+  zh: [
+    '看好', '看壞', '看漲', '看跌', '預測', '預期', '分析師', '研究報告',
+    '目標價', '評級', '建議', '推薦', '上調', '下調', '調升', '調降',
+    '認為', '表示', '指出', '稱', '說', '透露', '分析', '評論',
+    '展望', '前景', '觀點', '看法'
+  ],
+  en: [
+    'analyst', 'forecast', 'predict', 'expect', 'target price', 'rating',
+    'recommend', 'upgrade', 'downgrade', 'bullish on', 'bearish on',
+    'outlook', 'view', 'opinion', 'comment', 'says', 'said', 'believes',
+    'thinks', 'sees', 'expects'
+  ]
+}
+
+// 表示「公司自身財務/經營」的關鍵字
+const SELF_RELATED_KEYWORDS = {
+  zh: [
+    '財報', '營收', '獲利', '盈餘', '淨利', '虧損', '負債', '資產',
+    '現金流', '股利', '配息', '違約', '破產', '重整', '裁員', '併購',
+    '收購', '被收購', '信用評等', '降評', '升評', '債務', '償還',
+    '到期', '贖回', '發行', '籌資', '融資', '減資', '增資',
+    '訴訟', '調查', '罰款', '處分', '違規', '經營', '管理層', '執行長',
+    '財務長', '董事會', '股東會', '業績', '季報', '年報'
+  ],
+  en: [
+    'earnings', 'revenue', 'profit', 'loss', 'debt', 'asset', 'cash flow',
+    'dividend', 'default', 'bankruptcy', 'restructure', 'layoff', 'merger',
+    'acquisition', 'credit rating', 'downgrade', 'upgrade', 'bond', 'maturity',
+    'redemption', 'issue', 'financing', 'lawsuit', 'investigation', 'fine',
+    'penalty', 'ceo', 'cfo', 'board', 'quarterly', 'annual report'
+  ]
+}
+
+/**
+ * 判斷新聞是否與公司自身相關（用於債券過濾）
+ * 債券只關心公司是否會違約，因此只保留與公司自身財務/經營相關的新聞
+ * @param {string} text - 新聞標題
+ * @param {string} companyName - 公司名稱
+ * @returns {Object} { isRelevant, reason }
+ */
+export function isBondRelevantNews(text, companyName) {
+  if (!text || !companyName) {
+    return { isRelevant: false, reason: 'no_filter' }
+  }
+
+  const lowerText = text.toLowerCase()
+
+  // 檢查是否包含「公司自身財務」類關鍵字
+  // 只有明確包含這些關鍵字的新聞才列入
+  const allSelfKeywords = [...SELF_RELATED_KEYWORDS.zh, ...SELF_RELATED_KEYWORDS.en]
+  const matchedSelf = allSelfKeywords.filter(kw => lowerText.includes(kw.toLowerCase()))
+
+  if (matchedSelf.length > 0) {
+    return { isRelevant: true, reason: 'self_related', keywords: matchedSelf }
+  }
+
+  // 沒有匹配到公司自身財務類關鍵字，一律排除
+  return { isRelevant: false, reason: 'no_self_keywords' }
+}
+
 // 匯出關鍵字供外部使用
-export { BULLISH_KEYWORDS, BEARISH_KEYWORDS }
+export { BULLISH_KEYWORDS, BEARISH_KEYWORDS, OPINION_INDICATORS, SELF_RELATED_KEYWORDS }

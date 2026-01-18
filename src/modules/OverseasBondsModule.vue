@@ -50,6 +50,10 @@ defineProps({
     type: Function,
     default: () => false
   },
+  isNewsRead: {
+    type: Function,
+    default: () => false
+  },
   // 高亮代號
   highlightSymbol: {
     type: String,
@@ -75,6 +79,7 @@ function handleOpenNews(symbol, name) {
       :news-data="newsData"
       :get-news-count="getNewsCount"
       :is-news-loading="isNewsLoading"
+      :is-news-read="isNewsRead"
       :highlight-symbol="highlightSymbol"
       :column-config="config.columns"
       @open-news="handleOpenNews"

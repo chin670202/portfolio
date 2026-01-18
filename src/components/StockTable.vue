@@ -55,12 +55,16 @@
               <button
                 v-else-if="hasNews(stock.代號)"
                 class="news-btn"
-                :class="{ 'has-negative': hasNegativeNews(stock.代號) }"
+                :class="{
+                  'has-negative': hasNegativeNews(stock.代號) && !isNewsRead(stock.代號),
+                  'is-read': isNewsRead(stock.代號)
+                }"
                 @click="$emit('open-news', stock.代號, stock.公司名稱)"
               >
-                <span v-if="hasNegativeNews(stock.代號)">!</span>
+                <span v-if="hasNegativeNews(stock.代號) && !isNewsRead(stock.代號)">!</span>
                 <span v-else>i</span>
-                <span class="news-badge">{{ getNewsCount(stock.代號) }}</span>
+                <!-- 已讀後不顯示數字 badge -->
+                <span v-if="!isNewsRead(stock.代號)" class="news-badge">{{ getNewsCount(stock.代號) }}</span>
               </button>
             </div>
           </template>
@@ -143,6 +147,10 @@ const props = defineProps({
     default: () => 0
   },
   isNewsLoading: {
+    type: Function,
+    default: () => false
+  },
+  isNewsRead: {
     type: Function,
     default: () => false
   },
@@ -381,6 +389,20 @@ const resultFormula = computed(() => {
 
 .news-btn:not(.has-negative) .news-badge {
   background: #27ae60;
+}
+
+/* 已讀樣式：灰色外框、透明背景 */
+.news-btn.is-read {
+  background: transparent;
+  border: 2px solid #6b7280;
+  color: #6b7280;
+  animation: none;
+}
+
+.news-btn.is-read:hover {
+  background: rgba(107, 114, 128, 0.1);
+  border-color: #9ca3af;
+  color: #9ca3af;
 }
 
 @keyframes pulse {

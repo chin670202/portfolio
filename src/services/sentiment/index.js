@@ -124,3 +124,6 @@ export async function getStatus() {
     info: engine.getInfo ? engine.getInfo() : {}
   }
 }
+
+// 匯出債券相關性過濾函數
+export { isBondRelevantNews } from './keywordsEngine.js'

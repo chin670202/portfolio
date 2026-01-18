@@ -3,7 +3,7 @@
  * 負責抓取與分析股票/資產相關新聞
  */
 
-import { analyzeSentiment, analyzeBatch, initEngine, setEngine, getStatus } from './sentiment/index.js'
+import { analyzeSentiment, analyzeBatch, initEngine, setEngine, getStatus, isBondRelevantNews } from './sentiment/index.js'
 
 // CORS Proxy 設定
 const CORS_PROXY = 'https://corsproxy.io/?'
@@ -152,10 +152,11 @@ export const NEWS_SOURCES = {
  * @param {number} options.days - 抓取幾天內的新聞（預設 7）
  * @param {number} options.limit - 最多抓取幾則（預設 10）
  * @param {boolean} options.useSentiment - 是否使用 AI 情緒分析（預設 true）
+ * @param {string} options.assetType - 資產類型：'bond'（債券）會過濾掉公司發表意見類新聞
  * @returns {Promise<Array>} 新聞列表 [{title, link, pubDate, source, isNegative, sentiment, ...}]
  */
 export async function fetchGoogleNews(query, options = {}) {
-  const { days = 7, limit = 10, useSentiment = true } = options
+  const { days = 7, limit = 10, useSentiment = true, assetType = null } = options
   // 使用全域語系設定
   const lang = currentLocale
 
@@ -196,6 +197,16 @@ export async function fetchGoogleNews(query, options = {}) {
 
       // 只取指定天數內的新聞
       if (pubDate < cutoffDate) return
+
+      // 債券專用過濾：過濾掉「公司發表對別人看法」的新聞
+      // 只保留與公司自身財務/經營相關的新聞
+      if (assetType === 'bond') {
+        const relevance = isBondRelevantNews(title, query)
+        if (!relevance.isRelevant) {
+          // console.log(`[News] 過濾非相關債券新聞: ${title} (原因: ${relevance.reason})`)
+          return
+        }
+      }
 
       // 分析負面關鍵字（保留舊方法作為備用）
       const analysis = analyzeNewsTitle(title)
@@ -328,11 +339,13 @@ const CACHE_TTL = 15 * 60 * 1000 // 15 分鐘快取
  * 從快取取得新聞，若無則抓取
  * @param {string} symbol - 股票代號
  * @param {string} name - 公司名稱
- * @param {Object} options - 選項
+ * @param {Object} options - 選項（包含 assetType: 'bond' 用於債券過濾）
  * @returns {Promise<Object>} { news, riskScore, hasNegative, hasNews }
  */
 export async function getNewsWithCache(symbol, name, options = {}) {
-  const cacheKey = `${symbol}_${currentLocale}`
+  // 快取 key 需包含 assetType，因為同一公司債券和股票的新聞過濾結果不同
+  const assetTypeSuffix = options.assetType ? `_${options.assetType}` : ''
+  const cacheKey = `${symbol}_${currentLocale}${assetTypeSuffix}`
   const cached = newsCache.get(cacheKey)
 
   // 檢查快取是否有效

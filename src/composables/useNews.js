@@ -28,6 +28,10 @@ export function useNews() {
   const currentTitle = ref('')
   const modalLoading = ref(false)
 
+  // 已讀新聞記錄（點開過的 symbol）
+  // 當重新抓取新聞時會清除對應的已讀狀態
+  const readSymbols = ref(new Set())
+
   // 新聞篩選模式: 'all' | 'bullish' | 'bearish'
   const filterMode = ref(localStorage.getItem(NEWS_FILTER_KEY) || 'all')
 
@@ -184,10 +188,28 @@ export function useNews() {
   }
 
   /**
+   * 檢查新聞是否已讀（已點開過）
+   * @param {string} symbol - 股票代號
+   * @returns {boolean}
+   */
+  function isRead(symbol) {
+    return readSymbols.value.has(symbol)
+  }
+
+  /**
+   * 標記新聞為已讀
+   * @param {string} symbol - 股票代號
+   */
+  function markAsRead(symbol) {
+    readSymbols.value.add(symbol)
+  }
+
+  /**
    * 抓取單一股票的新聞
    * @param {string} symbol - 股票代號
    * @param {string} name - 公司名稱
    * @param {Object} options - 選項
+   * @param {boolean} options.forceRefresh - 強制重新抓取（會清除已讀狀態）
    */
   async function fetchNews(symbol, name, options = {}) {
     if (loadingSymbols.value.has(symbol)) return
@@ -214,13 +236,18 @@ export function useNews() {
 
   /**
    * 批次抓取多檔股票新聞
-   * @param {Array} items - [{symbol, name}]
-   * @param {Object} options - 選項
+   * @param {Array} items - [{symbol, name, assetType?}] assetType 可選，'bond' 表示債券
+   * @param {Object} options - 全域選項（會被 item 的選項覆蓋）
    */
   async function fetchBatchNews(items, options = {}) {
-    const promises = items.map(({ symbol, name }) =>
-      fetchNews(symbol, name, options)
-    )
+    // 批次抓取時清除所有已讀狀態（重新載入頁面時）
+    readSymbols.value.clear()
+
+    const promises = items.map(({ symbol, name, assetType }) => {
+      // 合併全域選項與 item 專屬選項
+      const itemOptions = assetType ? { ...options, assetType } : options
+      return fetchNews(symbol, name, itemOptions)
+    })
     await Promise.all(promises)
   }
 
@@ -228,14 +255,18 @@ export function useNews() {
    * 開啟新聞 Modal
    * @param {string} symbol - 股票代號
    * @param {string} name - 公司名稱
+   * @param {Object} options - 選項（如 assetType: 'bond'）
    */
-  async function openModal(symbol, name) {
+  async function openModal(symbol, name, options = {}) {
     currentSymbol.value = symbol
     currentTitle.value = name || symbol
     showModal.value = true
     modalLoading.value = true
 
-    await fetchNews(symbol, name)
+    // 標記為已讀（點開即已讀）
+    markAsRead(symbol)
+
+    await fetchNews(symbol, name, options)
 
     modalLoading.value = false
   }
@@ -255,8 +286,12 @@ export function useNews() {
     clearNewsCache(symbol)
     if (symbol) {
       delete newsData.value[symbol]
+      // 清除快取時也清除已讀狀態
+      readSymbols.value.delete(symbol)
     } else {
       newsData.value = {}
+      // 清除所有已讀狀態
+      readSymbols.value.clear()
     }
   }
 
@@ -308,6 +343,7 @@ export function useNews() {
     currentTitle,
     modalLoading,
     filterMode,
+    readSymbols,
 
     // 計算屬性
     currentNews,
@@ -325,6 +361,8 @@ export function useNews() {
     getNews,
     getNewsCount,
     isLoading,
+    isRead,
+    markAsRead,
     fetchNews,
     fetchBatchNews,
     openModal,

@@ -66,6 +66,7 @@ const {
   hasNegativeNews,
   getNewsCount,
   isLoading: isNewsLoading,
+  isRead: isNewsRead,
   fetchBatchNews,
   filterMode: newsFilterMode,
   setFilterMode: setNewsFilterMode
@@ -155,7 +156,10 @@ function handleNewsNavigate(direction) {
   const product = products[newIndex]
   // 更新 ID 追蹤（避免重複代號問題）
   currentProductId.value = product.id
-  openNewsModal(product.symbol, product.name)
+  // 判斷是否為債券，使用 assetType: 'bond' 過濾新聞
+  const isBond = product.id?.startsWith('bond_')
+  const options = isBond ? { assetType: 'bond' } : {}
+  openNewsModal(product.symbol, product.name, options)
 }
 
 // 封裝開啟新聞 Modal（從表格點擊時用）
@@ -165,7 +169,11 @@ function handleOpenNews(symbol, name) {
   if (product) {
     currentProductId.value = product.id
   }
-  openNewsModal(symbol, name)
+  // 判斷是否為債券，使用 assetType: 'bond' 過濾新聞
+  // 債券只顯示公司自身財務/經營相關新聞，過濾掉公司對別人發表意見的新聞
+  const isBond = product?.id?.startsWith('bond_')
+  const options = isBond ? { assetType: 'bond' } : {}
+  openNewsModal(symbol, name, options)
 }
 
 // 計算後的債券資料
@@ -291,6 +299,7 @@ const moduleProps = computed(() => ({
   newsData: newsData.value,
   getNewsCount,
   isNewsLoading,
+  isNewsRead,
   highlightSymbol: highlightSymbol.value
 }))
 
@@ -406,9 +415,10 @@ async function fetchAllNews() {
 
   const newsQueries = []
 
-  // 海外債券
+  // 海外債券 - 使用 assetType: 'bond' 進行特殊過濾
+  // 只保留與公司自身財務/經營相關的新聞，過濾掉公司對別人發表意見的新聞
   rawData.value.股票.forEach(bond => {
-    newsQueries.push({ symbol: bond.代號, name: bond.公司名稱 })
+    newsQueries.push({ symbol: bond.代號, name: bond.公司名稱, assetType: 'bond' })
   })
 
   // ETF
@@ -619,6 +629,7 @@ onMounted(() => {
         :visible="showModuleGallery"
         :current-config="moduleConfig"
         :module-stats="moduleStats"
+        :username="currentUsername"
         @close="showModuleGallery = false"
         @update="handleGalleryUpdate"
         @open-editor="showModuleEditor = true"
