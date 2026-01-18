@@ -70,6 +70,7 @@ function handleOpenNews(symbol, name) {
       :get-news-count="getNewsCount"
       :is-news-loading="isNewsLoading"
       :highlight-symbol="highlightSymbol"
+      :column-config="config.columns"
       @open-news="handleOpenNews"
     />
   </div>

@@ -1,10 +1,12 @@
 <script setup>
 /**
  * 模組編輯器
- * 讓用戶選擇要顯示哪些模組、調整順序
+ * 讓用戶選擇要顯示哪些模組、調整順序、配置欄位
  */
 import { ref, computed, watch } from 'vue'
 import { getAllModules } from './moduleRegistry'
+import ColumnEditor from './ColumnEditor.vue'
+import { getDefaultColumnConfig } from './columnDefinitions'
 
 const props = defineProps({
   visible: {
@@ -34,14 +36,42 @@ const originalConfig = ref([])
 // 所有可用模組
 const allModules = getAllModules()
 
+// 當前展開欄位編輯器的模組 UID（null 表示全部收起）
+const expandedModuleUid = ref(null)
+
 // 當 visible 變化時，重置本地狀態
 watch(() => props.visible, (visible) => {
   if (visible) {
     // 深拷貝配置作為原始狀態和編輯狀態
     originalConfig.value = JSON.parse(JSON.stringify(props.moduleConfig))
     localConfig.value = JSON.parse(JSON.stringify(props.moduleConfig))
+    // 收起所有欄位編輯器
+    expandedModuleUid.value = null
   }
 })
+
+// 切換欄位編輯器展開狀態
+function toggleColumnEditor(uid) {
+  if (expandedModuleUid.value === uid) {
+    expandedModuleUid.value = null
+  } else {
+    expandedModuleUid.value = uid
+  }
+}
+
+// 更新模組的欄位配置
+function updateColumnConfig(uid, columnConfig) {
+  const config = localConfig.value.find(c => c.uid === uid)
+  if (config) {
+    config.columns = columnConfig
+  }
+}
+
+// 取得模組的欄位配置（若無則使用預設）
+function getModuleColumnConfig(uid) {
+  const config = localConfig.value.find(c => c.uid === uid)
+  return config?.columns || getDefaultColumnConfig(uid)
+}
 
 // 當 localConfig 變化時，即時通知父元件預覽
 watch(localConfig, (newConfig) => {
@@ -164,49 +194,72 @@ const hasChanges = computed(() => {
             <div
               v-for="config in localConfig"
               :key="config.uid"
-              class="module-item"
-              :class="{ disabled: !config.enabled, dragging: draggedItem === config.uid }"
-              draggable="true"
-              @dragstart="onDragStart($event, config.uid)"
-              @dragover="onDragOver"
-              @drop="onDrop($event, config.uid)"
-              @dragend="onDragEnd"
+              class="module-wrapper"
             >
-              <div class="drag-handle">
-                <span class="handle-icon">⋮⋮</span>
-              </div>
-
-              <div class="module-info">
-                <span class="module-icon">{{ getModuleInfo(config.uid)?.icon }}</span>
-                <div class="module-text">
-                  <span class="module-name">{{ getModuleInfo(config.uid)?.name }}</span>
-                  <span class="module-desc">{{ getModuleInfo(config.uid)?.description }}</span>
+              <div
+                class="module-item"
+                :class="{ disabled: !config.enabled, dragging: draggedItem === config.uid, expanded: expandedModuleUid === config.uid }"
+                draggable="true"
+                @dragstart="onDragStart($event, config.uid)"
+                @dragover="onDragOver"
+                @drop="onDrop($event, config.uid)"
+                @dragend="onDragEnd"
+              >
+                <div class="drag-handle">
+                  <span class="handle-icon">⋮⋮</span>
                 </div>
-              </div>
 
-              <div class="module-actions">
-                <button
-                  class="move-btn"
-                  :disabled="localConfig.indexOf(config) === 0"
-                  @click="moveModule(config.uid, -1)"
-                  title="上移"
-                >▲</button>
-                <button
-                  class="move-btn"
-                  :disabled="localConfig.indexOf(config) === localConfig.length - 1"
-                  @click="moveModule(config.uid, 1)"
-                  title="下移"
-                >▼</button>
-              </div>
+                <div class="module-info">
+                  <span class="module-icon">{{ getModuleInfo(config.uid)?.icon }}</span>
+                  <div class="module-text">
+                    <span class="module-name">{{ getModuleInfo(config.uid)?.name }}</span>
+                    <span class="module-desc">{{ getModuleInfo(config.uid)?.description }}</span>
+                  </div>
+                </div>
 
-              <label class="toggle-switch">
-                <input
-                  type="checkbox"
-                  :checked="config.enabled"
-                  @change="toggleModule(config.uid)"
+                <div class="module-actions">
+                  <button
+                    class="move-btn"
+                    :disabled="localConfig.indexOf(config) === 0"
+                    @click="moveModule(config.uid, -1)"
+                    title="上移"
+                  >▲</button>
+                  <button
+                    class="move-btn"
+                    :disabled="localConfig.indexOf(config) === localConfig.length - 1"
+                    @click="moveModule(config.uid, 1)"
+                    title="下移"
+                  >▼</button>
+                </div>
+
+                <button
+                  class="column-btn"
+                  :class="{ active: expandedModuleUid === config.uid }"
+                  @click.stop="toggleColumnEditor(config.uid)"
+                  title="設定欄位"
                 >
-                <span class="slider"></span>
-              </label>
+                  ⚙
+                </button>
+
+                <label class="toggle-switch">
+                  <input
+                    type="checkbox"
+                    :checked="config.enabled"
+                    @change="toggleModule(config.uid)"
+                  >
+                  <span class="slider"></span>
+                </label>
+              </div>
+
+              <!-- 欄位編輯器（展開時顯示） -->
+              <ColumnEditor
+                v-if="expandedModuleUid === config.uid"
+                :module-uid="config.uid"
+                :module-name="getModuleInfo(config.uid)?.name || config.uid"
+                :column-config="getModuleColumnConfig(config.uid)"
+                @update="updateColumnConfig(config.uid, $event)"
+                @close="expandedModuleUid = null"
+              />
             </div>
           </div>
         </div>
@@ -251,8 +304,8 @@ const hasChanges = computed(() => {
   background: #1e1e2e;
   border-radius: 12px;
   width: 90%;
-  max-width: 500px;
-  max-height: 80vh;
+  max-width: 580px;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -304,6 +357,11 @@ const hasChanges = computed(() => {
   gap: 8px;
 }
 
+.module-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
 .module-item {
   display: flex;
   align-items: center;
@@ -313,6 +371,11 @@ const hasChanges = computed(() => {
   border-radius: 8px;
   cursor: grab;
   transition: all 0.2s;
+}
+
+.module-item.expanded {
+  border-radius: 8px 8px 0 0;
+  background: #323248;
 }
 
 .module-item:hover {
@@ -326,6 +389,31 @@ const hasChanges = computed(() => {
 .module-item.dragging {
   opacity: 0.5;
   transform: scale(1.02);
+}
+
+.column-btn {
+  background: #3a3a4e;
+  border: none;
+  color: #888;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.column-btn:hover {
+  background: #4a4a5e;
+  color: #fff;
+}
+
+.column-btn.active {
+  background: #4a6a8a;
+  color: #7ab8ff;
 }
 
 .drag-handle {

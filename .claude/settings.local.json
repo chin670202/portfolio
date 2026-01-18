@@ -50,7 +50,9 @@
       "Bash(python:*)",
       "Bash(Start-Sleep -Seconds 2)",
       "Bash(Get-Content \"C:\\\\Users\\\\CHINGH~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--------\\\\tasks\\\\bb244b9.output\" -Tail 10)",
-      "Bash(cmd //c \"taskkill /PID 20056 /F\")"
+      "Bash(cmd //c \"taskkill /PID 20056 /F\")",
+      "Bash(npx eslint:*)",
+      "Bash(npm run lint:*)"
     ]
   }
 }

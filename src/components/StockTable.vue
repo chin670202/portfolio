@@ -2,74 +2,85 @@
   <table>
     <thead>
       <tr class="section-header">
-        <th colspan="17">海外債券</th>
+        <th :colspan="sortedVisibleColumns.length">海外債券</th>
       </tr>
       <tr>
-        <th>公司名稱</th>
-        <th>代號</th>
-        <th>買入價格</th>
-        <th>持有單位</th>
-        <th>最新價格</th>
-        <th>損益(%)</th>
-        <th>台幣資產</th>
-        <th>佔比</th>
-        <th>票面利率</th>
-        <th>年殖利率</th>
-        <th>每年利息</th>
-        <th>配息日</th>
-        <th>剩餘天配息</th>
-        <th>下次配息</th>
-        <th>到期日</th>
-        <th>剩餘年數</th>
-        <th>新聞</th>
+        <th v-for="col in sortedVisibleColumns" :key="col.key" :class="getHeaderClass(col.key)">
+          {{ col.label }}
+        </th>
       </tr>
     </thead>
     <tbody>
       <tr v-for="(stock, index) in stocks" :key="index" :class="{ 'highlighted-row': stock.代號 === highlightSymbol }">
-        <td class="text-left">{{ stock.公司名稱 }}</td>
-        <td>{{ stock.代號 }}</td>
-        <td class="cost-price">{{ formatDecimal(stock.買入價格) }}</td>
-        <td>{{ formatNumber(stock.持有單位) }}</td>
-        <td :class="['calculated', { 'price-failed': getPriceStatus(stock.代號).failed }]">
-          {{ formatDecimal(stock.最新價格) }}
-          <span v-if="getPriceStatus(stock.代號).loading" class="spinner"></span>
-        </td>
-        <td :class="['calculated', getColorClass(stock.損益百分比)]">{{ formatPercent(stock.損益百分比) }}</td>
-        <td class="text-right calculated">{{ formatNumber(stock.台幣資產) }}</td>
-        <td class="calculated">{{ formatPercent(getPercentage(stock.台幣資產)) }}</td>
-        <td>{{ formatDecimal(stock.票面利率) }}</td>
-        <td class="calculated">{{ formatPercent(stock.年殖利率) }}</td>
-        <td class="text-right calculated">{{ formatNumber(stock.每年利息) }}</td>
-        <td>{{ stock.配息日 }}</td>
-        <td class="calculated">{{ stock.剩餘天配息 }}</td>
-        <td class="text-right calculated">{{ formatNumber(stock.下次配息) }}</td>
-        <td>{{ stock.到期日 }}</td>
-        <td class="calculated">{{ getRemainingYears(stock.到期日) }}</td>
-        <td>
-          <div class="news-cell">
-            <span v-if="isNewsLoading(stock.代號)" class="spinner news-spinner"></span>
-            <button
-              v-else-if="hasNews(stock.代號)"
-              class="news-btn"
-              :class="{ 'has-negative': hasNegativeNews(stock.代號) }"
-              @click="$emit('open-news', stock.代號, stock.公司名稱)"
-            >
-              <span v-if="hasNegativeNews(stock.代號)">!</span>
-              <span v-else>i</span>
-              <span class="news-badge">{{ getNewsCount(stock.代號) }}</span>
-            </button>
-          </div>
+        <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getCellClass(col.key, stock)">
+          <!-- 公司名稱 -->
+          <template v-if="col.key === 'companyName'">{{ stock.公司名稱 }}</template>
+          <!-- 代號 -->
+          <template v-else-if="col.key === 'symbol'">{{ stock.代號 }}</template>
+          <!-- 買入價格 -->
+          <template v-else-if="col.key === 'buyPrice'">{{ formatDecimal(stock.買入價格) }}</template>
+          <!-- 持有單位 -->
+          <template v-else-if="col.key === 'units'">{{ formatNumber(stock.持有單位) }}</template>
+          <!-- 最新價格 -->
+          <template v-else-if="col.key === 'latestPrice'">
+            {{ formatDecimal(stock.最新價格) }}
+            <span v-if="getPriceStatus(stock.代號).loading" class="spinner"></span>
+          </template>
+          <!-- 損益(%) -->
+          <template v-else-if="col.key === 'profitPercent'">{{ formatPercent(stock.損益百分比) }}</template>
+          <!-- 台幣資產 -->
+          <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(stock.台幣資產) }}</template>
+          <!-- 佔比 -->
+          <template v-else-if="col.key === 'ratio'">{{ formatPercent(getPercentage(stock.台幣資產)) }}</template>
+          <!-- 票面利率 -->
+          <template v-else-if="col.key === 'couponRate'">{{ formatDecimal(stock.票面利率) }}</template>
+          <!-- 年殖利率 -->
+          <template v-else-if="col.key === 'yield'">{{ formatPercent(stock.年殖利率) }}</template>
+          <!-- 每年利息 -->
+          <template v-else-if="col.key === 'annualInterest'">{{ formatNumber(stock.每年利息) }}</template>
+          <!-- 配息日 -->
+          <template v-else-if="col.key === 'paymentDate'">{{ stock.配息日 }}</template>
+          <!-- 剩餘天配息 -->
+          <template v-else-if="col.key === 'daysToPayment'">{{ stock.剩餘天配息 }}</template>
+          <!-- 下次配息 -->
+          <template v-else-if="col.key === 'nextPayment'">{{ formatNumber(stock.下次配息) }}</template>
+          <!-- 到期日 -->
+          <template v-else-if="col.key === 'maturityDate'">{{ stock.到期日 }}</template>
+          <!-- 剩餘年數 -->
+          <template v-else-if="col.key === 'yearsToMaturity'">{{ getRemainingYears(stock.到期日) }}</template>
+          <!-- 新聞 -->
+          <template v-else-if="col.key === 'news'">
+            <div class="news-cell">
+              <span v-if="isNewsLoading(stock.代號)" class="spinner news-spinner"></span>
+              <button
+                v-else-if="hasNews(stock.代號)"
+                class="news-btn"
+                :class="{ 'has-negative': hasNegativeNews(stock.代號) }"
+                @click="$emit('open-news', stock.代號, stock.公司名稱)"
+              >
+                <span v-if="hasNegativeNews(stock.代號)">!</span>
+                <span v-else>i</span>
+                <span class="news-badge">{{ getNewsCount(stock.代號) }}</span>
+              </button>
+            </div>
+          </template>
         </td>
       </tr>
     </tbody>
     <tfoot>
       <tr class="sub-total">
-        <td colspan="6">小計</td>
-        <td class="text-right calculated">{{ formatNumber(subtotal.台幣資產) }}</td>
-        <td class="calculated">{{ formatPercent(getPercentage(subtotal.台幣資產)) }}</td>
-        <td colspan="2"></td>
-        <td class="text-right calculated">{{ formatNumber(subtotal.每年利息) }}</td>
-        <td colspan="6"></td>
+        <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getFooterCellClass(col.key)">
+          <!-- 小計標籤（第一欄） -->
+          <template v-if="col === sortedVisibleColumns[0]">小計</template>
+          <!-- 台幣資產 -->
+          <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(subtotal.台幣資產) }}</template>
+          <!-- 佔比 -->
+          <template v-else-if="col.key === 'ratio'">{{ formatPercent(getPercentage(subtotal.台幣資產)) }}</template>
+          <!-- 每年利息 -->
+          <template v-else-if="col.key === 'annualInterest'">{{ formatNumber(subtotal.每年利息) }}</template>
+          <!-- 其他欄位留空 -->
+          <template v-else></template>
+        </td>
       </tr>
     </tfoot>
   </table>
@@ -138,10 +149,116 @@ const props = defineProps({
   highlightSymbol: {
     type: String,
     default: ''
+  },
+  // 欄位配置
+  columnConfig: {
+    type: Array,
+    default: () => []
   }
 })
 
 defineEmits(['open-news'])
+
+// 欄位定義（含標籤和預設順序）
+const columnDefinitions = {
+  companyName: { label: '公司名稱', defaultOrder: 1 },
+  symbol: { label: '代號', defaultOrder: 2 },
+  buyPrice: { label: '買入價格', defaultOrder: 3 },
+  units: { label: '持有單位', defaultOrder: 4 },
+  latestPrice: { label: '最新價格', defaultOrder: 5 },
+  profitPercent: { label: '損益(%)', defaultOrder: 6 },
+  twdAsset: { label: '台幣資產', defaultOrder: 7 },
+  ratio: { label: '佔比', defaultOrder: 8 },
+  couponRate: { label: '票面利率', defaultOrder: 9 },
+  yield: { label: '年殖利率', defaultOrder: 10 },
+  annualInterest: { label: '每年利息', defaultOrder: 11 },
+  paymentDate: { label: '配息日', defaultOrder: 12 },
+  daysToPayment: { label: '剩餘天配息', defaultOrder: 13 },
+  nextPayment: { label: '下次配息', defaultOrder: 14 },
+  maturityDate: { label: '到期日', defaultOrder: 15 },
+  yearsToMaturity: { label: '剩餘年數', defaultOrder: 16 },
+  news: { label: '新聞', defaultOrder: 17 }
+}
+
+const allColumnKeys = Object.keys(columnDefinitions)
+
+// 排序後的可見欄位
+const sortedVisibleColumns = computed(() => {
+  if (!props.columnConfig || props.columnConfig.length === 0) {
+    // 沒有配置，使用預設順序，全部顯示
+    return allColumnKeys.map(key => ({
+      key,
+      label: columnDefinitions[key].label,
+      order: columnDefinitions[key].defaultOrder
+    })).sort((a, b) => a.order - b.order)
+  }
+
+  // 建立配置對照表
+  const configMap = {}
+  props.columnConfig.forEach(col => {
+    configMap[col.key] = col
+  })
+
+  // 根據配置過濾並排序
+  return allColumnKeys
+    .filter(key => {
+      const config = configMap[key]
+      return config ? config.visible !== false : true
+    })
+    .map(key => ({
+      key,
+      label: columnDefinitions[key].label,
+      order: configMap[key]?.order ?? columnDefinitions[key].defaultOrder
+    }))
+    .sort((a, b) => a.order - b.order)
+})
+
+// 取得表頭樣式
+const getHeaderClass = (key) => {
+  const alignRight = ['buyPrice', 'units', 'latestPrice', 'profitPercent', 'twdAsset', 'ratio',
+                      'couponRate', 'yield', 'annualInterest', 'daysToPayment', 'nextPayment', 'yearsToMaturity']
+  if (alignRight.includes(key)) return 'text-right'
+  if (key === 'paymentDate' || key === 'maturityDate' || key === 'news') return 'text-center'
+  return ''
+}
+
+// 取得儲存格樣式
+const getCellClass = (key, stock) => {
+  const classes = []
+
+  // 對齊
+  if (key === 'companyName') classes.push('text-left')
+  if (['twdAsset', 'annualInterest', 'nextPayment'].includes(key)) classes.push('text-right')
+  if (key === 'buyPrice') classes.push('cost-price')
+
+  // 計算值
+  const calculatedCols = ['latestPrice', 'profitPercent', 'twdAsset', 'ratio', 'yield',
+                          'annualInterest', 'daysToPayment', 'nextPayment', 'yearsToMaturity']
+  if (calculatedCols.includes(key)) classes.push('calculated')
+
+  // 價格載入失敗
+  if (key === 'latestPrice' && getPriceStatus(stock.代號).failed) classes.push('price-failed')
+
+  // 損益顏色
+  if (key === 'profitPercent') {
+    const colorClass = getColorClass(stock.損益百分比)
+    if (colorClass) classes.push(colorClass)
+  }
+
+  return classes.join(' ')
+}
+
+// 取得小計行樣式
+const getFooterCellClass = (key) => {
+  const classes = []
+  if (['twdAsset', 'annualInterest'].includes(key)) {
+    classes.push('text-right', 'calculated')
+  }
+  if (key === 'ratio') {
+    classes.push('calculated')
+  }
+  return classes.join(' ')
+}
 
 // 計算佔總投資比例
 const getPercentage = (value) => {
@@ -157,7 +274,6 @@ const getPriceStatus = (symbol) => {
 // 計算剩餘年數
 const getRemainingYears = (maturityDate) => {
   if (!maturityDate) return '--'
-  // 解析到期日 (格式: YYYY/MM/DD)
   const [year, month, day] = maturityDate.split('/').map(Number)
   const maturity = new Date(year, month - 1, day)
   const today = new Date()
@@ -188,7 +304,6 @@ const modalValues = computed(() => {
   const values = [
     { name: '已質押資產', value: formatNumber(props.subtotal.已質押資產) }
   ]
-  // 動態加入各筆貸款
   props.loanDetails.forEach(l => {
     values.push({ name: l.name, value: formatNumber(l.value) })
   })

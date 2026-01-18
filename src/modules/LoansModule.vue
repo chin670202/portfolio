@@ -29,6 +29,7 @@ defineProps({
     <LoanTable
       :loans="calculatedLoans"
       :total="loanTotal"
+      :column-config="config.columns"
     />
   </div>
 </template>

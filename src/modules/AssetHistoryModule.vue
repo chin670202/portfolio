@@ -26,6 +26,7 @@ defineProps({
     <AssetHistoryTable
       v-if="config.options?.showTable !== false"
       :records="assetHistoryRecords"
+      :column-config="config.columns"
     />
 
     <!-- 資產變化趨勢圖 -->

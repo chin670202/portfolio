@@ -273,7 +273,7 @@ const moduleProps = computed(() => ({
   // 共用資料
   priceStatus: priceStatus.value,
   totalAssets: grandTotal.value?.台幣資產 || 0,
-  newsData: newsData,
+  newsData: newsData.value,
   getNewsCount,
   isNewsLoading,
   highlightSymbol: highlightSymbol.value

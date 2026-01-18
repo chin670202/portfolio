@@ -2,156 +2,209 @@
   <table>
     <thead>
       <tr class="section-header">
-        <th colspan="10">無配息資產</th>
+        <th :colspan="sortedVisibleColumns.length">無配息資產</th>
       </tr>
       <tr>
-        <th>名稱</th>
-        <th>代號</th>
-        <th>買入均價</th>
-        <th>持有單位</th>
-        <th>最新價格</th>
-        <th>台幣損益</th>
-        <th>損益(%)</th>
-        <th>台幣資產</th>
-        <th>佔比</th>
-        <th>新聞</th>
+        <th v-for="col in sortedVisibleColumns" :key="col.key" :class="getHeaderClass(col.key)">
+          {{ col.label }}
+        </th>
       </tr>
     </thead>
     <tbody>
       <!-- 美股 -->
       <tr class="category-header">
-        <td colspan="10">美股</td>
+        <td :colspan="sortedVisibleColumns.length">美股</td>
       </tr>
       <tr v-for="(asset, index) in usStocks" :key="'us-' + index" :class="{ 'highlighted-row': asset.代號 === highlightSymbol }">
-        <td class="text-left">{{ asset.名稱 }}</td>
-        <td>{{ asset.代號 }}</td>
-        <td class="cost-price">{{ formatDecimal(asset.買入均價) }}</td>
-        <td>{{ asset.持有單位 }}</td>
-        <td :class="['calculated', { 'price-failed': getPriceStatus(asset.代號).failed }]">
-          {{ formatDecimal(asset.最新價格) }}
-          <span v-if="getPriceStatus(asset.代號).loading" class="spinner"></span>
-        </td>
-        <td :class="['text-right', 'calculated', getColorClass(asset.台幣損益)]">{{ formatNumber(asset.台幣損益) }}</td>
-        <td :class="['calculated', getColorClass(asset.損益百分比)]">{{ formatPercent(asset.損益百分比) }}</td>
-        <td class="text-right calculated">{{ formatNumber(asset.台幣資產) }}</td>
-        <td class="calculated">{{ formatPercent(getPercentage(asset.台幣資產)) }}</td>
-        <td>
-          <div class="news-cell">
-            <span v-if="isNewsLoading(asset.代號)" class="spinner news-spinner"></span>
-            <button
-              v-else-if="hasNews(asset.代號)"
-              class="news-btn"
-              :class="{ 'has-negative': hasNegativeNews(asset.代號) }"
-              @click="$emit('open-news', asset.代號, asset.名稱)"
-            >
-              <span v-if="hasNegativeNews(asset.代號)">!</span>
-              <span v-else>i</span>
-              <span class="news-badge">{{ getNewsCount(asset.代號) }}</span>
-            </button>
-          </div>
+        <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getCellClass(col.key, asset)">
+          <!-- 名稱 -->
+          <template v-if="col.key === 'name'">{{ asset.名稱 }}</template>
+          <!-- 代號 -->
+          <template v-else-if="col.key === 'symbol'">{{ asset.代號 }}</template>
+          <!-- 買入均價 -->
+          <template v-else-if="col.key === 'buyPrice'">{{ formatDecimal(asset.買入均價) }}</template>
+          <!-- 持有單位 -->
+          <template v-else-if="col.key === 'units'">{{ asset.持有單位 }}</template>
+          <!-- 最新價格 -->
+          <template v-else-if="col.key === 'latestPrice'">
+            {{ formatDecimal(asset.最新價格) }}
+            <span v-if="getPriceStatus(asset.代號).loading" class="spinner"></span>
+          </template>
+          <!-- 台幣損益 -->
+          <template v-else-if="col.key === 'twdProfit'">{{ formatNumber(asset.台幣損益) }}</template>
+          <!-- 損益(%) -->
+          <template v-else-if="col.key === 'profitPercent'">{{ formatPercent(asset.損益百分比) }}</template>
+          <!-- 台幣資產 -->
+          <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(asset.台幣資產) }}</template>
+          <!-- 佔比 -->
+          <template v-else-if="col.key === 'ratio'">{{ formatPercent(getPercentage(asset.台幣資產)) }}</template>
+          <!-- 新聞 -->
+          <template v-else-if="col.key === 'news'">
+            <div class="news-cell">
+              <span v-if="isNewsLoading(asset.代號)" class="spinner news-spinner"></span>
+              <button
+                v-else-if="hasNews(asset.代號)"
+                class="news-btn"
+                :class="{ 'has-negative': hasNegativeNews(asset.代號) }"
+                @click="$emit('open-news', asset.代號, asset.名稱)"
+              >
+                <span v-if="hasNegativeNews(asset.代號)">!</span>
+                <span v-else>i</span>
+                <span class="news-badge">{{ getNewsCount(asset.代號) }}</span>
+              </button>
+            </div>
+          </template>
         </td>
       </tr>
       <tr class="category-subtotal">
-        <td colspan="5">美股小計</td>
-        <td :class="['text-right', 'calculated', getColorClass(usStockSubtotal.profitLoss)]">{{ formatNumber(usStockSubtotal.profitLoss) }}</td>
-        <td></td>
-        <td class="text-right calculated">{{ formatNumber(usStockSubtotal.asset) }}</td>
-        <td class="calculated">{{ formatPercent(getPercentage(usStockSubtotal.asset)) }}</td>
-        <td></td>
+        <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getSubtotalCellClass(col.key)">
+          <!-- 第一欄顯示小計標籤 -->
+          <template v-if="col === sortedVisibleColumns[0]">美股小計</template>
+          <!-- 台幣損益 -->
+          <template v-else-if="col.key === 'twdProfit'">{{ formatNumber(usStockSubtotal.profitLoss) }}</template>
+          <!-- 台幣資產 -->
+          <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(usStockSubtotal.asset) }}</template>
+          <!-- 佔比 -->
+          <template v-else-if="col.key === 'ratio'">{{ formatPercent(getPercentage(usStockSubtotal.asset)) }}</template>
+          <!-- 其他欄位留空 -->
+          <template v-else></template>
+        </td>
       </tr>
 
       <!-- 台股 -->
       <tr class="category-header">
-        <td colspan="10">台股</td>
+        <td :colspan="sortedVisibleColumns.length">台股</td>
       </tr>
       <tr v-for="(asset, index) in twStocks" :key="'tw-' + index" :class="{ 'highlighted-row': asset.代號 === highlightSymbol }">
-        <td class="text-left">{{ asset.名稱 }}</td>
-        <td>{{ asset.代號 }}</td>
-        <td class="cost-price">{{ formatDecimal(asset.買入均價) }}</td>
-        <td>{{ asset.持有單位 }}</td>
-        <td :class="['calculated', { 'price-failed': getPriceStatus(asset.代號).failed }]">
-          {{ formatDecimal(asset.最新價格) }}
-          <span v-if="getPriceStatus(asset.代號).loading" class="spinner"></span>
-        </td>
-        <td :class="['text-right', 'calculated', getColorClass(asset.台幣損益)]">{{ formatNumber(asset.台幣損益) }}</td>
-        <td :class="['calculated', getColorClass(asset.損益百分比)]">{{ formatPercent(asset.損益百分比) }}</td>
-        <td class="text-right calculated">{{ formatNumber(asset.台幣資產) }}</td>
-        <td class="calculated">{{ formatPercent(getPercentage(asset.台幣資產)) }}</td>
-        <td>
-          <div class="news-cell">
-            <span v-if="isNewsLoading(asset.代號)" class="spinner news-spinner"></span>
-            <button
-              v-else-if="hasNews(asset.代號)"
-              class="news-btn"
-              :class="{ 'has-negative': hasNegativeNews(asset.代號) }"
-              @click="$emit('open-news', asset.代號, asset.名稱)"
-            >
-              <span v-if="hasNegativeNews(asset.代號)">!</span>
-              <span v-else>i</span>
-              <span class="news-badge">{{ getNewsCount(asset.代號) }}</span>
-            </button>
-          </div>
+        <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getCellClass(col.key, asset)">
+          <!-- 名稱 -->
+          <template v-if="col.key === 'name'">{{ asset.名稱 }}</template>
+          <!-- 代號 -->
+          <template v-else-if="col.key === 'symbol'">{{ asset.代號 }}</template>
+          <!-- 買入均價 -->
+          <template v-else-if="col.key === 'buyPrice'">{{ formatDecimal(asset.買入均價) }}</template>
+          <!-- 持有單位 -->
+          <template v-else-if="col.key === 'units'">{{ asset.持有單位 }}</template>
+          <!-- 最新價格 -->
+          <template v-else-if="col.key === 'latestPrice'">
+            {{ formatDecimal(asset.最新價格) }}
+            <span v-if="getPriceStatus(asset.代號).loading" class="spinner"></span>
+          </template>
+          <!-- 台幣損益 -->
+          <template v-else-if="col.key === 'twdProfit'">{{ formatNumber(asset.台幣損益) }}</template>
+          <!-- 損益(%) -->
+          <template v-else-if="col.key === 'profitPercent'">{{ formatPercent(asset.損益百分比) }}</template>
+          <!-- 台幣資產 -->
+          <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(asset.台幣資產) }}</template>
+          <!-- 佔比 -->
+          <template v-else-if="col.key === 'ratio'">{{ formatPercent(getPercentage(asset.台幣資產)) }}</template>
+          <!-- 新聞 -->
+          <template v-else-if="col.key === 'news'">
+            <div class="news-cell">
+              <span v-if="isNewsLoading(asset.代號)" class="spinner news-spinner"></span>
+              <button
+                v-else-if="hasNews(asset.代號)"
+                class="news-btn"
+                :class="{ 'has-negative': hasNegativeNews(asset.代號) }"
+                @click="$emit('open-news', asset.代號, asset.名稱)"
+              >
+                <span v-if="hasNegativeNews(asset.代號)">!</span>
+                <span v-else>i</span>
+                <span class="news-badge">{{ getNewsCount(asset.代號) }}</span>
+              </button>
+            </div>
+          </template>
         </td>
       </tr>
       <tr class="category-subtotal">
-        <td colspan="5">台股小計</td>
-        <td :class="['text-right', 'calculated', getColorClass(twStockSubtotal.profitLoss)]">{{ formatNumber(twStockSubtotal.profitLoss) }}</td>
-        <td></td>
-        <td class="text-right calculated">{{ formatNumber(twStockSubtotal.asset) }}</td>
-        <td class="calculated">{{ formatPercent(getPercentage(twStockSubtotal.asset)) }}</td>
-        <td></td>
+        <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getSubtotalCellClass(col.key)">
+          <!-- 第一欄顯示小計標籤 -->
+          <template v-if="col === sortedVisibleColumns[0]">台股小計</template>
+          <!-- 台幣損益 -->
+          <template v-else-if="col.key === 'twdProfit'">{{ formatNumber(twStockSubtotal.profitLoss) }}</template>
+          <!-- 台幣資產 -->
+          <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(twStockSubtotal.asset) }}</template>
+          <!-- 佔比 -->
+          <template v-else-if="col.key === 'ratio'">{{ formatPercent(getPercentage(twStockSubtotal.asset)) }}</template>
+          <!-- 其他欄位留空 -->
+          <template v-else></template>
+        </td>
       </tr>
 
       <!-- 加密貨幣 -->
       <tr class="category-header">
-        <td colspan="10">加密貨幣</td>
+        <td :colspan="sortedVisibleColumns.length">加密貨幣</td>
       </tr>
       <tr v-for="(asset, index) in cryptos" :key="'crypto-' + index" :class="{ 'highlighted-row': asset.代號 === highlightSymbol }">
-        <td class="text-left">{{ asset.名稱 }}</td>
-        <td>{{ asset.代號 }}</td>
-        <td class="cost-price">{{ formatDecimal(asset.買入均價) }}</td>
-        <td>{{ asset.持有單位 }}</td>
-        <td :class="['calculated', { 'price-failed': getPriceStatus(asset.代號).failed }]">
-          {{ formatDecimal(asset.最新價格) }}
-          <span v-if="getPriceStatus(asset.代號).loading" class="spinner"></span>
-        </td>
-        <td :class="['text-right', 'calculated', getColorClass(asset.台幣損益)]">{{ formatNumber(asset.台幣損益) }}</td>
-        <td :class="['calculated', getColorClass(asset.損益百分比)]">{{ formatPercent(asset.損益百分比) }}</td>
-        <td class="text-right calculated">{{ formatNumber(asset.台幣資產) }}</td>
-        <td class="calculated">{{ formatPercent(getPercentage(asset.台幣資產)) }}</td>
-        <td>
-          <div class="news-cell">
-            <span v-if="isNewsLoading(asset.代號)" class="spinner news-spinner"></span>
-            <button
-              v-else-if="hasNews(asset.代號)"
-              class="news-btn"
-              :class="{ 'has-negative': hasNegativeNews(asset.代號) }"
-              @click="$emit('open-news', asset.代號, asset.名稱)"
-            >
-              <span v-if="hasNegativeNews(asset.代號)">!</span>
-              <span v-else>i</span>
-              <span class="news-badge">{{ getNewsCount(asset.代號) }}</span>
-            </button>
-          </div>
+        <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getCellClass(col.key, asset)">
+          <!-- 名稱 -->
+          <template v-if="col.key === 'name'">{{ asset.名稱 }}</template>
+          <!-- 代號 -->
+          <template v-else-if="col.key === 'symbol'">{{ asset.代號 }}</template>
+          <!-- 買入均價 -->
+          <template v-else-if="col.key === 'buyPrice'">{{ formatDecimal(asset.買入均價) }}</template>
+          <!-- 持有單位 -->
+          <template v-else-if="col.key === 'units'">{{ asset.持有單位 }}</template>
+          <!-- 最新價格 -->
+          <template v-else-if="col.key === 'latestPrice'">
+            {{ formatDecimal(asset.最新價格) }}
+            <span v-if="getPriceStatus(asset.代號).loading" class="spinner"></span>
+          </template>
+          <!-- 台幣損益 -->
+          <template v-else-if="col.key === 'twdProfit'">{{ formatNumber(asset.台幣損益) }}</template>
+          <!-- 損益(%) -->
+          <template v-else-if="col.key === 'profitPercent'">{{ formatPercent(asset.損益百分比) }}</template>
+          <!-- 台幣資產 -->
+          <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(asset.台幣資產) }}</template>
+          <!-- 佔比 -->
+          <template v-else-if="col.key === 'ratio'">{{ formatPercent(getPercentage(asset.台幣資產)) }}</template>
+          <!-- 新聞 -->
+          <template v-else-if="col.key === 'news'">
+            <div class="news-cell">
+              <span v-if="isNewsLoading(asset.代號)" class="spinner news-spinner"></span>
+              <button
+                v-else-if="hasNews(asset.代號)"
+                class="news-btn"
+                :class="{ 'has-negative': hasNegativeNews(asset.代號) }"
+                @click="$emit('open-news', asset.代號, asset.名稱)"
+              >
+                <span v-if="hasNegativeNews(asset.代號)">!</span>
+                <span v-else>i</span>
+                <span class="news-badge">{{ getNewsCount(asset.代號) }}</span>
+              </button>
+            </div>
+          </template>
         </td>
       </tr>
       <tr class="category-subtotal">
-        <td colspan="5">加密貨幣小計</td>
-        <td :class="['text-right', 'calculated', getColorClass(cryptoSubtotal.profitLoss)]">{{ formatNumber(cryptoSubtotal.profitLoss) }}</td>
-        <td></td>
-        <td class="text-right calculated">{{ formatNumber(cryptoSubtotal.asset) }}</td>
-        <td class="calculated">{{ formatPercent(getPercentage(cryptoSubtotal.asset)) }}</td>
-        <td></td>
+        <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getSubtotalCellClass(col.key)">
+          <!-- 第一欄顯示小計標籤 -->
+          <template v-if="col === sortedVisibleColumns[0]">加密貨幣小計</template>
+          <!-- 台幣損益 -->
+          <template v-else-if="col.key === 'twdProfit'">{{ formatNumber(cryptoSubtotal.profitLoss) }}</template>
+          <!-- 台幣資產 -->
+          <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(cryptoSubtotal.asset) }}</template>
+          <!-- 佔比 -->
+          <template v-else-if="col.key === 'ratio'">{{ formatPercent(getPercentage(cryptoSubtotal.asset)) }}</template>
+          <!-- 其他欄位留空 -->
+          <template v-else></template>
+        </td>
       </tr>
     </tbody>
     <tfoot>
       <tr class="sub-total">
-        <td colspan="5">小計</td>
-        <td :class="['text-right', 'calculated', getColorClass(totalProfitLoss)]">{{ formatNumber(totalProfitLoss) }}</td>
-        <td></td>
-        <td class="text-right calculated">{{ formatNumber(subtotal.台幣資產) }}</td>
-        <td class="calculated">{{ formatPercent(getPercentage(subtotal.台幣資產)) }}</td>
-        <td></td>
+        <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getFooterCellClass(col.key)">
+          <!-- 第一欄顯示小計標籤 -->
+          <template v-if="col === sortedVisibleColumns[0]">小計</template>
+          <!-- 台幣損益 -->
+          <template v-else-if="col.key === 'twdProfit'">{{ formatNumber(totalProfitLoss) }}</template>
+          <!-- 台幣資產 -->
+          <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(subtotal.台幣資產) }}</template>
+          <!-- 佔比 -->
+          <template v-else-if="col.key === 'ratio'">{{ formatPercent(getPercentage(subtotal.台幣資產)) }}</template>
+          <!-- 其他欄位留空 -->
+          <template v-else></template>
+        </td>
       </tr>
     </tfoot>
   </table>
@@ -193,10 +246,105 @@ const props = defineProps({
   highlightSymbol: {
     type: String,
     default: ''
+  },
+  columnConfig: {
+    type: Array,
+    default: () => []
   }
 })
 
 defineEmits(['open-news'])
+
+// 欄位定義
+const columnDefinitions = {
+  name: { label: '名稱', defaultOrder: 1 },
+  symbol: { label: '代號', defaultOrder: 2 },
+  buyPrice: { label: '買入均價', defaultOrder: 3 },
+  units: { label: '持有單位', defaultOrder: 4 },
+  latestPrice: { label: '最新價格', defaultOrder: 5 },
+  twdProfit: { label: '台幣損益', defaultOrder: 6 },
+  profitPercent: { label: '損益(%)', defaultOrder: 7 },
+  twdAsset: { label: '台幣資產', defaultOrder: 8 },
+  ratio: { label: '佔比', defaultOrder: 9 },
+  news: { label: '新聞', defaultOrder: 10 }
+}
+
+const allColumnKeys = Object.keys(columnDefinitions)
+
+// 排序後的可見欄位
+const sortedVisibleColumns = computed(() => {
+  if (!props.columnConfig || props.columnConfig.length === 0) {
+    return allColumnKeys.map(key => ({
+      key,
+      label: columnDefinitions[key].label,
+      order: columnDefinitions[key].defaultOrder
+    })).sort((a, b) => a.order - b.order)
+  }
+
+  const configMap = {}
+  props.columnConfig.forEach(col => {
+    configMap[col.key] = col
+  })
+
+  return allColumnKeys
+    .filter(key => {
+      const config = configMap[key]
+      return config ? config.visible !== false : true
+    })
+    .map(key => ({
+      key,
+      label: columnDefinitions[key].label,
+      order: configMap[key]?.order ?? columnDefinitions[key].defaultOrder
+    }))
+    .sort((a, b) => a.order - b.order)
+})
+
+// 取得表頭樣式
+const getHeaderClass = (key) => {
+  if (key === 'news') return 'text-center'
+  if (['twdProfit', 'twdAsset'].includes(key)) return 'text-right'
+  return ''
+}
+
+// 取得儲存格樣式
+const getCellClass = (key, asset) => {
+  const classes = []
+
+  if (key === 'name') classes.push('text-left')
+  if (key === 'buyPrice') classes.push('cost-price')
+  if (['twdProfit', 'twdAsset'].includes(key)) classes.push('text-right')
+
+  const calculatedCols = ['latestPrice', 'twdProfit', 'profitPercent', 'twdAsset', 'ratio']
+  if (calculatedCols.includes(key)) classes.push('calculated')
+
+  if (key === 'latestPrice' && getPriceStatus(asset.代號).failed) classes.push('price-failed')
+  if (key === 'twdProfit') {
+    const colorClass = getColorClass(asset.台幣損益)
+    if (colorClass) classes.push(colorClass)
+  }
+  if (key === 'profitPercent') {
+    const colorClass = getColorClass(asset.損益百分比)
+    if (colorClass) classes.push(colorClass)
+  }
+
+  return classes.join(' ')
+}
+
+// 取得類別小計行樣式
+const getSubtotalCellClass = (key) => {
+  const classes = []
+  if (['twdProfit', 'twdAsset'].includes(key)) classes.push('text-right', 'calculated')
+  if (key === 'ratio') classes.push('calculated')
+  return classes.join(' ')
+}
+
+// 取得總計行樣式
+const getFooterCellClass = (key) => {
+  const classes = []
+  if (['twdProfit', 'twdAsset'].includes(key)) classes.push('text-right', 'calculated')
+  if (key === 'ratio') classes.push('calculated')
+  return classes.join(' ')
+}
 
 // 美股代號列表
 const usStockSymbols = ['TSLA', 'GLDM', 'SIVR', 'COPX', 'VOO']
