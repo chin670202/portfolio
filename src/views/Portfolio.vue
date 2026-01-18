@@ -4,9 +4,8 @@ import { useRoute } from 'vue-router'
 import NewsModal from '../components/NewsModal.vue'
 import QuickUpdate from '../components/QuickUpdate.vue'
 import { ModuleContainer, getDefaultModuleConfig, mergeModuleConfig } from '../modules'
-import ModuleEditor from '../modules/ModuleEditor.vue'
-import ModuleGallery from '../modules/ModuleGallery.vue'
 import SettingsModal from '../components/SettingsModal.vue'
+import UserDashboard from '../components/UserDashboard.vue'
 import { updateService } from '../config'
 import {
   calculateBondDerivedData,
@@ -41,13 +40,9 @@ const priceStatus = ref({})
 // 模組配置（從用戶 JSON 載入，若無則使用預設）
 const moduleConfig = ref(getDefaultModuleConfig())
 
-// 模組編輯器狀態
-const showModuleEditor = ref(false)
-const savingModuleConfig = ref(false)
-
-// 模組畫廊狀態
-const showModuleGallery = ref(false)
-const moduleStats = ref({})
+// 用戶儀表板（動態載入）
+const userDashboardComponent = ref(null)
+const dashboardLoading = ref(false)
 
 // 設定視窗狀態
 const showSettings = ref(false)
@@ -464,97 +459,30 @@ async function loadData() {
   }
 }
 
-// 即時預覽模組配置（不儲存）
-function previewModuleConfig(newConfig) {
-  moduleConfig.value = newConfig
-}
-
-// 取消編輯時恢復原始配置
-function restoreModuleConfig(originalConfig) {
-  moduleConfig.value = originalConfig
-}
-
-// 儲存模組配置到後端
-async function saveModuleConfig(newConfig) {
-  savingModuleConfig.value = true
+// 載入用戶儀表板
+async function loadUserDashboard() {
+  dashboardLoading.value = true
   try {
-    const response = await fetch(`${updateService.baseUrl}/config/${currentUsername.value}/modules`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': updateService.apiKey
-      },
-      body: JSON.stringify({ moduleConfig: newConfig })
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error || '儲存失敗')
-    }
-
-    // 更新本地狀態
-    moduleConfig.value = newConfig
-    showModuleEditor.value = false
-
-    // 同時更新 rawData 以保持一致
-    if (rawData.value) {
-      rawData.value.模組配置 = newConfig
-    }
-  } catch (e) {
-    alert(`儲存失敗: ${e.message}`)
-  } finally {
-    savingModuleConfig.value = false
-  }
-}
-
-// 載入模組統計（熱門度）
-async function loadModuleStats() {
-  try {
-    const response = await fetch(`${updateService.baseUrl}/modules/stats`, {
+    const response = await fetch(`${updateService.baseUrl}/dashboard/${currentUsername.value}/compiled`, {
       headers: {
         'X-API-Key': updateService.apiKey
       }
     })
     if (response.ok) {
       const data = await response.json()
-      moduleStats.value = data.stats || {}
+      userDashboardComponent.value = data
     }
   } catch (e) {
-    console.warn('[Portfolio] 載入模組統計失敗:', e)
+    console.warn('[Portfolio] 載入用戶儀表板失敗，使用預設:', e)
+    userDashboardComponent.value = null
+  } finally {
+    dashboardLoading.value = false
   }
 }
 
-// 處理模組畫廊的選擇更新
-async function handleGalleryUpdate(selectedUids) {
-  // 建立新的配置
-  const newConfig = moduleConfig.value.map(m => {
-    const shouldEnable = selectedUids.includes(m.uid)
-    return {
-      ...m,
-      enabled: shouldEnable
-    }
-  })
-
-  // 檢查是否有新選的模組（不在現有配置中）
-  const existingUids = new Set(moduleConfig.value.map(m => m.uid))
-  const newUids = selectedUids.filter(uid => !existingUids.has(uid))
-
-  // 如果有新模組，加到最後
-  if (newUids.length > 0) {
-    const maxOrder = Math.max(...moduleConfig.value.map(m => m.order), 0)
-    newUids.forEach((uid, index) => {
-      newConfig.push({
-        uid,
-        enabled: true,
-        order: maxOrder + index + 1,
-        options: {}
-      })
-    })
-  }
-
-  // 儲存配置
-  await saveModuleConfig(newConfig)
-  showModuleGallery.value = false
+// 處理儀表板更新事件
+function handleDashboardUpdated() {
+  loadUserDashboard()
 }
 
 // 監聽路由變化，重新載入資料
@@ -564,7 +492,7 @@ watch(() => route.params.username, () => {
 
 onMounted(() => {
   loadData()
-  loadModuleStats()
+  loadUserDashboard()
 })
 </script>
 
@@ -576,10 +504,7 @@ onMounted(() => {
         <span v-if="lastUpdateTime" class="last-update">
           最後更新: {{ lastUpdateTime }}
         </span>
-        <QuickUpdate :username="currentUsername" @updated="loadData" />
-        <button class="module-gallery-btn" @click="showModuleGallery = true" title="儀表模組">
-          📊 儀表模組
-        </button>
+        <QuickUpdate :username="currentUsername" @updated="loadData" @dashboard-updated="handleDashboardUpdated" />
         <button class="settings-btn" @click="showSettings = true" title="設定">
           ⚙️
         </button>
@@ -590,8 +515,15 @@ onMounted(() => {
     <div v-else-if="error" class="error">錯誤: {{ error }}</div>
 
     <template v-else-if="rawData">
-      <!-- 模組化區塊（包含摘要卡片模組） -->
+      <!-- 用戶儀表板（動態載入）或預設模組容器 -->
+      <UserDashboard
+        v-if="userDashboardComponent"
+        :compiled="userDashboardComponent"
+        :module-props="moduleProps"
+        @open-news="handleOpenNews"
+      />
       <ModuleContainer
+        v-else
         :module-config="moduleConfig"
         :module-props="moduleProps"
         @open-news="handleOpenNews"
@@ -611,28 +543,6 @@ onMounted(() => {
         :total-count="allProducts.length"
         @close="showNewsModal = false"
         @navigate="handleNewsNavigate"
-      />
-
-      <!-- 模組編輯器 -->
-      <ModuleEditor
-        :visible="showModuleEditor"
-        :module-config="moduleConfig"
-        :saving="savingModuleConfig"
-        @close="showModuleEditor = false"
-        @save="saveModuleConfig"
-        @preview="previewModuleConfig"
-        @cancel="restoreModuleConfig"
-      />
-
-      <!-- 模組畫廊 -->
-      <ModuleGallery
-        :visible="showModuleGallery"
-        :current-config="moduleConfig"
-        :module-stats="moduleStats"
-        :username="currentUsername"
-        @close="showModuleGallery = false"
-        @update="handleGalleryUpdate"
-        @open-editor="showModuleEditor = true"
       />
 
       <!-- 設定視窗 -->

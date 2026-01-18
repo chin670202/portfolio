@@ -8,10 +8,76 @@ const router = express.Router();
 const claudeService = require('../services/claude');
 const githubService = require('../services/github');
 const backupService = require('../services/backup');
+const dashboardBackupService = require('../services/dashboard-backup');
+const vueCompiler = require('../services/vue-compiler');
 const fs = require('fs').promises;
 const path = require('path');
 
 const PROJECT_ROOT = process.env.PROJECT_ROOT || path.resolve(__dirname, '../..');
+const DASHBOARDS_DIR = path.join(__dirname, '../dashboards');
+
+/**
+ * 處理儀表板更新
+ */
+async function handleDashboardUpdate(user, instruction, sendProgress, sendComplete, sendError, startTime, projectRoot) {
+  try {
+    sendProgress('備份儀表板', '正在備份當前儀表板...');
+
+    // 讀取當前儀表板內容
+    const currentContent = await vueCompiler.getUserDashboardRaw(user);
+
+    // 備份當前儀表板
+    const backupResult = await dashboardBackupService.createBackup(user, currentContent);
+    if (!backupResult.success && !backupResult.skipped) {
+      console.warn(`[Warning] 儀表板備份失敗: ${backupResult.error}`);
+    }
+
+    sendProgress('修改儀表板', 'AI 正在修改儀表板...');
+
+    // 讀取儀表板 prompt
+    const dashboardPrompt = await fs.readFile(
+      path.join(__dirname, '../prompts/dashboard.md'),
+      'utf-8'
+    );
+
+    // 取得儀表板路徑
+    const dashboardPath = path.join(DASHBOARDS_DIR, `${user}.vue`);
+
+    // 組合 prompt
+    const prompt = dashboardPrompt
+      .replace('{{USER}}', user)
+      .replace('{{INSTRUCTION}}', instruction)
+      .replace('{{CURRENT_VUE}}', currentContent)
+      .replace('{{DASHBOARD_PATH}}', dashboardPath);
+
+    // 呼叫 Claude 修改儀表板
+    const result = await claudeService.runClaudeRaw(prompt, DASHBOARDS_DIR);
+
+    // 推送到 GitHub
+    sendProgress('推送變更', '正在推送到 GitHub...');
+    const gitResult = await githubService.commitAndPush(
+      user,
+      [{ type: 'update', category: '儀表板', item: instruction }],
+      projectRoot
+    );
+
+    const duration = Date.now() - startTime;
+    console.log(`\n儀表板更新完成！耗時 ${duration}ms`);
+
+    sendComplete({
+      success: true,
+      type: 'dashboard-updated',
+      message: `已更新 ${user} 的儀表板`,
+      changes: [{ type: 'update', category: '儀表板', item: instruction }],
+      summary: result,
+      duration: `${duration}ms`
+    });
+
+  } catch (error) {
+    console.error('儀表板更新失敗:', error);
+    sendError(error.message || '儀表板更新失敗');
+  }
+}
 
 /**
  * POST /update
@@ -175,6 +241,18 @@ router.post('/stream', async (req, res) => {
         originalInput: content
       })}\n\n`);
       res.end();
+      return;
+    }
+
+    // 檢查是否是儀表板調整（summary 包含「儀表板調整」）
+    if (analysis.summary && analysis.summary.includes('儀表板調整')) {
+      console.log('\n偵測到儀表板調整請求，切換到儀表板更新流程...');
+
+      // 取得儀表板調整指令描述
+      const dashboardInstruction = analysis.summary.replace(/^儀表板調整[：:]\s*/, '');
+
+      // 執行儀表板更新
+      await handleDashboardUpdate(user, dashboardInstruction, sendProgress, sendComplete, sendError, startTime, PROJECT_ROOT);
       return;
     }
 

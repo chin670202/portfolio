@@ -54,7 +54,9 @@
       "Bash(npx eslint:*)",
       "Bash(npm run lint:*)",
       "Bash(npx playwright install:*)",
-      "Bash(TASKKILL:*)"
+      "Bash(TASKKILL:*)",
+      "Bash(Start-Sleep -Seconds 3)",
+      "Bash(Get-Content -Path \"C:\\\\Users\\\\CHINGH~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--------\\\\tasks\\\\b082394.output\" -Tail 30)"
     ]
   }
 }

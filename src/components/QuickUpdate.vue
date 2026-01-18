@@ -9,7 +9,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['updated'])
+const emit = defineEmits(['updated', 'dashboard-updated'])
 
 // 輸入視窗狀態
 const showInputModal = ref(false)
@@ -265,7 +265,12 @@ function handleSSEMessage(data) {
         if (s.status === 'active') s.status = 'done'
       })
       result.value = data.result
-      emit('updated', data.result)
+      // 根據結果類型 emit 不同事件
+      if (data.result?.type === 'dashboard-updated') {
+        emit('dashboard-updated', data.result)
+      } else {
+        emit('updated', data.result)
+      }
       break
 
     case 'clarification':
@@ -365,9 +370,9 @@ async function submitClarification() {
 <template>
   <div v-if="isEnabled" class="quick-update">
     <!-- 觸發按鈕 -->
-    <button class="quick-update-btn" @click="openInputModal" title="快速更新部位">
-      <span class="btn-icon">+</span>
-      <span class="btn-text">更新部位</span>
+    <button class="quick-update-btn" @click="openInputModal" title="智慧助手">
+      <span class="btn-icon">✦</span>
+      <span class="btn-text">智慧助手</span>
     </button>
 
     <!-- 輸入視窗 -->
@@ -375,17 +380,17 @@ async function submitClarification() {
       <div v-if="showInputModal" class="modal-overlay" @click.self="closeInputModal">
         <div class="modal-content">
           <div class="modal-header">
-            <h3>快速更新部位</h3>
+            <h3>智慧助手</h3>
             <button class="close-btn" @click="closeInputModal">&times;</button>
           </div>
 
           <div class="modal-body">
             <!-- 輸入區 -->
             <div class="input-section">
-              <label>貼上交易訊息：</label>
+              <label>輸入指令：</label>
               <textarea
                 v-model="updateContent"
-                placeholder="例如：買入 NVDA 10股 @140&#10;或：賣出 00725B 5000股"
+                placeholder="例如：買入 NVDA 10股 @140&#10;或：把債券移到最上面"
                 rows="4"
               ></textarea>
             </div>
@@ -411,7 +416,7 @@ async function submitClarification() {
             </div>
 
             <div class="input-hint">
-              僅接受投資部位更新指令（買入/賣出/加碼等）
+              支援投資部位更新、儀表板調整等指令
             </div>
           </div>
 
@@ -424,7 +429,7 @@ async function submitClarification() {
               @click="submitUpdate"
               :disabled="!canSubmit"
             >
-              送出更新
+              送出
             </button>
           </div>
         </div>

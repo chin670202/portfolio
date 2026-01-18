@@ -8,8 +8,7 @@ const express = require('express');
 const cors = require('cors');
 const updateRouter = require('./routes/update');
 const backupRouter = require('./routes/backup');
-const configRouter = require('./routes/config');
-const moduleStatsRouter = require('./routes/moduleStats');
+const dashboardRouter = require('./routes/dashboard');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -60,8 +59,7 @@ const apiKeyAuth = (req, res, next) => {
 // 路由
 app.use('/update', apiKeyAuth, updateRouter);
 app.use('/backup', apiKeyAuth, backupRouter);
-app.use('/config', apiKeyAuth, configRouter);
-app.use('/modules', apiKeyAuth, moduleStatsRouter);
+app.use('/dashboard', apiKeyAuth, dashboardRouter);
 
 // 健康檢查
 app.get('/health', (req, res) => {
@@ -104,13 +102,10 @@ app.listen(PORT, () => {
   ngrok http ${PORT}
 
 API 端點:
-  POST /update - 更新投資部位
+  POST /update - 更新投資部位（支援儀表板調整）
   GET  /backup/:user - 取得備份列表
   POST /backup/:user/restore - 還原備份
-  GET  /config/:user/modules - 取得模組配置
-  PUT  /config/:user/modules - 更新模組配置
-  GET  /modules/stats - 取得模組使用統計
-  GET  /modules/all - 取得所有可用模組
+  GET  /dashboard/:user/compiled - 取得編譯後的用戶儀表板
   GET  /health - 健康檢查
   `);
 });

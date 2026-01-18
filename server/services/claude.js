@@ -263,7 +263,15 @@ function compareChanges(oldData, newData) {
   return changes;
 }
 
+/**
+ * 直接執行 Claude CLI（不做 JSON 處理，用於儀表板等非 JSON 場景）
+ */
+async function runClaudeRaw(prompt, workDir) {
+  return runClaude(prompt, workDir);
+}
+
 module.exports = {
   checkAvailable,
-  analyzeAndUpdate
+  analyzeAndUpdate,
+  runClaudeRaw
 };
