@@ -81,7 +81,14 @@ const allColumnKeys = Object.keys(columnDefinitions)
 
 // 排序後的可見欄位
 const sortedVisibleColumns = computed(() => {
-  if (!props.columnConfig || props.columnConfig.length === 0) {
+  // 支援兩種格式：
+  // 1. Array 格式（舊）: [{ key, order, visible }]
+  // 2. Object 格式（新）: { order: [...], hidden: [...] }
+
+  if (!props.columnConfig ||
+      (Array.isArray(props.columnConfig) && props.columnConfig.length === 0) ||
+      (typeof props.columnConfig === 'object' && !Array.isArray(props.columnConfig) && !props.columnConfig.order)) {
+    // 沒有配置，使用預設順序，全部顯示
     return allColumnKeys.map(key => ({
       key,
       label: columnDefinitions[key].label,
@@ -89,6 +96,34 @@ const sortedVisibleColumns = computed(() => {
     })).sort((a, b) => a.order - b.order)
   }
 
+  // 新格式：{ order: [], hidden: [] }
+  if (typeof props.columnConfig === 'object' && !Array.isArray(props.columnConfig)) {
+    const { order = [], hidden = [] } = props.columnConfig
+    const hiddenSet = new Set(hidden)
+
+    // 如果有指定順序，按指定順序排列
+    if (order.length > 0) {
+      return order
+        .filter(key => !hiddenSet.has(key) && columnDefinitions[key])
+        .map((key, index) => ({
+          key,
+          label: columnDefinitions[key].label,
+          order: index + 1
+        }))
+    }
+
+    // 沒有指定順序，只過濾隱藏欄位
+    return allColumnKeys
+      .filter(key => !hiddenSet.has(key))
+      .map(key => ({
+        key,
+        label: columnDefinitions[key].label,
+        order: columnDefinitions[key].defaultOrder
+      }))
+      .sort((a, b) => a.order - b.order)
+  }
+
+  // 舊格式：Array
   const configMap = {}
   props.columnConfig.forEach(col => {
     configMap[col.key] = col

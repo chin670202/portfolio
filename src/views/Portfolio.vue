@@ -459,18 +459,36 @@ async function loadData() {
   }
 }
 
-// 載入用戶儀表板
+// 載入用戶儀表板配置
 async function loadUserDashboard() {
   dashboardLoading.value = true
   try {
-    const response = await fetch(`${updateService.baseUrl}/dashboard/${currentUsername.value}/compiled`, {
-      headers: {
-        'X-API-Key': updateService.apiKey
-      }
-    })
+    // 直接從靜態檔案載入 dashboard.json
+    const response = await fetch(`/data/${currentUsername.value}.dashboard.json?t=${Date.now()}`)
     if (response.ok) {
       const data = await response.json()
       userDashboardComponent.value = data
+    } else {
+      // 如果找不到用戶專屬配置，使用預設配置
+      userDashboardComponent.value = {
+        version: 1,
+        sectionOrder: ['summary', 'bonds', 'etf', 'otherAssets', 'loans', 'history'],
+        sections: {
+          summary: true,
+          bonds: true,
+          etf: true,
+          otherAssets: true,
+          loans: true,
+          history: true
+        },
+        theme: {
+          primaryColor: '#667eea',
+          primaryGradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          sectionGap: '20px'
+        },
+        columns: {},
+        customCards: []
+      }
     }
   } catch (e) {
     console.warn('[Portfolio] 載入用戶儀表板失敗，使用預設:', e)
@@ -518,7 +536,7 @@ onMounted(() => {
       <!-- 用戶儀表板（動態載入）或預設模組容器 -->
       <UserDashboard
         v-if="userDashboardComponent"
-        :compiled="userDashboardComponent"
+        :dashboard-config="userDashboardComponent"
         :module-props="moduleProps"
         @open-news="handleOpenNews"
       />

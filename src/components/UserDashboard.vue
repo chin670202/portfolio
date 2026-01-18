@@ -1,9 +1,9 @@
 <script setup>
 /**
- * 用戶儀表板動態載入元件
- * 解析用戶的 Vue 檔案，根據配置渲染儀表板
+ * 用戶儀表板元件
+ * 根據 dashboard.json 配置渲染儀表板
  */
-import { ref, computed, watch, onErrorCaptured } from 'vue'
+import { computed } from 'vue'
 
 // 引入所有模組元件
 import SummaryCardsModule from '../modules/SummaryCardsModule.vue'
@@ -14,8 +14,8 @@ import LoansModule from '../modules/LoansModule.vue'
 import AssetHistoryModule from '../modules/AssetHistoryModule.vue'
 
 const props = defineProps({
-  // 後端編譯的結果（包含 raw 原始內容）
-  compiled: {
+  // 儀表板配置（從 JSON 載入）
+  dashboardConfig: {
     type: Object,
     required: true
   },
@@ -28,167 +28,106 @@ const props = defineProps({
 
 const emit = defineEmits(['open-news'])
 
-// 錯誤狀態
-const hasError = ref(false)
-const errorMessage = ref('')
-
-// 錯誤捕獲
-onErrorCaptured((err, instance, info) => {
-  console.error('[UserDashboard] 元件錯誤:', err)
-  hasError.value = true
-  errorMessage.value = `儀表板渲染錯誤: ${err.message}`
-  return false
-})
-
 // 預設配置
-const defaultSections = {
-  summary: true,
-  bonds: true,
-  etf: true,
-  otherAssets: true,
-  loans: true,
-  history: true
+const defaultConfig = {
+  sectionOrder: ['summary', 'bonds', 'etf', 'otherAssets', 'loans', 'history'],
+  sections: {
+    summary: true,
+    bonds: true,
+    etf: true,
+    otherAssets: true,
+    loans: true,
+    history: true
+  },
+  theme: {
+    primaryColor: '#667eea',
+    primaryGradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    sectionGap: '20px'
+  },
+  customCards: []
 }
 
-const defaultThemeVars = {
-  '--primary-color': '#667eea',
-  '--primary-gradient': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  '--section-gap': '20px'
-}
+// 合併配置
+const config = computed(() => ({
+  sectionOrder: props.dashboardConfig?.sectionOrder || defaultConfig.sectionOrder,
+  sections: { ...defaultConfig.sections, ...props.dashboardConfig?.sections },
+  theme: { ...defaultConfig.theme, ...props.dashboardConfig?.theme },
+  customCards: props.dashboardConfig?.customCards || [],
+  columns: props.dashboardConfig?.columns || {}
+}))
 
-// 從原始 Vue 內容解析配置
-const parsedConfig = computed(() => {
-  const raw = props.compiled?.raw || ''
-
-  let sections = { ...defaultSections }
-  let themeVars = { ...defaultThemeVars }
-  let sectionOrder = ['summary', 'bonds', 'etf', 'otherAssets', 'loans', 'history']
-  let customSections = []
-
-  try {
-    // 解析 sections
-    const sectionsMatch = raw.match(/const sections\s*=\s*\{([\s\S]*?)\n\s*\}/)
-    if (sectionsMatch) {
-      const sectionsContent = sectionsMatch[1]
-      const sectionEntries = sectionsContent.match(/(\w+)\s*:\s*(true|false)/g)
-      if (sectionEntries) {
-        sectionEntries.forEach(entry => {
-          const [key, value] = entry.split(':').map(s => s.trim())
-          sections[key] = value === 'true'
-        })
-      }
-    }
-
-    // 解析 themeVars
-    const themeMatch = raw.match(/const themeVars\s*=\s*\{([\s\S]*?)\n\s*\}/)
-    if (themeMatch) {
-      const themeContent = themeMatch[1]
-      const themeEntries = themeContent.match(/'([^']+)'\s*:\s*'([^']+)'/g)
-      if (themeEntries) {
-        themeEntries.forEach(entry => {
-          const match = entry.match(/'([^']+)'\s*:\s*'([^']+)'/)
-          if (match) {
-            themeVars[match[1]] = match[2]
-          }
-        })
-      }
-    }
-
-    // 從 template 解析區塊順序
-    const templateMatch = raw.match(/<template>([\s\S]*?)<\/template>/)
-    if (templateMatch) {
-      const templateContent = templateMatch[1]
-
-      // 找出所有 section 的順序（匹配 xxx-section 格式）
-      const sectionRegex = /<section[^>]*class="[^"]*\b([\w-]+)-section\b[^"]*"[^>]*>/g
-      const foundSections = []
-      let match
-      while ((match = sectionRegex.exec(templateContent)) !== null) {
-        const sectionType = match[1]
-        // 映射 class 名稱到 section key
-        const keyMap = {
-          'summary': 'summary',
-          'bonds': 'bonds',
-          'etf': 'etf',
-          'other-assets': 'otherAssets',
-          'loans': 'loans',
-          'history': 'history'
-        }
-        const key = keyMap[sectionType]
-        if (key && !foundSections.includes(key)) {
-          foundSections.push(key)
-        }
-      }
-
-      if (foundSections.length > 0) {
-        sectionOrder = foundSections
-      }
-
-      // 解析自訂區塊
-      const customSectionRegex = /<section[^>]*class="[^"]*custom-([^-\s"]+)-section[^"]*"[^>]*>([\s\S]*?)<\/section>/g
-      while ((match = customSectionRegex.exec(templateContent)) !== null) {
-        const customType = match[1]
-        const customContent = match[2]
-        customSections.push({
-          type: customType,
-          content: customContent
-        })
-      }
-    }
-
-  } catch (e) {
-    console.warn('[UserDashboard] 解析配置失敗，使用預設值:', e)
-  }
-
-  return { sections, themeVars, sectionOrder, customSections }
-})
+// 主題樣式變數
+const themeVars = computed(() => ({
+  '--primary-color': config.value.theme.primaryColor,
+  '--primary-gradient': config.value.theme.primaryGradient,
+  '--section-gap': config.value.theme.sectionGap
+}))
 
 // 處理 open-news 事件
 function handleOpenNews(symbol, name) {
   emit('open-news', symbol, name)
 }
 
-// 注入自訂樣式
-const injectedStyleIds = new Set()
-watch(
-  () => props.compiled,
-  () => {
-    if (props.compiled?.compiled?.styles) {
-      const scopeId = props.compiled.compiled.scopeId || 'user'
-      props.compiled.compiled.styles.forEach((style, index) => {
-        const styleId = `user-dashboard-style-${scopeId}-${index}`
-        if (injectedStyleIds.has(styleId)) return
+// 解析自訂卡片的變數值
+function resolveValue(item, data) {
+  if (!item.value) return ''
 
-        const styleEl = document.createElement('style')
-        styleEl.id = styleId
-        styleEl.textContent = style.code
-        document.head.appendChild(styleEl)
-        injectedStyleIds.add(styleId)
-      })
+  let value = item.value.replace(/\{\{(.+?)\}\}/g, (_, path) => {
+    return getNestedValue(data, path)
+  })
+
+  if (item.format === 'currency') {
+    const num = Number(value)
+    if (!isNaN(num)) {
+      value = num.toLocaleString()
     }
-  },
-  { immediate: true }
-)
+  } else if (item.format === 'percent') {
+    const num = Number(value)
+    if (!isNaN(num)) {
+      value = num.toFixed(2) + '%'
+    }
+  }
+
+  return value + (item.suffix || '')
+}
+
+// 取得巢狀物件的值
+function getNestedValue(obj, path) {
+  return path.split('.').reduce((current, key) => {
+    if (current === null || current === undefined) return ''
+    return current[key]
+  }, obj)
+}
+
+// 根據 position 取得該位置的自訂卡片
+function getCustomCardsAt(position) {
+  return config.value.customCards.filter(card => card.position === position)
+}
+
+// 計算用於自訂卡片的資料
+const customCardData = computed(() => ({
+  bondsCount: props.moduleProps.calculatedBonds?.length || 0,
+  etfCount: props.moduleProps.calculatedEtfs?.length || 0,
+  otherAssetsCount: props.moduleProps.calculatedOtherAssets?.length || 0,
+  totalCount: (props.moduleProps.calculatedBonds?.length || 0) +
+              (props.moduleProps.calculatedEtfs?.length || 0) +
+              (props.moduleProps.calculatedOtherAssets?.length || 0),
+  exchangeRate: props.moduleProps.exchangeRate || 0,
+  usd100ToTwd: ((props.moduleProps.exchangeRate || 0) * 100).toLocaleString(),
+  usd1000ToTwd: ((props.moduleProps.exchangeRate || 0) * 1000).toLocaleString(),
+  grandTotal: props.moduleProps.grandTotal || 0,
+  loanTotal: props.moduleProps.loanTotal || 0,
+  netWorth: (props.moduleProps.grandTotal || 0) - (props.moduleProps.loanTotal || 0),
+  netIncome: props.moduleProps.netIncome || 0
+}))
 </script>
 
 <template>
-  <div class="user-dashboard-container">
-    <!-- 錯誤狀態 -->
-    <div v-if="hasError" class="dashboard-error">
-      <div class="error-icon">⚠️</div>
-      <h3>儀表板載入失敗</h3>
-      <p>{{ errorMessage }}</p>
-      <p class="error-hint">請嘗試重新整理頁面，或聯繫管理員</p>
-    </div>
-
-    <!-- 正常渲染 -->
-    <div v-else class="user-dashboard" :style="parsedConfig.themeVars">
-      <template v-for="sectionKey in parsedConfig.sectionOrder" :key="sectionKey">
-        <!-- 摘要卡片 -->
-        <section
-          v-if="sectionKey === 'summary' && parsedConfig.sections.summary"
-          class="dashboard-section summary-section"
-        >
+  <div class="user-dashboard" :style="themeVars">
+    <template v-for="sectionKey in config.sectionOrder" :key="sectionKey">
+      <!-- 摘要卡片 -->
+      <template v-if="sectionKey === 'summary' && config.sections.summary">
+        <section class="dashboard-section summary-section">
           <SummaryCardsModule
             :config="{ uid: 'summary-cards', enabled: true, options: {} }"
             :exchange-rate="moduleProps.exchangeRate"
@@ -198,14 +137,29 @@ watch(
             :updating="moduleProps.updating"
           />
         </section>
-
-        <!-- 海外債券 -->
+        <!-- 自訂卡片：after-summary -->
         <section
-          v-if="sectionKey === 'bonds' && parsedConfig.sections.bonds"
-          class="dashboard-section bonds-section"
+          v-for="card in getCustomCardsAt('after-summary')"
+          :key="card.id"
+          class="dashboard-section custom-section"
         >
+          <div class="custom-card" :class="card.layout">
+            <h3 v-if="card.title">{{ card.title }}</h3>
+            <div class="card-items">
+              <div v-for="item in card.items" :key="item.label" class="card-item">
+                <span class="item-label">{{ item.label }}</span>
+                <span class="item-value">{{ resolveValue(item, customCardData) }}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </template>
+
+      <!-- 海外債券 -->
+      <template v-if="sectionKey === 'bonds' && config.sections.bonds">
+        <section class="dashboard-section bonds-section">
           <OverseasBondsModule
-            :config="{ uid: 'overseas-bonds', enabled: true, options: {} }"
+            :config="{ uid: 'overseas-bonds', enabled: true, options: {}, columns: config.columns.bonds }"
             :calculated-bonds="moduleProps.calculatedBonds"
             :bond-subtotal="moduleProps.bondSubtotal"
             :bond-loan-details="moduleProps.bondLoanDetails"
@@ -219,14 +173,29 @@ watch(
             @open-news="handleOpenNews"
           />
         </section>
-
-        <!-- 股票/ETF -->
+        <!-- 自訂卡片：after-bonds -->
         <section
-          v-if="sectionKey === 'etf' && parsedConfig.sections.etf"
-          class="dashboard-section etf-section"
+          v-for="card in getCustomCardsAt('after-bonds')"
+          :key="card.id"
+          class="dashboard-section custom-section"
         >
+          <div class="custom-card" :class="card.layout">
+            <h3 v-if="card.title">{{ card.title }}</h3>
+            <div class="card-items">
+              <div v-for="item in card.items" :key="item.label" class="card-item">
+                <span class="item-label">{{ item.label }}</span>
+                <span class="item-value">{{ resolveValue(item, customCardData) }}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </template>
+
+      <!-- 股票/ETF -->
+      <template v-if="sectionKey === 'etf' && config.sections.etf">
+        <section class="dashboard-section etf-section">
           <StocksEtfModule
-            :config="{ uid: 'stocks-etf', enabled: true, options: {} }"
+            :config="{ uid: 'stocks-etf', enabled: true, options: {}, columns: config.columns.etf }"
             :calculated-etfs="moduleProps.calculatedEtfs"
             :etf-subtotal="moduleProps.etfSubtotal"
             :etf-loan-details="moduleProps.etfLoanDetails"
@@ -240,14 +209,29 @@ watch(
             @open-news="handleOpenNews"
           />
         </section>
-
-        <!-- 無配息資產 -->
+        <!-- 自訂卡片：after-etf -->
         <section
-          v-if="sectionKey === 'otherAssets' && parsedConfig.sections.otherAssets"
-          class="dashboard-section other-assets-section"
+          v-for="card in getCustomCardsAt('after-etf')"
+          :key="card.id"
+          class="dashboard-section custom-section"
         >
+          <div class="custom-card" :class="card.layout">
+            <h3 v-if="card.title">{{ card.title }}</h3>
+            <div class="card-items">
+              <div v-for="item in card.items" :key="item.label" class="card-item">
+                <span class="item-label">{{ item.label }}</span>
+                <span class="item-value">{{ resolveValue(item, customCardData) }}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </template>
+
+      <!-- 無配息資產 -->
+      <template v-if="sectionKey === 'otherAssets' && config.sections.otherAssets">
+        <section class="dashboard-section other-assets-section">
           <OtherAssetsModule
-            :config="{ uid: 'other-assets', enabled: true, options: {} }"
+            :config="{ uid: 'other-assets', enabled: true, options: {}, columns: config.columns.otherAssets }"
             :calculated-other-assets="moduleProps.calculatedOtherAssets"
             :other-asset-subtotal="moduleProps.otherAssetSubtotal"
             :price-status="moduleProps.priceStatus"
@@ -259,39 +243,81 @@ watch(
             @open-news="handleOpenNews"
           />
         </section>
-
-        <!-- 貸款 -->
+        <!-- 自訂卡片：after-otherAssets -->
         <section
-          v-if="sectionKey === 'loans' && parsedConfig.sections.loans"
-          class="dashboard-section loans-section"
+          v-for="card in getCustomCardsAt('after-otherAssets')"
+          :key="card.id"
+          class="dashboard-section custom-section"
         >
+          <div class="custom-card" :class="card.layout">
+            <h3 v-if="card.title">{{ card.title }}</h3>
+            <div class="card-items">
+              <div v-for="item in card.items" :key="item.label" class="card-item">
+                <span class="item-label">{{ item.label }}</span>
+                <span class="item-value">{{ resolveValue(item, customCardData) }}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </template>
+
+      <!-- 貸款 -->
+      <template v-if="sectionKey === 'loans' && config.sections.loans">
+        <section class="dashboard-section loans-section">
           <LoansModule
-            :config="{ uid: 'loans', enabled: true, options: {} }"
+            :config="{ uid: 'loans', enabled: true, options: {}, columns: config.columns.loans }"
             :calculated-loans="moduleProps.calculatedLoans"
             :loan-total="moduleProps.loanTotal"
           />
         </section>
-
-        <!-- 資產歷史 -->
+        <!-- 自訂卡片：after-loans -->
         <section
-          v-if="sectionKey === 'history' && parsedConfig.sections.history"
-          class="dashboard-section history-section"
+          v-for="card in getCustomCardsAt('after-loans')"
+          :key="card.id"
+          class="dashboard-section custom-section"
         >
+          <div class="custom-card" :class="card.layout">
+            <h3 v-if="card.title">{{ card.title }}</h3>
+            <div class="card-items">
+              <div v-for="item in card.items" :key="item.label" class="card-item">
+                <span class="item-label">{{ item.label }}</span>
+                <span class="item-value">{{ resolveValue(item, customCardData) }}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </template>
+
+      <!-- 資產歷史 -->
+      <template v-if="sectionKey === 'history' && config.sections.history">
+        <section class="dashboard-section history-section">
           <AssetHistoryModule
             :config="{ uid: 'asset-history', enabled: true, options: {} }"
             :asset-history-records="moduleProps.assetHistoryRecords"
           />
         </section>
+        <!-- 自訂卡片：after-history -->
+        <section
+          v-for="card in getCustomCardsAt('after-history')"
+          :key="card.id"
+          class="dashboard-section custom-section"
+        >
+          <div class="custom-card" :class="card.layout">
+            <h3 v-if="card.title">{{ card.title }}</h3>
+            <div class="card-items">
+              <div v-for="item in card.items" :key="item.label" class="card-item">
+                <span class="item-label">{{ item.label }}</span>
+                <span class="item-value">{{ resolveValue(item, customCardData) }}</span>
+              </div>
+            </div>
+          </div>
+        </section>
       </template>
-    </div>
+    </template>
   </div>
 </template>
 
 <style scoped>
-.user-dashboard-container {
-  min-height: 200px;
-}
-
 .user-dashboard {
   display: flex;
   flex-direction: column;
@@ -302,32 +328,76 @@ watch(
   /* 區塊基本樣式 */
 }
 
-.dashboard-error {
-  background: rgba(231, 76, 60, 0.1);
-  border: 1px solid rgba(231, 76, 60, 0.3);
+/* 自訂卡片樣式 */
+.custom-card {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   border-radius: 12px;
-  padding: 40px;
-  text-align: center;
-  color: #e74c3c;
+  padding: 20px;
+  color: #fff;
 }
 
-.error-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
+.custom-card h3 {
+  margin: 0 0 16px;
+  color: var(--primary-color, #667eea);
+  font-size: 18px;
 }
 
-.dashboard-error h3 {
-  margin: 0 0 12px;
-  font-size: 20px;
+.card-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
-.dashboard-error p {
-  margin: 8px 0;
-  color: #ccc;
+/* 網格布局 */
+.custom-card.grid-2 .card-items {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
 }
 
-.error-hint {
-  font-size: 14px;
-  color: #888 !important;
+.custom-card.grid-3 .card-items {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.custom-card.grid-4 .card-items {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.card-item {
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item-label {
+  color: #888;
+  font-size: 12px;
+}
+
+.item-value {
+  color: #fff;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* 響應式 */
+@media (max-width: 768px) {
+  .custom-card.grid-3 .card-items,
+  .custom-card.grid-4 .card-items {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .custom-card.grid-2 .card-items,
+  .custom-card.grid-3 .card-items,
+  .custom-card.grid-4 .card-items {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

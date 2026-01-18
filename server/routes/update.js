@@ -17,22 +17,51 @@ const PROJECT_ROOT = process.env.PROJECT_ROOT || path.resolve(__dirname, '../..'
 const DASHBOARDS_DIR = path.join(__dirname, '../dashboards');
 
 /**
- * 處理儀表板更新
+ * 處理儀表板更新（JSON 配置）
  */
 async function handleDashboardUpdate(user, instruction, sendProgress, sendComplete, sendError, startTime, projectRoot) {
   try {
+    // Dashboard JSON 路徑
+    const dashboardJsonPath = path.join(projectRoot, 'public', 'data', `${user}.dashboard.json`);
+
     sendProgress('備份儀表板', '正在備份當前儀表板...');
 
-    // 讀取當前儀表板內容
-    const currentContent = await vueCompiler.getUserDashboardRaw(user);
+    // 讀取當前 dashboard.json 配置
+    let currentConfig;
+    try {
+      currentConfig = JSON.parse(await fs.readFile(dashboardJsonPath, 'utf-8'));
+    } catch (err) {
+      // 如果檔案不存在，使用預設配置
+      currentConfig = {
+        version: 1,
+        sectionOrder: ['summary', 'bonds', 'etf', 'otherAssets', 'loans', 'history'],
+        sections: {
+          summary: true,
+          bonds: true,
+          etf: true,
+          otherAssets: true,
+          loans: true,
+          history: true
+        },
+        theme: {
+          primaryColor: '#667eea',
+          primaryGradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          sectionGap: '20px'
+        },
+        columns: {},
+        customCards: []
+      };
+      // 建立預設配置檔
+      await fs.writeFile(dashboardJsonPath, JSON.stringify(currentConfig, null, 2), 'utf-8');
+    }
 
-    // 備份當前儀表板
-    const backupResult = await dashboardBackupService.createBackup(user, currentContent);
+    // 備份當前儀表板配置
+    const backupResult = await dashboardBackupService.createBackup(user, JSON.stringify(currentConfig, null, 2));
     if (!backupResult.success && !backupResult.skipped) {
       console.warn(`[Warning] 儀表板備份失敗: ${backupResult.error}`);
     }
 
-    sendProgress('修改儀表板', 'AI 正在修改儀表板...');
+    sendProgress('修改儀表板', 'AI 正在修改儀表板配置...');
 
     // 讀取儀表板 prompt
     const dashboardPrompt = await fs.readFile(
@@ -40,18 +69,15 @@ async function handleDashboardUpdate(user, instruction, sendProgress, sendComple
       'utf-8'
     );
 
-    // 取得儀表板路徑
-    const dashboardPath = path.join(DASHBOARDS_DIR, `${user}.vue`);
-
     // 組合 prompt
     const prompt = dashboardPrompt
       .replace('{{USER}}', user)
       .replace('{{INSTRUCTION}}', instruction)
-      .replace('{{CURRENT_VUE}}', currentContent)
-      .replace('{{DASHBOARD_PATH}}', dashboardPath);
+      .replace('{{CURRENT_CONFIG}}', JSON.stringify(currentConfig, null, 2))
+      .replace(/\{\{DASHBOARD_PATH\}\}/g, dashboardJsonPath);
 
-    // 呼叫 Claude 修改儀表板
-    const result = await claudeService.runClaudeRaw(prompt, DASHBOARDS_DIR);
+    // 呼叫 Claude 修改儀表板配置
+    const result = await claudeService.runClaudeRaw(prompt, path.join(projectRoot, 'public', 'data'));
 
     // 推送到 GitHub
     sendProgress('推送變更', '正在推送到 GitHub...');
@@ -67,7 +93,7 @@ async function handleDashboardUpdate(user, instruction, sendProgress, sendComple
     sendComplete({
       success: true,
       type: 'dashboard-updated',
-      message: `已更新 ${user} 的儀表板`,
+      message: `已更新 ${user} 的儀表板配置`,
       changes: [{ type: 'update', category: '儀表板', item: instruction }],
       summary: result,
       duration: `${duration}ms`
