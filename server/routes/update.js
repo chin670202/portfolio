@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const claudeService = require('../services/claude');
 const githubService = require('../services/github');
+const backupService = require('../services/backup');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -187,6 +188,15 @@ router.post('/stream', async (req, res) => {
     if (!analysis.changes || analysis.changes.length === 0) {
       const duration = Date.now() - startTime;
       return sendError('無法識別有效的交易指令，請確認輸入內容包含買入/賣出操作');
+    }
+
+    // 備份當前資料（在實際更新前）
+    console.log('\n備份當前資料...');
+    const backupResult = await backupService.createBackup(user, jsonPath);
+    if (!backupResult.success) {
+      console.warn(`[Warning] 備份失敗，但繼續執行更新: ${backupResult.error}`);
+    } else if (backupResult.skipped) {
+      console.log(`[Backup] ${backupResult.reason}`);
     }
 
     // 推送到 GitHub

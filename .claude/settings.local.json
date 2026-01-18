@@ -47,7 +47,9 @@
       "Bash(claude --version:*)",
       "Bash(Stop-Process -Id 40216 -Force)",
       "Bash(git checkout:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(Start-Sleep -Seconds 2)",
+      "Bash(Get-Content \"C:\\\\Users\\\\CHINGH~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--------\\\\tasks\\\\bb244b9.output\" -Tail 10)"
     ]
   }
 }

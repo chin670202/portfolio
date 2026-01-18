@@ -97,6 +97,49 @@ function removeImage() {
   imagePreview.value = null
 }
 
+// 將技術性錯誤訊息轉換為用戶友善的提示
+function friendlyErrorMessage(error) {
+  const message = error?.message || error || ''
+
+  // 連線相關錯誤
+  if (message.includes('Failed to fetch') || message.includes('fetch')) {
+    return '服務連線失敗，請稍後再試'
+  }
+  if (message.includes('NetworkError') || message.includes('network')) {
+    return '網路連線異常，請檢查網路後再試'
+  }
+  if (message.includes('timeout') || message.includes('Timeout')) {
+    return '請求超時，請稍後再試'
+  }
+  if (message.includes('ECONNREFUSED') || message.includes('連線失敗')) {
+    return '服務暫時無法使用，請稍後再試'
+  }
+
+  // 伺服器錯誤
+  if (message.includes('500') || message.includes('Internal Server Error')) {
+    return '系統處理時發生問題，請稍後再試'
+  }
+  if (message.includes('502') || message.includes('503') || message.includes('504')) {
+    return '服務暫時無法使用，請稍後再試'
+  }
+
+  // 驗證錯誤
+  if (message.includes('401') || message.includes('Unauthorized')) {
+    return '驗證失敗，請重新登入'
+  }
+  if (message.includes('403') || message.includes('Forbidden')) {
+    return '沒有權限執行此操作'
+  }
+
+  // 如果訊息本身已經是中文且不含技術術語，直接使用
+  if (/^[\u4e00-\u9fa5\s，。、！？：]+$/.test(message)) {
+    return message
+  }
+
+  // 預設友善訊息
+  return '操作失敗，請稍後再試'
+}
+
 // 簡單的 markdown 格式化（粗體、換行）
 function formatSummary(text) {
   if (!text) return ''
@@ -200,8 +243,9 @@ async function submitUpdate() {
     }
 
   } catch (e) {
-    error.value = e.message || '連線失敗，請確認本機服務是否啟動'
-    addProgressStep(e.message || '連線失敗', 'error')
+    const friendlyMsg = friendlyErrorMessage(e)
+    error.value = friendlyMsg
+    addProgressStep(friendlyMsg, 'error')
   } finally {
     processing.value = false
     progressStatus.value = ''
@@ -236,8 +280,9 @@ function handleSSEMessage(data) {
       break
 
     case 'error':
-      error.value = data.message
-      addProgressStep(data.message, 'error')
+      const errorMsg = friendlyErrorMessage(data.message)
+      error.value = errorMsg
+      addProgressStep(errorMsg, 'error')
       break
   }
 }
@@ -254,9 +299,12 @@ async function submitClarification() {
   clarificationInput.value = ''
   processing.value = true
   progressStatus.value = ''
-  // 移除「需要確認」步驟，加入「重新分析」
-  progressSteps.value = progressSteps.value.filter(s => s.step !== '需要確認')
-  addProgressStep('重新分析')
+
+  // 移除「需要確認」步驟，確保其他步驟保持 done 狀態，然後加入「重新分析」
+  progressSteps.value = progressSteps.value
+    .filter(s => s.step !== '需要確認')
+    .map(s => ({ ...s, status: 'done' }))  // 確保所有現有步驟都是 done
+  progressSteps.value.push({ step: '重新分析', status: 'active' })
 
   try {
     const response = await fetch(`${serverUrl}/update/stream`, {
@@ -303,8 +351,9 @@ async function submitClarification() {
     }
 
   } catch (e) {
-    error.value = e.message || '連線失敗'
-    addProgressStep(e.message || '連線失敗', 'error')
+    const friendlyMsg = friendlyErrorMessage(e)
+    error.value = friendlyMsg
+    addProgressStep(friendlyMsg, 'error')
   } finally {
     processing.value = false
     progressStatus.value = ''
@@ -397,8 +446,8 @@ async function submitClarification() {
           </div>
 
           <div class="modal-body">
-            <!-- 進度步驟 -->
-            <div class="progress-steps">
+            <!-- 進度步驟（只在處理中或錯誤時顯示，成功時隱藏） -->
+            <div v-if="processing || error" class="progress-steps">
               <div
                 v-for="(step, i) in progressSteps"
                 :key="i"
