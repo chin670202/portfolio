@@ -77,6 +77,21 @@ h1 {
   cursor: not-allowed;
 }
 
+.module-edit-btn {
+  background: transparent;
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s;
+}
+
+.module-edit-btn:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
 /* 頂部摘要列 */
 .top-summary {
   display: flex;

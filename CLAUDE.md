@@ -62,9 +62,49 @@ $p = Get-NetTCPConnection -LocalPort 3001 -ErrorAction SilentlyContinue | Select
   - `services/backup.js` - 備份服務（建立、列表、還原）
   - `prompts/analyze.md` - Claude 分析用的 system prompt
 - `src/` - Vue 3 前端
-  - `components/QuickUpdate.vue` - 快速更新部位元件
+  - `views/Portfolio.vue` - 主儀表板頁面
+  - `components/` - 基礎 UI 元件
+  - `modules/` - 模組化區塊系統
+    - `moduleRegistry.js` - 模組註冊表與定義
+    - `ModuleContainer.vue` - 模組容器（動態載入）
+    - `OverseasBondsModule.vue` - 海外債券模組
+    - `StocksEtfModule.vue` - 股票/ETF 模組
+    - `OtherAssetsModule.vue` - 無配息資產模組
+    - `LoansModule.vue` - 貸款別模組
+    - `AssetHistoryModule.vue` - 資產變化記錄與趨勢圖模組
 - `public/data/` - 用戶投資資料 JSON 檔案
   - `backups/{user}/` - 用戶備份資料夾
+
+## 模組系統
+
+儀表板採用模組化架構，每個區塊都是獨立模組。
+
+### 內建模組
+
+| UID | 名稱 | 說明 |
+|-----|------|------|
+| `overseas-bonds` | 海外債券 | 顯示海外債券持倉、殖利率、配息資訊 |
+| `stocks-etf` | 股票/ETF | 顯示股票與 ETF 持倉、損益、配息 |
+| `other-assets` | 無配息資產 | 顯示美股、台股、加密貨幣 |
+| `loans` | 貸款別 | 顯示貸款資訊、餘額、利率 |
+| `asset-history` | 資產變化記錄與趨勢圖 | 歷史記錄表格與趨勢圖表 |
+
+### 模組配置結構
+
+```javascript
+{
+  uid: 'overseas-bonds',  // 模組唯一識別碼
+  enabled: true,          // 是否啟用
+  order: 1,               // 顯示順序
+  options: { ... }        // 模組專屬選項
+}
+```
+
+### 擴充新模組
+
+1. 在 `moduleRegistry.js` 的 `builtInModules` 中定義模組
+2. 建立對應的 Vue 元件 `{Name}Module.vue`
+3. 在 `ModuleContainer.vue` 的 `moduleComponents` 中註冊
 
 ## 備份機制
 

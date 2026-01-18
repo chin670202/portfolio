@@ -1,14 +1,11 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import StockTable from '../components/StockTable.vue'
-import EtfTable from '../components/EtfTable.vue'
-import OtherAssetsTable from '../components/OtherAssetsTable.vue'
-import LoanTable from '../components/LoanTable.vue'
-import AssetHistoryTable from '../components/AssetHistoryTable.vue'
-import AssetHistoryChart from '../components/AssetHistoryChart.vue'
 import NewsModal from '../components/NewsModal.vue'
 import QuickUpdate from '../components/QuickUpdate.vue'
+import { ModuleContainer, getDefaultModuleConfig } from '../modules'
+import ModuleEditor from '../modules/ModuleEditor.vue'
+import { updateService } from '../config'
 import { formatNumber, formatWan } from '../utils/format'
 import {
   calculateBondDerivedData,
@@ -39,6 +36,13 @@ const displayName = computed(() => rawData.value?.顯示名稱 || currentUsernam
 
 // 價格狀態追蹤: { [代號]: { loading: boolean, failed: boolean } }
 const priceStatus = ref({})
+
+// 模組配置（從用戶 JSON 載入，若無則使用預設）
+const moduleConfig = ref(getDefaultModuleConfig())
+
+// 模組編輯器狀態
+const showModuleEditor = ref(false)
+const savingModuleConfig = ref(false)
 
 // 新聞管理（使用 composable）
 const {
@@ -243,6 +247,38 @@ const etfLoanDetails = computed(() => {
   return loans.map(l => ({ name: l.貸款別, value: l.貸款餘額 }))
 })
 
+// 傳遞給 ModuleContainer 的所有 props
+const moduleProps = computed(() => ({
+  // 海外債券模組需要的資料
+  calculatedBonds: calculatedBonds.value,
+  bondSubtotal: bondSubtotal.value,
+  bondLoanDetails: bondLoanDetails.value,
+
+  // 股票/ETF 模組需要的資料
+  calculatedEtfs: calculatedEtfs.value,
+  etfSubtotal: etfSubtotal.value,
+  etfLoanDetails: etfLoanDetails.value,
+
+  // 無配息資產模組需要的資料
+  calculatedOtherAssets: calculatedOtherAssets.value,
+  otherAssetSubtotal: otherAssetSubtotal.value,
+
+  // 貸款模組需要的資料
+  calculatedLoans: calculatedLoans.value,
+  loanTotal: loanTotal.value,
+
+  // 資產變化記錄模組需要的資料
+  assetHistoryRecords: rawData.value?.資產變化記錄 || [],
+
+  // 共用資料
+  priceStatus: priceStatus.value,
+  totalAssets: grandTotal.value?.台幣資產 || 0,
+  newsData: newsData,
+  getNewsCount,
+  isNewsLoading,
+  highlightSymbol: highlightSymbol.value
+}))
+
 // 輔助函式：更新價格並追蹤狀態
 async function updatePriceWithStatus(key, fetchFn, onSuccess) {
   priceStatus.value[key] = { loading: true, failed: false }
@@ -391,12 +427,62 @@ async function loadData() {
     }
     rawData.value = await response.json()
 
+    // 載入模組配置（若用戶 JSON 中有配置則使用，否則使用預設）
+    if (rawData.value.模組配置 && Array.isArray(rawData.value.模組配置)) {
+      moduleConfig.value = rawData.value.模組配置
+    } else {
+      moduleConfig.value = getDefaultModuleConfig()
+    }
+
     // 載入完成後自動更新價格
     updateAllPrices()
   } catch (e) {
     error.value = e.message
   } finally {
     loading.value = false
+  }
+}
+
+// 即時預覽模組配置（不儲存）
+function previewModuleConfig(newConfig) {
+  moduleConfig.value = newConfig
+}
+
+// 取消編輯時恢復原始配置
+function restoreModuleConfig(originalConfig) {
+  moduleConfig.value = originalConfig
+}
+
+// 儲存模組配置到後端
+async function saveModuleConfig(newConfig) {
+  savingModuleConfig.value = true
+  try {
+    const response = await fetch(`${updateService.baseUrl}/config/${currentUsername.value}/modules`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': updateService.apiKey
+      },
+      body: JSON.stringify({ moduleConfig: newConfig })
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || '儲存失敗')
+    }
+
+    // 更新本地狀態
+    moduleConfig.value = newConfig
+    showModuleEditor.value = false
+
+    // 同時更新 rawData 以保持一致
+    if (rawData.value) {
+      rawData.value.模組配置 = newConfig
+    }
+  } catch (e) {
+    alert(`儲存失敗: ${e.message}`)
+  } finally {
+    savingModuleConfig.value = false
   }
 }
 
@@ -442,6 +528,9 @@ onMounted(() => {
           {{ updating ? '更新中...' : '更新價格' }}
         </button>
         <QuickUpdate :username="currentUsername" @updated="loadData" />
+        <button class="module-edit-btn" @click="showModuleEditor = true" title="編輯模組配置">
+          ⚙️
+        </button>
         <span class="version">v{{ appVersion }}</span>
       </div>
     </div>
@@ -486,23 +575,12 @@ onMounted(() => {
         </span>
       </div>
 
-      <!-- 股票(海外債券) -->
-      <StockTable :stocks="calculatedBonds" :subtotal="bondSubtotal" :loan-details="bondLoanDetails" :price-status="priceStatus" :total-assets="grandTotal.台幣資產" :news-data="newsData" :get-news-count="getNewsCount" :is-news-loading="isNewsLoading" :highlight-symbol="highlightSymbol" @open-news="handleOpenNews" />
-
-      <!-- ETF -->
-      <EtfTable :etfs="calculatedEtfs" :subtotal="etfSubtotal" :loan-details="etfLoanDetails" :price-status="priceStatus" :total-assets="grandTotal.台幣資產" :news-data="newsData" :get-news-count="getNewsCount" :is-news-loading="isNewsLoading" :highlight-symbol="highlightSymbol" @open-news="handleOpenNews" />
-
-      <!-- 其它資產 -->
-      <OtherAssetsTable :assets="calculatedOtherAssets" :subtotal="otherAssetSubtotal" :price-status="priceStatus" :total-assets="grandTotal.台幣資產" :news-data="newsData" :get-news-count="getNewsCount" :is-news-loading="isNewsLoading" :highlight-symbol="highlightSymbol" @open-news="handleOpenNews" />
-
-      <!-- 貸款 -->
-      <LoanTable :loans="calculatedLoans" :total="loanTotal" />
-
-      <!-- 資產變化記錄 -->
-      <AssetHistoryTable :records="rawData.資產變化記錄" />
-
-      <!-- 資產變化趨勢圖 -->
-      <AssetHistoryChart :records="rawData.資產變化記錄" />
+      <!-- 模組化區塊 -->
+      <ModuleContainer
+        :module-config="moduleConfig"
+        :module-props="moduleProps"
+        @open-news="handleOpenNews"
+      />
 
       <div class="update-date">
         資料更新日期: {{ rawData.資料更新日期 }}
@@ -518,6 +596,17 @@ onMounted(() => {
         :total-count="allProducts.length"
         @close="showNewsModal = false"
         @navigate="handleNewsNavigate"
+      />
+
+      <!-- 模組編輯器 -->
+      <ModuleEditor
+        :visible="showModuleEditor"
+        :module-config="moduleConfig"
+        :saving="savingModuleConfig"
+        @close="showModuleEditor = false"
+        @save="saveModuleConfig"
+        @preview="previewModuleConfig"
+        @cancel="restoreModuleConfig"
       />
     </template>
   </div>
