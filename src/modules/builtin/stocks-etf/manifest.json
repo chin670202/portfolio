@@ -1,0 +1,23 @@
+{
+  "uid": "stocks-etf",
+  "name": "股票/ETF",
+  "author": "system",
+  "authorDisplayName": "系統內建",
+  "version": "1.0.0",
+  "visibility": "public",
+  "category": "表格",
+  "tags": ["內建", "表格", "股票", "ETF", "配息"],
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2026-01-18T00:00:00Z",
+  "icon": "📊",
+  "description": "顯示股票與 ETF 持倉，包含價格、損益、配息資訊",
+  "type": "builtin",
+  "component": "StocksEtfModule",
+  "requiredData": ["ETF", "匯率"],
+  "defaultEnabled": true,
+  "defaultOrder": 2,
+  "options": {
+    "showLoanDetails": true,
+    "showDividendInfo": true
+  }
+}

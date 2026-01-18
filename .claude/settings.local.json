@@ -54,7 +54,17 @@
       "Bash(npx eslint:*)",
       "Bash(npm run lint:*)",
       "Bash(npx playwright install:*)",
-      "Bash(TASKKILL:*)"
+      "Bash(TASKKILL:*)",
+      "Bash(Get-NetTCPConnection -LocalPort 3001 -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object -First 1)",
+      "Bash(cmd /c \"taskkill /PID 54080 /F\")",
+      "Bash(wmic process where \"processid=54080\" call terminate)",
+      "Bash(wmic process where \"processid=52520\" call terminate)",
+      "Bash(claude:*)",
+      "Bash(iconv:*)",
+      "Bash(powershell -NoProfile -Command:*)",
+      "Bash(dir:*)",
+      "Bash(cmd //c \"taskkill /PID 49440 /F\")"
     ]
   }
 }

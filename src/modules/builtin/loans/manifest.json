@@ -1,0 +1,19 @@
+{
+  "uid": "loans",
+  "name": "貸款別",
+  "author": "system",
+  "authorDisplayName": "系統內建",
+  "version": "1.0.0",
+  "visibility": "public",
+  "category": "表格",
+  "tags": ["內建", "表格", "貸款", "負債"],
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2026-01-18T00:00:00Z",
+  "icon": "🏦",
+  "description": "顯示各項貸款資訊，包含餘額、利率、每月還款",
+  "type": "builtin",
+  "component": "LoansModule",
+  "requiredData": ["貸款"],
+  "defaultEnabled": true,
+  "defaultOrder": 4
+}

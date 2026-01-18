@@ -1,0 +1,88 @@
+{
+  "uid": "custom-1768742001060",
+  "name": "資產分布",
+  "author": "test",
+  "authorDisplayName": "test",
+  "version": "1.0.0",
+  "changelog": [],
+  "visibility": "private",
+  "subscribers": [],
+  "subscriberCount": 0,
+  "category": null,
+  "tags": [],
+  "createdAt": "2026-01-18T13:13:21.060Z",
+  "updatedAt": "2026-01-18T13:13:21.063Z",
+  "publishedAt": null,
+  "icon": "📊",
+  "description": "顯示各類資產佔總資產的百分比分布",
+  "readme": null,
+  "thumbnail": null,
+  "screenshots": [],
+  "stats": {
+    "views": 0,
+    "likes": 0,
+    "uses": 0
+  },
+  "type": "custom",
+  "isCustom": true,
+  "validation": null,
+  "layout": "chart",
+  "dataBindings": [
+    {
+      "key": "bonds",
+      "source": "股票",
+      "filter": null
+    },
+    {
+      "key": "etfs",
+      "source": "ETF",
+      "filter": null
+    },
+    {
+      "key": "others",
+      "source": "其它資產",
+      "filter": null
+    }
+  ],
+  "computedFields": [
+    {
+      "key": "bondTotal",
+      "label": "海外債券",
+      "formula": "sum(bonds.買入價格 * bonds.持有單位)",
+      "format": "currency"
+    },
+    {
+      "key": "etfTotal",
+      "label": "ETF",
+      "formula": "sum(etfs.買入均價 * etfs.持有單位)",
+      "format": "currency"
+    },
+    {
+      "key": "otherTotal",
+      "label": "其它資產",
+      "formula": "sum(others.買入均價 * others.持有單位)",
+      "format": "currency"
+    },
+    {
+      "key": "assetDistribution",
+      "label": "資產分布數據",
+      "formula": "[{\"name\": \"海外債券\", \"value\": bondTotal}, {\"name\": \"ETF\", \"value\": etfTotal}, {\"name\": \"其它資產\", \"value\": otherTotal}]",
+      "format": "array"
+    }
+  ],
+  "components": [
+    {
+      "type": "chart-pie",
+      "props": {
+        "data": "${assetDistribution}",
+        "labelField": "name",
+        "valueField": "value",
+        "title": "資產配置分布"
+      }
+    }
+  ],
+  "style": {
+    "primaryColor": "#5C6BC0",
+    "layout": "full"
+  }
+}

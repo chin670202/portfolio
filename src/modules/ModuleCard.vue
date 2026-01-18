@@ -30,14 +30,14 @@ const props = defineProps({
 
 const emit = defineEmits(['toggle'])
 
-// 動態載入模組元件用於預覽
+// 動態載入模組元件用於預覽（從新的 builtin 目錄結構）
 const moduleComponents = {
-  'summary-cards': defineAsyncComponent(() => import('./SummaryCardsModule.vue')),
-  'overseas-bonds': defineAsyncComponent(() => import('./OverseasBondsModule.vue')),
-  'stocks-etf': defineAsyncComponent(() => import('./StocksEtfModule.vue')),
-  'other-assets': defineAsyncComponent(() => import('./OtherAssetsModule.vue')),
-  'loans': defineAsyncComponent(() => import('./LoansModule.vue')),
-  'asset-history': defineAsyncComponent(() => import('./AssetHistoryModule.vue'))
+  'summary-cards': defineAsyncComponent(() => import('./builtin/summary-cards/index.vue')),
+  'overseas-bonds': defineAsyncComponent(() => import('./builtin/overseas-bonds/index.vue')),
+  'stocks-etf': defineAsyncComponent(() => import('./builtin/stocks-etf/index.vue')),
+  'other-assets': defineAsyncComponent(() => import('./builtin/other-assets/index.vue')),
+  'loans': defineAsyncComponent(() => import('./builtin/loans/index.vue')),
+  'asset-history': defineAsyncComponent(() => import('./builtin/asset-history/index.vue'))
 }
 
 const getModuleComponent = (uid) => {

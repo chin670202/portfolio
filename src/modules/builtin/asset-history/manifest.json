@@ -1,0 +1,23 @@
+{
+  "uid": "asset-history",
+  "name": "資產變化記錄與趨勢圖",
+  "author": "system",
+  "authorDisplayName": "系統內建",
+  "version": "1.0.0",
+  "visibility": "public",
+  "category": "圖表",
+  "tags": ["內建", "圖表", "歷史記錄", "趨勢"],
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2026-01-18T00:00:00Z",
+  "icon": "📉",
+  "description": "顯示資產變化歷史記錄與趨勢圖表",
+  "type": "builtin",
+  "component": "AssetHistoryModule",
+  "requiredData": ["資產變化記錄"],
+  "defaultEnabled": true,
+  "defaultOrder": 5,
+  "options": {
+    "showTable": true,
+    "showChart": true
+  }
+}

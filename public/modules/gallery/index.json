@@ -1,0 +1,27 @@
+{
+  "modules": [],
+  "categories": [
+    {
+      "id": "summary",
+      "name": "摘要",
+      "icon": "📋"
+    },
+    {
+      "id": "table",
+      "name": "表格",
+      "icon": "📊"
+    },
+    {
+      "id": "chart",
+      "name": "圖表",
+      "icon": "📈"
+    },
+    {
+      "id": "analysis",
+      "name": "分析",
+      "icon": "🔍"
+    }
+  ],
+  "featured": [],
+  "lastUpdated": "2026-01-18T00:00:00Z"
+}

@@ -10,6 +10,8 @@ const updateRouter = require('./routes/update');
 const backupRouter = require('./routes/backup');
 const configRouter = require('./routes/config');
 const moduleStatsRouter = require('./routes/moduleStats');
+const moduleDesignRouter = require('./routes/moduleDesign');
+const modulesRouter = require('./routes/modules');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -62,6 +64,8 @@ app.use('/update', apiKeyAuth, updateRouter);
 app.use('/backup', apiKeyAuth, backupRouter);
 app.use('/config', apiKeyAuth, configRouter);
 app.use('/modules', apiKeyAuth, moduleStatsRouter);
+app.use('/modules', apiKeyAuth, moduleDesignRouter);
+app.use('/api/modules', apiKeyAuth, modulesRouter);
 
 // 健康檢查
 app.get('/health', (req, res) => {
@@ -111,6 +115,19 @@ API 端點:
   PUT  /config/:user/modules - 更新模組配置
   GET  /modules/stats - 取得模組使用統計
   GET  /modules/all - 取得所有可用模組
+  POST /modules/design/stream - AI 模組設計 (SSE)
+
+  模組 API (新):
+  GET  /api/modules/builtin - 取得內建模組
+  GET  /api/modules/users/:user - 取得用戶自訂模組
+  POST /api/modules/users/:user - 新增自訂模組
+  PUT  /api/modules/users/:user/:uid - 更新自訂模組
+  DELETE /api/modules/users/:user/:uid - 刪除自訂模組
+  POST /api/modules/users/:user/:uid/publish - 公開模組
+  GET  /api/modules/users/:user/subscriptions - 取得訂閱列表
+  POST /api/modules/users/:user/subscriptions - 訂閱模組
+  GET  /api/modules/gallery - 取得市集模組
+
   GET  /health - 健康檢查
   `);
 });

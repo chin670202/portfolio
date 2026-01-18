@@ -1,0 +1,24 @@
+{
+  "uid": "other-assets",
+  "name": "無配息資產",
+  "author": "system",
+  "authorDisplayName": "系統內建",
+  "version": "1.0.0",
+  "visibility": "public",
+  "category": "表格",
+  "tags": ["內建", "表格", "美股", "台股", "加密貨幣"],
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2026-01-18T00:00:00Z",
+  "icon": "💰",
+  "description": "顯示美股、台股、加密貨幣等無固定配息資產",
+  "type": "builtin",
+  "component": "OtherAssetsModule",
+  "requiredData": ["其它資產", "匯率"],
+  "defaultEnabled": true,
+  "defaultOrder": 3,
+  "options": {
+    "showUsStocks": true,
+    "showTwStocks": true,
+    "showCrypto": true
+  }
+}

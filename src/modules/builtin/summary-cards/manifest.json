@@ -1,0 +1,19 @@
+{
+  "uid": "summary-cards",
+  "name": "摘要卡片",
+  "author": "system",
+  "authorDisplayName": "系統內建",
+  "version": "1.0.0",
+  "visibility": "public",
+  "category": "摘要",
+  "tags": ["內建", "卡片", "財務指標", "總覽"],
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2026-01-18T00:00:00Z",
+  "icon": "📋",
+  "description": "顯示關鍵財務指標：總資產、淨值、年收益等",
+  "type": "builtin",
+  "component": "SummaryCardsModule",
+  "requiredData": ["匯率"],
+  "defaultEnabled": true,
+  "defaultOrder": 0
+}

@@ -4,7 +4,7 @@
  * 讓用戶選擇要顯示哪些模組、調整順序、配置欄位
  */
 import { ref, computed, watch } from 'vue'
-import { getAllModules } from './moduleRegistry'
+import { getBuiltinModules } from './registry'
 import ColumnEditor from './ColumnEditor.vue'
 import { getDefaultColumnConfig } from './columnDefinitions'
 
@@ -34,7 +34,7 @@ const localConfig = ref([])
 const originalConfig = ref([])
 
 // 所有可用模組
-const allModules = getAllModules()
+const allModules = getBuiltinModules()
 
 // 當前展開欄位編輯器的模組 UID（null 表示全部收起）
 const expandedModuleUid = ref(null)
@@ -79,8 +79,18 @@ watch(localConfig, (newConfig) => {
 }, { deep: true })
 
 // 取得模組定義
-function getModuleInfo(uid) {
-  return allModules.find(m => m.uid === uid)
+function getModuleInfo(config) {
+  // 如果是自訂模組，資訊直接在 config 中
+  if (config.isCustom) {
+    return {
+      uid: config.uid,
+      name: config.name,
+      icon: config.icon || '📊',
+      description: config.description || '自訂模組'
+    }
+  }
+  // 內建模組從 registry 查詢
+  return allModules.find(m => m.uid === config.uid)
 }
 
 // 切換模組啟用狀態
@@ -210,10 +220,11 @@ const hasChanges = computed(() => {
                 </div>
 
                 <div class="module-info">
-                  <span class="module-icon">{{ getModuleInfo(config.uid)?.icon }}</span>
+                  <span class="module-icon">{{ getModuleInfo(config)?.icon }}</span>
                   <div class="module-text">
-                    <span class="module-name">{{ getModuleInfo(config.uid)?.name }}</span>
-                    <span class="module-desc">{{ getModuleInfo(config.uid)?.description }}</span>
+                    <span class="module-name">{{ getModuleInfo(config)?.name }}</span>
+                    <span class="module-desc">{{ getModuleInfo(config)?.description }}</span>
+                    <span v-if="config.isCustom" class="custom-badge">自訂</span>
                   </div>
                 </div>
 
@@ -233,6 +244,7 @@ const hasChanges = computed(() => {
                 </div>
 
                 <button
+                  v-if="!config.isCustom"
                   class="column-btn"
                   :class="{ active: expandedModuleUid === config.uid }"
                   @click.stop="toggleColumnEditor(config.uid)"
@@ -251,11 +263,11 @@ const hasChanges = computed(() => {
                 </label>
               </div>
 
-              <!-- 欄位編輯器（展開時顯示） -->
+              <!-- 欄位編輯器（展開時顯示，自訂模組不支援） -->
               <ColumnEditor
-                v-if="expandedModuleUid === config.uid"
+                v-if="expandedModuleUid === config.uid && !config.isCustom"
                 :module-uid="config.uid"
-                :module-name="getModuleInfo(config.uid)?.name || config.uid"
+                :module-name="getModuleInfo(config)?.name || config.uid"
                 :column-config="getModuleColumnConfig(config.uid)"
                 @update="updateColumnConfig(config.uid, $event)"
                 @close="expandedModuleUid = null"
@@ -452,6 +464,17 @@ const hasChanges = computed(() => {
 .module-desc {
   color: #888;
   font-size: 12px;
+}
+
+.custom-badge {
+  display: inline-block;
+  font-size: 10px;
+  background: linear-gradient(135deg, #6b21a8 0%, #9333ea 100%);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-left: 6px;
+  font-weight: 500;
 }
 
 .module-actions {

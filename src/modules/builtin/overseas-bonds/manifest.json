@@ -1,0 +1,23 @@
+{
+  "uid": "overseas-bonds",
+  "name": "海外債券",
+  "author": "system",
+  "authorDisplayName": "系統內建",
+  "version": "1.0.0",
+  "visibility": "public",
+  "category": "表格",
+  "tags": ["內建", "表格", "債券", "配息", "海外投資"],
+  "createdAt": "2024-01-01T00:00:00Z",
+  "updatedAt": "2026-01-18T00:00:00Z",
+  "icon": "📈",
+  "description": "顯示海外債券持倉，包含價格、殖利率、配息資訊",
+  "type": "builtin",
+  "component": "OverseasBondsModule",
+  "requiredData": ["股票", "匯率"],
+  "defaultEnabled": true,
+  "defaultOrder": 1,
+  "options": {
+    "showLoanDetails": true,
+    "showDividendInfo": true
+  }
+}

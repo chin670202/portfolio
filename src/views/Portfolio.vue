@@ -453,7 +453,30 @@ async function loadData() {
     rawData.value = await response.json()
 
     // 載入模組配置（合併用戶配置與新內建模組）
-    moduleConfig.value = mergeModuleConfig(rawData.value.模組配置)
+    let config = mergeModuleConfig(rawData.value.模組配置)
+
+    // 將 customModules 的完整資訊合併到模組配置中
+    if (rawData.value.customModules && Array.isArray(rawData.value.customModules)) {
+      const customModuleMap = new Map()
+      for (const cm of rawData.value.customModules) {
+        customModuleMap.set(cm.uid, cm)
+      }
+
+      // 用完整資訊更新模組配置中的自訂模組
+      config = config.map(m => {
+        if (m.uid && m.uid.startsWith('custom-') && customModuleMap.has(m.uid)) {
+          const fullModule = customModuleMap.get(m.uid)
+          return {
+            ...fullModule,
+            enabled: m.enabled,
+            order: m.order
+          }
+        }
+        return m
+      })
+    }
+
+    moduleConfig.value = config
 
     // 載入完成後自動更新價格
     updateAllPrices()
@@ -525,7 +548,7 @@ async function loadModuleStats() {
 }
 
 // 處理模組畫廊的選擇更新
-async function handleGalleryUpdate(selectedUids) {
+async function handleGalleryUpdate({ selectedUids, customModuleMap }) {
   // 建立新的配置
   const newConfig = moduleConfig.value.map(m => {
     const shouldEnable = selectedUids.includes(m.uid)
@@ -543,12 +566,23 @@ async function handleGalleryUpdate(selectedUids) {
   if (newUids.length > 0) {
     const maxOrder = Math.max(...moduleConfig.value.map(m => m.order), 0)
     newUids.forEach((uid, index) => {
-      newConfig.push({
-        uid,
-        enabled: true,
-        order: maxOrder + index + 1,
-        options: {}
-      })
+      const customModule = customModuleMap[uid]
+      if (customModule) {
+        // 自訂模組：保留完整資訊
+        newConfig.push({
+          ...customModule,
+          enabled: true,
+          order: maxOrder + index + 1
+        })
+      } else {
+        // 內建模組：只需基本資訊
+        newConfig.push({
+          uid,
+          enabled: true,
+          order: maxOrder + index + 1,
+          options: {}
+        })
+      }
     })
   }
 
