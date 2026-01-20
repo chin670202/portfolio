@@ -149,12 +149,12 @@ export function calculateEtfDerivedData(etf) {
  * - G: 台幣資產 = E*D*匯率 (美股) 或 E*D (加密貨幣已換算TWD)
  */
 export function calculateOtherAssetDerivedData(asset, usdRate) {
-  const E = asset.最新價格
+  const E = asset.最新價格 || 0  // 沒有最新價格時預設為 0
   const C = asset.買入均價
   const D = asset.持有單位
 
-  // F: 損益(%) = (E-C)/C
-  const 損益百分比 = ((E - C) / C) * 100
+  // F: 損益(%) = (E-C)/C，價格為 0 時顯示 0
+  const 損益百分比 = E > 0 ? ((E - C) / C) * 100 : 0
 
   // G: 台幣資產
   let 台幣資產

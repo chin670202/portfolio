@@ -506,9 +506,10 @@ async function updateAllPrices() {
 
     // 更新其他資產價格 (並行)
     const cryptoMapping = { 'BTC/TWD': 'bitcoin', 'ETH/TWD': 'ethereum' }
-    const usStockSymbols = ['TSLA', 'GLDM', 'SIVR', 'COPX', 'VOO']
     // 台股代號格式：數字開頭（如 00635U, 2330）
     const isTwStock = (symbol) => /^\d/.test(symbol)
+    // 美股代號格式：純英文大寫（如 NVDA, TSLA）
+    const isUsStock = (symbol) => /^[A-Z]+$/.test(symbol)
 
     const otherPromises = rawData.value.其它資產.map(asset => {
       const coinId = cryptoMapping[asset.代號]
@@ -516,7 +517,8 @@ async function updateAllPrices() {
         return updatePriceWithStatus(`other_${asset.代號}`, () => getCryptoPrice(coinId, 'twd'), (price) => {
           asset.最新價格 = price
         })
-      } else if (usStockSymbols.includes(asset.代號)) {
+      } else if (isUsStock(asset.代號)) {
+        // 美股使用 getUsStockPrice
         return updatePriceWithStatus(`other_${asset.代號}`, () => getUsStockPrice(asset.代號), (price) => {
           asset.最新價格 = price
         })
