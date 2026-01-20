@@ -8,8 +8,8 @@ import { computed } from 'vue'
 // 引入所有模組元件
 import SummaryCardsModule from '../modules/SummaryCardsModule.vue'
 import OverseasBondsModule from '../modules/OverseasBondsModule.vue'
-import StocksEtfModule from '../modules/StocksEtfModule.vue'
-import OtherAssetsModule from '../modules/OtherAssetsModule.vue'
+import StocksModule from '../modules/StocksModule.vue'
+import CryptoModule from '../modules/CryptoModule.vue'
 import LoansModule from '../modules/LoansModule.vue'
 import AssetHistoryModule from '../modules/AssetHistoryModule.vue'
 
@@ -30,12 +30,12 @@ const emit = defineEmits(['open-news'])
 
 // 預設配置
 const defaultConfig = {
-  sectionOrder: ['summary', 'bonds', 'etf', 'otherAssets', 'loans', 'history'],
+  sectionOrder: ['summary', 'bonds', 'stocks', 'crypto', 'loans', 'history'],
   sections: {
     summary: true,
     bonds: true,
-    etf: true,
-    otherAssets: true,
+    stocks: true,
+    crypto: true,
     loans: true,
     history: true
   },
@@ -107,11 +107,13 @@ function getCustomCardsAt(position) {
 // 計算用於自訂卡片的資料
 const customCardData = computed(() => ({
   bondsCount: props.moduleProps.calculatedBonds?.length || 0,
-  etfCount: props.moduleProps.calculatedEtfs?.length || 0,
-  otherAssetsCount: props.moduleProps.calculatedOtherAssets?.length || 0,
+  stocksCount: (props.moduleProps.calculatedTwStocks?.length || 0) +
+               (props.moduleProps.calculatedUsStocks?.length || 0),
+  cryptoCount: props.moduleProps.calculatedCryptos?.length || 0,
   totalCount: (props.moduleProps.calculatedBonds?.length || 0) +
-              (props.moduleProps.calculatedEtfs?.length || 0) +
-              (props.moduleProps.calculatedOtherAssets?.length || 0),
+              (props.moduleProps.calculatedTwStocks?.length || 0) +
+              (props.moduleProps.calculatedUsStocks?.length || 0) +
+              (props.moduleProps.calculatedCryptos?.length || 0),
   exchangeRate: props.moduleProps.exchangeRate || 0,
   usd100ToTwd: ((props.moduleProps.exchangeRate || 0) * 100).toLocaleString(),
   usd1000ToTwd: ((props.moduleProps.exchangeRate || 0) * 1000).toLocaleString(),
@@ -191,14 +193,17 @@ const customCardData = computed(() => ({
         </section>
       </template>
 
-      <!-- 股票/ETF -->
-      <template v-if="sectionKey === 'etf' && config.sections.etf">
-        <section class="dashboard-section etf-section">
-          <StocksEtfModule
-            :config="{ uid: 'stocks-etf', enabled: true, options: {}, columns: config.columns.etf }"
-            :calculated-etfs="moduleProps.calculatedEtfs"
-            :etf-subtotal="moduleProps.etfSubtotal"
-            :etf-loan-details="moduleProps.etfLoanDetails"
+      <!-- 股票（台股 + 美股） -->
+      <template v-if="sectionKey === 'stocks' && config.sections.stocks">
+        <section class="dashboard-section stocks-section">
+          <StocksModule
+            :config="{ uid: 'stocks', enabled: true, options: {}, columns: config.columns.stocks }"
+            :calculated-tw-stocks="moduleProps.calculatedTwStocks"
+            :calculated-us-stocks="moduleProps.calculatedUsStocks"
+            :tw-stock-subtotal="moduleProps.twStockSubtotal"
+            :us-stock-subtotal="moduleProps.usStockSubtotal"
+            :stock-subtotal="moduleProps.stockSubtotal"
+            :stock-loan-details="moduleProps.stockLoanDetails"
             :price-status="moduleProps.priceStatus"
             :total-assets="moduleProps.totalAssets"
             :news-data="moduleProps.newsData"
@@ -209,9 +214,9 @@ const customCardData = computed(() => ({
             @open-news="handleOpenNews"
           />
         </section>
-        <!-- 自訂卡片：after-etf -->
+        <!-- 自訂卡片：after-stocks -->
         <section
-          v-for="card in getCustomCardsAt('after-etf')"
+          v-for="card in getCustomCardsAt('after-stocks')"
           :key="card.id"
           class="dashboard-section custom-section"
         >
@@ -227,14 +232,15 @@ const customCardData = computed(() => ({
         </section>
       </template>
 
-      <!-- 無配息資產 -->
-      <template v-if="sectionKey === 'otherAssets' && config.sections.otherAssets">
-        <section class="dashboard-section other-assets-section">
-          <OtherAssetsModule
-            :config="{ uid: 'other-assets', enabled: true, options: {}, columns: config.columns.otherAssets }"
-            :calculated-other-assets="moduleProps.calculatedOtherAssets"
-            :other-asset-subtotal="moduleProps.otherAssetSubtotal"
+      <!-- 加密貨幣 -->
+      <template v-if="sectionKey === 'crypto' && config.sections.crypto">
+        <section class="dashboard-section crypto-section">
+          <CryptoModule
+            :config="{ uid: 'crypto', enabled: true, options: {}, columns: config.columns.crypto }"
+            :calculated-cryptos="moduleProps.calculatedCryptos"
+            :crypto-subtotal="moduleProps.cryptoSubtotal"
             :price-status="moduleProps.priceStatus"
+            :total-assets="moduleProps.totalAssets"
             :news-data="moduleProps.newsData"
             :get-news-count="moduleProps.getNewsCount"
             :is-news-loading="moduleProps.isNewsLoading"
@@ -243,9 +249,9 @@ const customCardData = computed(() => ({
             @open-news="handleOpenNews"
           />
         </section>
-        <!-- 自訂卡片：after-otherAssets -->
+        <!-- 自訂卡片：after-crypto -->
         <section
-          v-for="card in getCustomCardsAt('after-otherAssets')"
+          v-for="card in getCustomCardsAt('after-crypto')"
           :key="card.id"
           class="dashboard-section custom-section"
         >

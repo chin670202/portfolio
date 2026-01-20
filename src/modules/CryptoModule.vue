@@ -1,23 +1,23 @@
 <script setup>
 /**
- * 無配息資產模組
- * UID: other-assets
- * 顯示美股、台股、加密貨幣等無固定配息資產
+ * 加密貨幣模組
+ * UID: crypto
+ * 顯示加密貨幣持倉，包含價格、損益資訊
  */
-import OtherAssetsTable from '../components/OtherAssetsTable.vue'
+import CryptoTable from '../components/CryptoTable.vue'
 
 defineProps({
   config: {
     type: Object,
     required: true
   },
-  // 計算後的其它資產資料
-  calculatedOtherAssets: {
+  // 計算後的加密貨幣資料
+  calculatedCryptos: {
     type: Array,
     required: true
   },
-  // 其它資產小計
-  otherAssetSubtotal: {
+  // 加密貨幣小計
+  cryptoSubtotal: {
     type: Object,
     required: true
   },
@@ -64,10 +64,10 @@ function handleOpenNews(symbol, name) {
 </script>
 
 <template>
-  <div class="module other-assets-module" :data-module-uid="config.uid">
-    <OtherAssetsTable
-      :assets="calculatedOtherAssets"
-      :subtotal="otherAssetSubtotal"
+  <div class="module crypto-module" :data-module-uid="config.uid">
+    <CryptoTable
+      :cryptos="calculatedCryptos"
+      :subtotal="cryptoSubtotal"
       :price-status="priceStatus"
       :total-assets="totalAssets"
       :news-data="newsData"

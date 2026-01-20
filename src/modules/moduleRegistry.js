@@ -3,6 +3,9 @@
  * 定義所有可用的儀表板模組
  */
 
+// 配置版本號（用於重置用戶欄位配置）
+export const MODULE_CONFIG_VERSION = 2
+
 // 內建模組定義
 export const builtInModules = {
   'summary-cards': {
@@ -15,52 +18,45 @@ export const builtInModules = {
     defaultOrder: 0,
     requiredData: ['匯率'],
     options: {}
-    // 欄位配置由 columnDefinitions.js 管理
   },
-  'overseas-bonds': {
-    uid: 'overseas-bonds',
-    name: '海外債券',
-    description: '顯示海外債券持倉，包含價格、殖利率、配息資訊',
+  'bonds': {
+    uid: 'bonds',
+    name: '直債',
+    description: '顯示海外直接債券持倉，包含價格、殖利率、配息資訊',
     component: 'OverseasBondsModule',
     icon: '📈',
     defaultEnabled: true,
     defaultOrder: 1,
-    // 模組需要的資料欄位
     requiredData: ['股票', '匯率'],
-    // 模組設定選項（未來擴充用）
     options: {
       showLoanDetails: true,
       showDividendInfo: true
     }
   },
-  'stocks-etf': {
-    uid: 'stocks-etf',
-    name: '股票/ETF',
-    description: '顯示股票與 ETF 持倉，包含價格、損益、配息資訊',
-    component: 'StocksEtfModule',
+  'stocks': {
+    uid: 'stocks',
+    name: '股票',
+    description: '顯示台股與美股持倉，包含價格、損益、配息資訊',
+    component: 'StocksModule',
     icon: '📊',
     defaultEnabled: true,
     defaultOrder: 2,
-    requiredData: ['ETF', '匯率'],
+    requiredData: ['ETF', '其它資產', '匯率'],
     options: {
-      showLoanDetails: true,
-      showDividendInfo: true
+      showTwStocks: true,
+      showUsStocks: true
     }
   },
-  'other-assets': {
-    uid: 'other-assets',
-    name: '無配息資產',
-    description: '顯示美股、台股、加密貨幣等無固定配息資產',
-    component: 'OtherAssetsModule',
-    icon: '💰',
+  'crypto': {
+    uid: 'crypto',
+    name: '加密貨幣',
+    description: '顯示加密貨幣持倉，包含價格、損益資訊',
+    component: 'CryptoModule',
+    icon: '₿',
     defaultEnabled: true,
     defaultOrder: 3,
     requiredData: ['其它資產', '匯率'],
-    options: {
-      showUsStocks: true,
-      showTwStocks: true,
-      showCrypto: true
-    }
+    options: {}
   },
   'loans': {
     uid: 'loans',

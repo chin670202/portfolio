@@ -55,7 +55,7 @@ export const stocksEtfColumns = [
   { key: 'news', label: '新聞', dataKey: null, defaultVisible: true, defaultOrder: 16, align: 'center', isAction: true }
 ]
 
-// 無配息資產欄位定義
+// 無配息資產欄位定義（保留向後相容）
 export const otherAssetsColumns = [
   { key: 'name', label: '名稱', dataKey: '名稱', defaultVisible: true, defaultOrder: 1, align: 'left' },
   { key: 'symbol', label: '代號', dataKey: '代號', defaultVisible: true, defaultOrder: 2, align: 'left' },
@@ -64,6 +64,38 @@ export const otherAssetsColumns = [
   { key: 'latestPrice', label: '最新價格', dataKey: '最新價格', defaultVisible: true, defaultOrder: 5, align: 'right', isCalculated: true },
   { key: 'twdProfit', label: '台幣損益', dataKey: '台幣損益', defaultVisible: true, defaultOrder: 6, align: 'right', isCalculated: true },
   { key: 'profitPercent', label: '損益(%)', dataKey: '損益百分比', defaultVisible: true, defaultOrder: 7, align: 'right', isCalculated: true },
+  { key: 'twdAsset', label: '台幣資產', dataKey: '台幣資產', defaultVisible: true, defaultOrder: 8, align: 'right', isCalculated: true },
+  { key: 'ratio', label: '佔比', dataKey: null, defaultVisible: true, defaultOrder: 9, align: 'right', isCalculated: true },
+  { key: 'news', label: '新聞', dataKey: null, defaultVisible: true, defaultOrder: 10, align: 'center', isAction: true }
+]
+
+// 股票欄位定義（台股 + 美股）
+export const stocksColumns = [
+  { key: 'name', label: '名稱', dataKey: '名稱', defaultVisible: true, defaultOrder: 1, align: 'left' },
+  { key: 'symbol', label: '代號', dataKey: '代號', defaultVisible: true, defaultOrder: 2, align: 'left' },
+  { key: 'buyPrice', label: '買入均價', dataKey: '買入均價', defaultVisible: true, defaultOrder: 3, align: 'right' },
+  { key: 'units', label: '股數', dataKey: '股數', defaultVisible: true, defaultOrder: 4, align: 'right' },
+  { key: 'latestPrice', label: '最新價格', dataKey: '最新價格', defaultVisible: true, defaultOrder: 5, align: 'right', isCalculated: true },
+  { key: 'twdProfit', label: '台幣損益', dataKey: '台幣損益', defaultVisible: true, defaultOrder: 6, align: 'right', isCalculated: true },
+  { key: 'profitPercent', label: '損益(%)', dataKey: '報酬率', defaultVisible: true, defaultOrder: 7, align: 'right', isCalculated: true },
+  { key: 'twdAsset', label: '台幣資產', dataKey: '台幣資產', defaultVisible: true, defaultOrder: 8, align: 'right', isCalculated: true },
+  { key: 'ratio', label: '佔比', dataKey: null, defaultVisible: true, defaultOrder: 9, align: 'right', isCalculated: true },
+  { key: 'dividend', label: '每股配息', dataKey: '每股配息', defaultVisible: true, defaultOrder: 10, align: 'right' },
+  { key: 'yield', label: '殖利率', dataKey: '殖利率', defaultVisible: true, defaultOrder: 11, align: 'right', isCalculated: true },
+  { key: 'annualDividend', label: '每年配息', dataKey: '每年配息', defaultVisible: true, defaultOrder: 12, align: 'right', isCalculated: true },
+  { key: 'nextPaymentDate', label: '下次配息日', dataKey: '下次配息日', defaultVisible: true, defaultOrder: 13, align: 'center' },
+  { key: 'news', label: '新聞', dataKey: null, defaultVisible: true, defaultOrder: 14, align: 'center', isAction: true }
+]
+
+// 加密貨幣欄位定義
+export const cryptoColumns = [
+  { key: 'name', label: '名稱', dataKey: '名稱', defaultVisible: true, defaultOrder: 1, align: 'left' },
+  { key: 'symbol', label: '代號', dataKey: '代號', defaultVisible: true, defaultOrder: 2, align: 'left' },
+  { key: 'buyPrice', label: '買入均價', dataKey: '買入均價', defaultVisible: true, defaultOrder: 3, align: 'right' },
+  { key: 'units', label: '持有數量', dataKey: '股數', defaultVisible: true, defaultOrder: 4, align: 'right' },
+  { key: 'latestPrice', label: '最新價格', dataKey: '最新價格', defaultVisible: true, defaultOrder: 5, align: 'right', isCalculated: true },
+  { key: 'twdProfit', label: '台幣損益', dataKey: '台幣損益', defaultVisible: true, defaultOrder: 6, align: 'right', isCalculated: true },
+  { key: 'profitPercent', label: '損益(%)', dataKey: '報酬率', defaultVisible: true, defaultOrder: 7, align: 'right', isCalculated: true },
   { key: 'twdAsset', label: '台幣資產', dataKey: '台幣資產', defaultVisible: true, defaultOrder: 8, align: 'right', isCalculated: true },
   { key: 'ratio', label: '佔比', dataKey: null, defaultVisible: true, defaultOrder: 9, align: 'right', isCalculated: true },
   { key: 'news', label: '新聞', dataKey: null, defaultVisible: true, defaultOrder: 10, align: 'center', isAction: true }
@@ -96,8 +128,11 @@ export const assetHistoryColumns = [
 export const moduleColumnDefinitions = {
   'summary-cards': summaryCardsColumns,
   'overseas-bonds': overseasBondsColumns,
-  'stocks-etf': stocksEtfColumns,
-  'other-assets': otherAssetsColumns,
+  'bonds': overseasBondsColumns, // 新名稱
+  'stocks-etf': stocksEtfColumns, // 保留向後相容
+  'stocks': stocksColumns, // 新分類
+  'crypto': cryptoColumns, // 新分類
+  'other-assets': otherAssetsColumns, // 保留向後相容
   'loans': loansColumns,
   'asset-history': assetHistoryColumns
 }

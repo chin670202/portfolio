@@ -1,28 +1,43 @@
 <script setup>
 /**
- * 股票/ETF 模組
- * UID: stocks-etf
- * 顯示股票與 ETF 持倉，包含價格、損益、配息資訊
+ * 股票模組
+ * UID: stocks
+ * 顯示台股與美股持倉，包含價格、損益、配息資訊
  */
-import EtfTable from '../components/EtfTable.vue'
+import StocksTable from '../components/StocksTable.vue'
 
 defineProps({
   config: {
     type: Object,
     required: true
   },
-  // 計算後的 ETF 資料
-  calculatedEtfs: {
+  // 計算後的台股資料
+  calculatedTwStocks: {
     type: Array,
     required: true
   },
-  // ETF 小計
-  etfSubtotal: {
+  // 計算後的美股資料
+  calculatedUsStocks: {
+    type: Array,
+    required: true
+  },
+  // 台股小計
+  twStockSubtotal: {
+    type: Object,
+    required: true
+  },
+  // 美股小計
+  usStockSubtotal: {
+    type: Object,
+    required: true
+  },
+  // 股票總小計
+  stockSubtotal: {
     type: Object,
     required: true
   },
   // 貸款詳情（用於維持率計算）
-  etfLoanDetails: {
+  stockLoanDetails: {
     type: Array,
     default: () => []
   },
@@ -69,11 +84,14 @@ function handleOpenNews(symbol, name) {
 </script>
 
 <template>
-  <div class="module stocks-etf-module" :data-module-uid="config.uid">
-    <EtfTable
-      :etfs="calculatedEtfs"
-      :subtotal="etfSubtotal"
-      :loan-details="etfLoanDetails"
+  <div class="module stocks-module" :data-module-uid="config.uid">
+    <StocksTable
+      :tw-stocks="calculatedTwStocks"
+      :us-stocks="calculatedUsStocks"
+      :tw-subtotal="twStockSubtotal"
+      :us-subtotal="usStockSubtotal"
+      :total-subtotal="stockSubtotal"
+      :loan-details="stockLoanDetails"
       :price-status="priceStatus"
       :total-assets="totalAssets"
       :news-data="newsData"

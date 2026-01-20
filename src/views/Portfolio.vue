@@ -67,36 +67,33 @@ const {
   setFilterMode: setNewsFilterMode
 } = useNews()
 
-// 美股代號列表（與 OtherAssetsTable 一致）
-const usStockSymbols = ['TSLA', 'GLDM', 'SIVR', 'COPX', 'VOO']
+// 分類判斷函數（用於新分類：債券/股票/加密貨幣）
 const isCrypto = (symbol) => symbol.includes('/TWD')
-const isTwStock = (symbol) => /^\d/.test(symbol) && !isCrypto(symbol)
+const isTwStock = (symbol) => /^\d{4}/.test(symbol) || /^00/.test(symbol)
+const isUsStock = (symbol) => /^[A-Z]+$/.test(symbol) && !isCrypto(symbol)
 
 // 所有商品列表（用於新聞滾輪切換，順序與畫面一致）
 // 使用唯一 ID 避免重複代號問題
 const allProducts = computed(() => {
   if (!rawData.value) return []
   const products = []
-  // 1. 海外債券（使用索引建立唯一 ID）
+  // 1. 債券（原「股票」陣列）
   rawData.value.股票.forEach((bond, idx) => {
     products.push({ id: `bond_${idx}`, symbol: bond.代號, name: bond.公司名稱 })
   })
-  // 2. ETF
-  rawData.value.ETF.forEach((etf, idx) => {
-    products.push({ id: `etf_${idx}`, symbol: etf.代號, name: etf.名稱 })
+  // 2. 股票（台股：ETF 中的台股 + 其它資產中的台股）
+  rawData.value.ETF.filter(etf => isTwStock(etf.代號)).forEach((etf, idx) => {
+    products.push({ id: `tw_etf_${idx}`, symbol: etf.代號, name: etf.名稱 })
   })
-  // 3. 其它資產（按畫面順序：美股 → 台股 → 加密貨幣）
-  const otherAssets = rawData.value.其它資產
-  // 美股
-  otherAssets.filter(a => usStockSymbols.includes(a.代號)).forEach((asset, idx) => {
+  rawData.value.其它資產.filter(a => isTwStock(a.代號)).forEach((asset, idx) => {
+    products.push({ id: `tw_other_${idx}`, symbol: asset.代號, name: asset.名稱 })
+  })
+  // 3. 股票（美股）
+  rawData.value.其它資產.filter(a => isUsStock(a.代號)).forEach((asset, idx) => {
     products.push({ id: `us_${idx}`, symbol: asset.代號, name: asset.名稱 })
   })
-  // 台股
-  otherAssets.filter(a => isTwStock(a.代號)).forEach((asset, idx) => {
-    products.push({ id: `tw_${idx}`, symbol: asset.代號, name: asset.名稱 })
-  })
-  // 加密貨幣
-  otherAssets.filter(a => isCrypto(a.代號)).forEach((asset, idx) => {
+  // 4. 加密貨幣
+  rawData.value.其它資產.filter(a => isCrypto(a.代號)).forEach((asset, idx) => {
     products.push({ id: `crypto_${idx}`, symbol: asset.代號, name: asset.名稱 })
   })
   return products
@@ -191,6 +188,63 @@ const calculatedOtherAssets = computed(() => {
   return rawData.value.其它資產.map(asset => calculateOtherAssetDerivedData(asset, usdRate))
 })
 
+// ========== 新分類：股票/加密貨幣 ==========
+
+// 計算後的台股資料（合併 ETF 中的台股 + 其它資產中的台股）
+// 排序規則：有配息的排在上面
+const calculatedTwStocks = computed(() => {
+  if (!rawData.value) return []
+
+  // 從 ETF 中篩選台股
+  const twEtfs = calculatedEtfs.value.filter(etf => isTwStock(etf.代號))
+
+  // 從其它資產中篩選台股
+  const twOtherAssets = calculatedOtherAssets.value.filter(asset => isTwStock(asset.代號))
+
+  // 合併資料，統一欄位格式（使用 ETF 的欄位結構）
+  const merged = [
+    ...twEtfs,
+    ...twOtherAssets.map(asset => ({
+      ...asset,
+      名稱: asset.名稱,
+      代號: asset.代號,
+      買入均價: asset.買入均價,
+      股數: asset.股數,
+      最新價格: asset.最新價格,
+      台幣損益: asset.台幣損益,
+      報酬率: asset.報酬率,
+      台幣資產: asset.台幣資產,
+      每股配息: asset.每股配息 || 0,
+      每年配息: asset.每年配息 || 0,
+      殖利率: asset.殖利率 || 0,
+      下次配息日: asset.下次配息日 || '',
+      質押股數: asset.質押股數 || 0,
+      貸款餘額: asset.貸款餘額 || 0
+    }))
+  ]
+
+  // 排序：有配息的排在上面（按殖利率降序）
+  return merged.sort((a, b) => {
+    const aHasDividend = (a.每股配息 || 0) > 0
+    const bHasDividend = (b.每股配息 || 0) > 0
+    if (aHasDividend && !bHasDividend) return -1
+    if (!aHasDividend && bHasDividend) return 1
+    return (b.殖利率 || 0) - (a.殖利率 || 0)
+  })
+})
+
+// 計算後的美股資料
+const calculatedUsStocks = computed(() => {
+  if (!rawData.value) return []
+  return calculatedOtherAssets.value.filter(asset => isUsStock(asset.代號))
+})
+
+// 計算後的加密貨幣資料
+const calculatedCryptos = computed(() => {
+  if (!rawData.value) return []
+  return calculatedOtherAssets.value.filter(asset => isCrypto(asset.代號))
+})
+
 // 計算後的貸款資料
 const calculatedLoans = computed(() => {
   if (!rawData.value) return []
@@ -226,6 +280,82 @@ const etfSubtotal = computed(() => {
 const otherAssetSubtotal = computed(() => {
   if (!calculatedOtherAssets.value.length) return { 台幣資產: 0 }
   return calculateOtherAssetSubtotal(calculatedOtherAssets.value)
+})
+
+// ========== 新分類小計 ==========
+
+// 台股小計
+const twStockSubtotal = computed(() => {
+  const stocks = calculatedTwStocks.value
+  if (!stocks.length) return { 台幣資產: 0, 台幣損益: 0, 每年配息: 0 }
+
+  const 台幣資產 = stocks.reduce((sum, s) => sum + (s.台幣資產 || 0), 0)
+  const 台幣損益 = stocks.reduce((sum, s) => sum + (s.台幣損益 || 0), 0)
+  const 每年配息 = stocks.reduce((sum, s) => sum + (s.每年配息 || 0), 0)
+  const 質押股數 = stocks.reduce((sum, s) => sum + (s.質押股數 || 0), 0)
+
+  return {
+    台幣資產,
+    台幣損益,
+    報酬率: 台幣資產 > 0 ? (台幣損益 / (台幣資產 - 台幣損益)) * 100 : 0,
+    每年配息,
+    殖利率: 台幣資產 > 0 ? (每年配息 / 台幣資產) * 100 : 0,
+    質押股數
+  }
+})
+
+// 美股小計
+const usStockSubtotal = computed(() => {
+  const stocks = calculatedUsStocks.value
+  if (!stocks.length) return { 台幣資產: 0, 台幣損益: 0 }
+
+  const 台幣資產 = stocks.reduce((sum, s) => sum + (s.台幣資產 || 0), 0)
+  const 台幣損益 = stocks.reduce((sum, s) => sum + (s.台幣損益 || 0), 0)
+
+  return {
+    台幣資產,
+    台幣損益,
+    報酬率: 台幣資產 > 0 ? (台幣損益 / (台幣資產 - 台幣損益)) * 100 : 0
+  }
+})
+
+// 股票總計（台股 + 美股）
+const stockSubtotal = computed(() => {
+  const tw = twStockSubtotal.value
+  const us = usStockSubtotal.value
+
+  const 台幣資產 = (tw.台幣資產 || 0) + (us.台幣資產 || 0)
+  const 台幣損益 = (tw.台幣損益 || 0) + (us.台幣損益 || 0)
+  const 每年配息 = tw.每年配息 || 0
+
+  // 計算股票相關貸款餘額（用於維持率）
+  const stockLoans = calculatedLoans.value.filter(l => l.貸款別.includes('股票'))
+  const 貸款餘額 = stockLoans.reduce((sum, l) => sum + l.貸款餘額, 0)
+
+  return {
+    台幣資產,
+    台幣損益,
+    報酬率: 台幣資產 > 0 ? (台幣損益 / (台幣資產 - 台幣損益)) * 100 : 0,
+    每年配息,
+    殖利率: 台幣資產 > 0 ? (每年配息 / 台幣資產) * 100 : 0,
+    貸款餘額,
+    維持率: 貸款餘額 > 0 ? (台幣資產 / 貸款餘額) * 100 : 0
+  }
+})
+
+// 加密貨幣小計
+const cryptoSubtotal = computed(() => {
+  const cryptos = calculatedCryptos.value
+  if (!cryptos.length) return { 台幣資產: 0, 台幣損益: 0 }
+
+  const 台幣資產 = cryptos.reduce((sum, c) => sum + (c.台幣資產 || 0), 0)
+  const 台幣損益 = cryptos.reduce((sum, c) => sum + (c.台幣損益 || 0), 0)
+
+  return {
+    台幣資產,
+    台幣損益,
+    報酬率: 台幣資產 > 0 ? (台幣損益 / (台幣資產 - 台幣損益)) * 100 : 0
+  }
 })
 
 // 貸款總計
@@ -267,17 +397,27 @@ const moduleProps = computed(() => ({
   netIncome: netIncome.value,
   updating: updating.value,
 
-  // 海外債券模組需要的資料
+  // 債券模組需要的資料（原海外債券）
   calculatedBonds: calculatedBonds.value,
   bondSubtotal: bondSubtotal.value,
   bondLoanDetails: bondLoanDetails.value,
 
-  // 股票/ETF 模組需要的資料
+  // 股票模組需要的資料（新分類：台股 + 美股）
+  calculatedTwStocks: calculatedTwStocks.value,
+  calculatedUsStocks: calculatedUsStocks.value,
+  twStockSubtotal: twStockSubtotal.value,
+  usStockSubtotal: usStockSubtotal.value,
+  stockSubtotal: stockSubtotal.value,
+  stockLoanDetails: etfLoanDetails.value, // 沿用 ETF 的貸款明細（股票質借）
+
+  // 加密貨幣模組需要的資料
+  calculatedCryptos: calculatedCryptos.value,
+  cryptoSubtotal: cryptoSubtotal.value,
+
+  // 舊模組相容（保留給可能還在使用的元件）
   calculatedEtfs: calculatedEtfs.value,
   etfSubtotal: etfSubtotal.value,
   etfLoanDetails: etfLoanDetails.value,
-
-  // 無配息資產模組需要的資料
   calculatedOtherAssets: calculatedOtherAssets.value,
   otherAssetSubtotal: otherAssetSubtotal.value,
 
@@ -438,7 +578,7 @@ async function loadData() {
 
   try {
     const username = currentUsername.value
-    const response = await fetch(`${import.meta.env.BASE_URL}data/${username}.json`)
+    const response = await fetch(`${import.meta.env.BASE_URL}data/${username}.json?v=${appVersion}`)
     if (!response.ok) {
       if (response.status === 404) {
         throw new Error(`找不到使用者 "${username}" 的資料`)
@@ -467,17 +607,41 @@ async function loadUserDashboard() {
     const response = await fetch(`/data/${currentUsername.value}.dashboard.json?t=${Date.now()}`)
     if (response.ok) {
       const data = await response.json()
-      userDashboardComponent.value = data
+      // 版本檢查：如果用戶配置版本低於 2，重置為新分類配置
+      if (!data.version || data.version < 2) {
+        console.log('[Portfolio] 用戶儀表板配置版本過舊，重置為新配置')
+        userDashboardComponent.value = {
+          version: 2,
+          sectionOrder: ['summary', 'bonds', 'stocks', 'crypto', 'loans', 'history'],
+          sections: {
+            summary: true,
+            bonds: true,
+            stocks: true,
+            crypto: true,
+            loans: true,
+            history: true
+          },
+          theme: data.theme || {
+            primaryColor: '#667eea',
+            primaryGradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            sectionGap: '20px'
+          },
+          columns: {}, // 重置欄位配置
+          customCards: data.customCards || []
+        }
+      } else {
+        userDashboardComponent.value = data
+      }
     } else {
       // 如果找不到用戶專屬配置，使用預設配置
       userDashboardComponent.value = {
-        version: 1,
-        sectionOrder: ['summary', 'bonds', 'etf', 'otherAssets', 'loans', 'history'],
+        version: 2,
+        sectionOrder: ['summary', 'bonds', 'stocks', 'crypto', 'loans', 'history'],
         sections: {
           summary: true,
           bonds: true,
-          etf: true,
-          otherAssets: true,
+          stocks: true,
+          crypto: true,
           loans: true,
           history: true
         },

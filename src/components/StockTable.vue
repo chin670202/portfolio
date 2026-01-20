@@ -2,7 +2,7 @@
   <table>
     <thead>
       <tr class="section-header">
-        <th :colspan="sortedVisibleColumns.length">海外債券</th>
+        <th :colspan="sortedVisibleColumns.length">直債</th>
       </tr>
       <tr>
         <th v-for="col in sortedVisibleColumns" :key="col.key" :class="getHeaderClass(col.key)">
@@ -103,7 +103,7 @@
 
   <FormulaModal
     :visible="showModal"
-    title="海外債券整戶維持率"
+    title="直債整戶維持率"
     formula="整戶維持率 = 已質押資產 ÷ 貸款餘額 × 100%"
     :values="modalValues"
     :result-formula="resultFormula"

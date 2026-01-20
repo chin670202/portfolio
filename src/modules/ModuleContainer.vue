@@ -27,11 +27,13 @@ function handleOpenNews(symbol, name) {
 // 動態載入模組元件
 const moduleComponents = {
   'summary-cards': defineAsyncComponent(() => import('./SummaryCardsModule.vue')),
-  'overseas-bonds': defineAsyncComponent(() => import('./OverseasBondsModule.vue')),
-  'stocks-etf': defineAsyncComponent(() => import('./StocksEtfModule.vue')),
-  'other-assets': defineAsyncComponent(() => import('./OtherAssetsModule.vue')),
+  'bonds': defineAsyncComponent(() => import('./OverseasBondsModule.vue')),
+  'stocks': defineAsyncComponent(() => import('./StocksModule.vue')),
+  'crypto': defineAsyncComponent(() => import('./CryptoModule.vue')),
   'loans': defineAsyncComponent(() => import('./LoansModule.vue')),
-  'asset-history': defineAsyncComponent(() => import('./AssetHistoryModule.vue'))
+  'asset-history': defineAsyncComponent(() => import('./AssetHistoryModule.vue')),
+  // 向後相容：舊的 UID 映射到新元件
+  'overseas-bonds': defineAsyncComponent(() => import('./OverseasBondsModule.vue'))
 }
 
 // 過濾並排序啟用的模組
