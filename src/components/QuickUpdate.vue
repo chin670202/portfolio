@@ -9,10 +9,14 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['updated', 'dashboard-updated'])
+const emit = defineEmits(['updated', 'dashboard-updated', 'custom-dashboard-created'])
 
-// 頁籤狀態：'position' = 部位更新, 'dashboard' = 儀表板調整
+// 頁籤狀態：'position' = 部位更新, 'dashboard' = 儀表板調整, 'custom' = 自訂儀表板
 const activeTab = ref('position')
+
+// 自訂儀表板狀態
+const customHtmlExists = ref(false)
+const showCustomDashboard = ref(false)
 
 // 輸入視窗狀態
 const showInputModal = ref(false)
@@ -39,6 +43,29 @@ const apiKey = updateService.apiKey
 
 // 功能是否啟用
 const isEnabled = features.quickUpdate
+
+// 檢查自訂儀表板 HTML 是否存在
+async function checkCustomHtmlExists() {
+  try {
+    const response = await fetch(`${serverUrl}/custom-dashboard/${props.username}/check`)
+    const data = await response.json()
+    customHtmlExists.value = data.exists
+  } catch (e) {
+    customHtmlExists.value = false
+  }
+}
+
+// 開啟自訂儀表板（全螢幕 iframe）
+function openCustomDashboard() {
+  showCustomDashboard.value = true
+}
+
+function closeCustomDashboard() {
+  showCustomDashboard.value = false
+}
+
+// 初始化時檢查
+checkCustomHtmlExists()
 
 const canSubmit = computed(() => {
   return (updateContent.value.trim() || imageFile.value) && serverUrl
@@ -201,19 +228,30 @@ async function submitUpdate() {
       content = imageToSend
     }
 
-    // 使用 SSE 端點，根據頁籤決定 mode
-    const response = await fetch(`${serverUrl}/update/stream`, {
+    // 根據頁籤決定使用哪個 API 端點
+    let apiUrl = `${serverUrl}/update/stream`
+    let requestBody = {
+      user: props.username,
+      type,
+      content,
+      mode: activeTab.value  // 'position' 或 'dashboard'
+    }
+
+    // 自訂儀表板使用不同的端點
+    if (activeTab.value === 'custom') {
+      apiUrl = `${serverUrl}/custom-dashboard/${props.username}/generate`
+      requestBody = {
+        instruction: content
+      }
+    }
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-API-Key': apiKey
       },
-      body: JSON.stringify({
-        user: props.username,
-        type,
-        content,
-        mode: activeTab.value  // 'position' 或 'dashboard'
-      })
+      body: JSON.stringify(requestBody)
     })
 
     if (!response.ok) {
@@ -272,6 +310,9 @@ function handleSSEMessage(data) {
       // 根據結果類型 emit 不同事件
       if (data.result?.type === 'dashboard-updated') {
         emit('dashboard-updated', data.result)
+      } else if (data.result?.type === 'custom-dashboard-created') {
+        customHtmlExists.value = true
+        emit('custom-dashboard-created', data.result)
       } else {
         emit('updated', data.result)
       }
@@ -373,6 +414,17 @@ async function submitClarification() {
 
 <template>
   <div v-if="isEnabled" class="quick-update">
+    <!-- 自訂儀表板按鈕（當 HTML 存在時顯示） -->
+    <button
+      v-if="customHtmlExists"
+      class="custom-dashboard-btn"
+      @click="openCustomDashboard"
+      title="我的自訂儀表板"
+    >
+      <span class="btn-icon">📊</span>
+      <span class="btn-text">我的自訂儀表板</span>
+    </button>
+
     <!-- 觸發按鈕 -->
     <button class="quick-update-btn" @click="openInputModal" title="智慧助手">
       <span class="btn-icon">✦</span>
@@ -406,6 +458,14 @@ async function submitClarification() {
               >
                 <span class="tab-icon">🎨</span>
                 儀表板調整
+              </button>
+              <button
+                class="tab-btn"
+                :class="{ active: activeTab === 'custom' }"
+                @click="activeTab = 'custom'"
+              >
+                <span class="tab-icon">✨</span>
+                自訂儀表板
               </button>
             </div>
 
@@ -464,6 +524,37 @@ async function submitClarification() {
                   <li>欄位順序調整</li>
                   <li>新增自訂卡片</li>
                 </ul>
+              </div>
+            </div>
+
+            <!-- 自訂儀表板頁籤內容 -->
+            <div v-if="activeTab === 'custom'" class="tab-content">
+              <div class="input-section">
+                <label>描述你想要的儀表板：</label>
+                <textarea
+                  v-model="updateContent"
+                  placeholder="例如：&#10;我想要一個簡潔的儀表板，只顯示總資產、總負債和淨值&#10;幫我做一個圓餅圖顯示各類資產比例&#10;我要一個有深色主題的儀表板，顯示我的股票和ETF績效"
+                  rows="4"
+                ></textarea>
+              </div>
+
+              <div class="input-hint custom-hint">
+                <div class="hint-title">AI 將為你生成獨立的 HTML 儀表板</div>
+                <ul>
+                  <li>可以完全自訂版面配置和風格</li>
+                  <li>支援各種圖表和視覺化元素</li>
+                  <li>生成的 HTML 會自動包含你的投資資料</li>
+                  <li>完成後可在右側開啟「我的自訂儀表板」按鈕查看</li>
+                </ul>
+              </div>
+
+              <!-- 如果已存在自訂儀表板，顯示開啟按鈕 -->
+              <div v-if="customHtmlExists" class="existing-dashboard-hint">
+                <span class="hint-icon">✅</span>
+                <span>你已有自訂儀表板，</span>
+                <button class="link-btn" @click="closeInputModal(); openCustomDashboard()">
+                  點此開啟
+                </button>
               </div>
             </div>
           </div>
@@ -577,6 +668,20 @@ async function submitClarification() {
             </button>
           </div>
         </div>
+      </div>
+    </Teleport>
+    <!-- 自訂儀表板 iframe 全螢幕視窗 -->
+    <Teleport to="body">
+      <div v-if="showCustomDashboard" class="custom-dashboard-overlay">
+        <div class="custom-dashboard-header">
+          <h3>我的自訂儀表板</h3>
+          <button class="close-btn" @click="closeCustomDashboard">&times;</button>
+        </div>
+        <iframe
+          :src="`${serverUrl}/custom-dashboard/${props.username}/html`"
+          class="custom-dashboard-iframe"
+          frameborder="0"
+        ></iframe>
       </div>
     </Teleport>
   </div>
@@ -1139,5 +1244,134 @@ async function submitClarification() {
 
 .submit-btn:not(:disabled):hover {
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* 自訂儀表板頁籤樣式 */
+.custom-hint {
+  background: rgba(46, 204, 113, 0.1);
+  border-color: rgba(46, 204, 113, 0.3);
+  color: #7dcea0;
+}
+
+.custom-hint .hint-title {
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #2ecc71;
+}
+
+.custom-hint ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.custom-hint li {
+  margin: 4px 0;
+}
+
+.existing-dashboard-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(46, 204, 113, 0.15);
+  border: 1px solid rgba(46, 204, 113, 0.4);
+  border-radius: 8px;
+  color: #2ecc71;
+  font-size: 14px;
+}
+
+.hint-icon {
+  font-size: 16px;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: #667eea;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+}
+
+.link-btn:hover {
+  color: #764ba2;
+}
+
+/* 自訂儀表板按鈕 */
+.custom-dashboard-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3);
+  margin-right: 12px;
+}
+
+.custom-dashboard-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(46, 204, 113, 0.5);
+}
+
+.custom-dashboard-btn:active {
+  transform: translateY(0);
+}
+
+/* 自訂儀表板 iframe 全螢幕 */
+.custom-dashboard-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #1e1e2e;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+}
+
+.custom-dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  color: white;
+}
+
+.custom-dashboard-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.custom-dashboard-header .close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.custom-dashboard-header .close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.custom-dashboard-iframe {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: white;
 }
 </style>

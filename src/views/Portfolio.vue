@@ -503,6 +503,11 @@ function handleDashboardUpdated() {
   loadUserDashboard()
 }
 
+function handleCustomDashboardCreated() {
+  // 自訂儀表板已建立，可以在這裡添加通知或其他邏輯
+  console.log('自訂儀表板已建立')
+}
+
 // 監聽路由變化，重新載入資料
 watch(() => route.params.username, () => {
   loadData()
@@ -522,7 +527,7 @@ onMounted(() => {
         <span v-if="lastUpdateTime" class="last-update">
           最後更新: {{ lastUpdateTime }}
         </span>
-        <QuickUpdate :username="currentUsername" @updated="loadData" @dashboard-updated="handleDashboardUpdated" />
+        <QuickUpdate :username="currentUsername" @updated="loadData" @dashboard-updated="handleDashboardUpdated" @custom-dashboard-created="handleCustomDashboardCreated" />
         <button class="settings-btn" @click="showSettings = true" title="設定">
           ⚙️
         </button>
