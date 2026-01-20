@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "sectionOrder": ["summary", "bonds", "etf", "otherAssets", "loans", "history"],
+  "sections": {
+    "summary": true,
+    "bonds": true,
+    "etf": true,
+    "otherAssets": true,
+    "loans": true,
+    "history": true
+  },
+  "theme": {
+    "primaryColor": "#667eea",
+    "primaryGradient": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    "sectionGap": "20px"
+  },
+  "customCards": []
+}
