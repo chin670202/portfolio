@@ -580,7 +580,7 @@ async function loadData() {
 
   try {
     const username = currentUsername.value
-    const response = await fetch(`${import.meta.env.BASE_URL}data/${username}.json?v=${appVersion}`)
+    const response = await fetch(`${import.meta.env.BASE_URL}data/${username}.json?t=${Date.now()}`)
     if (!response.ok) {
       if (response.status === 404) {
         throw new Error(`找不到使用者 "${username}" 的資料`)
