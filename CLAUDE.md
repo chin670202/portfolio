@@ -139,8 +139,25 @@ API 端點：
 - `GET /backup/:user` - 取得備份列表
 - `POST /backup/:user/restore` - 還原指定備份
 
+## Git 提交規則
+
+### 必須一起提交的檔案
+每次 commit 時，必須包含 `.claude/settings.local.json`：
+```bash
+git add .claude/settings.local.json
+```
+
+這個檔案記錄了 Claude Code 的本地設定，需要同步到版本控制中。
+
 ## 部署流程
 
 1. 建置前端：`npm run build`
 2. 提交變更：`git add . && git commit -m "message"`
 3. 推送到 GitHub：`git push`
+
+### 用戶資料同步（智慧助手更新）
+
+當用戶透過智慧助手更新部位時，系統會：
+1. 更新 `public/data/{user}.json`（main 分支）
+2. 使用 git worktree 同步到 gh-pages 分支的 `users/{user}/data.json`
+3. 只影響該用戶的資料，不會動到其他用戶
