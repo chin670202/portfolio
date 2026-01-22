@@ -32,8 +32,13 @@ async function getStatus(projectRoot) {
 }
 
 /**
- * 同步資料檔案到 gh-pages 分支
- * 只更新 data/ 目錄下的 JSON 檔案，不重新 build 整個專案
+ * 同步用戶資料到 gh-pages 分支的用戶專屬目錄
+ *
+ * 新架構：每個用戶有獨立目錄
+ * gh-pages/users/{username}/data.json
+ * gh-pages/users/{username}/backups/
+ *
+ * 這樣更新某用戶只需要改該用戶的目錄，不影響其他用戶
  */
 async function syncToGhPages(user, projectRoot) {
   const git = simpleGit(projectRoot);
@@ -43,7 +48,7 @@ async function syncToGhPages(user, projectRoot) {
     const branch = await git.branch();
     const currentBranch = branch.current;
 
-    // 取得要同步的檔案路徑
+    // 取得要同步的檔案路徑（main 分支上的路徑）
     const jsonFile = `public/data/${user}.json`;
     const backupDir = `public/data/backups/${user}`;
 
@@ -71,30 +76,62 @@ async function syncToGhPages(user, projectRoot) {
     await git.checkout('gh-pages');
 
     try {
-      // 更新 JSON 檔案（gh-pages 上的路徑是 data/，不是 public/data/）
-      const ghPagesJsonPath = path.join(projectRoot, `data/${user}.json`);
-      await fs.writeFile(ghPagesJsonPath, jsonContent, 'utf-8');
-      console.log(`已更新 gh-pages: data/${user}.json`);
+      // 用戶專屬目錄路徑
+      const userDir = path.join(projectRoot, 'users', user);
 
-      // 更新備份檔案
-      if (backupFiles.length > 0) {
-        const ghPagesBackupDir = path.join(projectRoot, `data/backups/${user}`);
-        await fs.mkdir(ghPagesBackupDir, { recursive: true });
+      // 確保用戶目錄存在
+      await fs.mkdir(userDir, { recursive: true });
 
-        for (const backup of backupFiles) {
-          const backupPath = path.join(ghPagesBackupDir, backup.name);
-          await fs.writeFile(backupPath, backup.content, 'utf-8');
-        }
-        console.log(`已同步 ${backupFiles.length} 個備份檔案到 gh-pages`);
+      // 更新用戶資料 JSON
+      const userDataPath = path.join(userDir, 'data.json');
+      await fs.writeFile(userDataPath, jsonContent, 'utf-8');
+      console.log(`已更新 gh-pages: users/${user}/data.json`);
+
+      // 同時更新舊路徑（向後相容）
+      const legacyJsonPath = path.join(projectRoot, 'data', `${user}.json`);
+      try {
+        await fs.mkdir(path.join(projectRoot, 'data'), { recursive: true });
+        await fs.writeFile(legacyJsonPath, jsonContent, 'utf-8');
+        console.log(`已更新 gh-pages: data/${user}.json (向後相容)`);
+      } catch (err) {
+        console.warn('無法更新舊路徑:', err.message);
       }
 
-      // Stage 並 commit
+      // 更新備份檔案到用戶目錄
+      if (backupFiles.length > 0) {
+        const userBackupDir = path.join(userDir, 'backups');
+        await fs.mkdir(userBackupDir, { recursive: true });
+
+        for (const backup of backupFiles) {
+          const backupPath = path.join(userBackupDir, backup.name);
+          await fs.writeFile(backupPath, backup.content, 'utf-8');
+        }
+        console.log(`已同步 ${backupFiles.length} 個備份檔案到 users/${user}/backups/`);
+
+        // 同時更新舊路徑的備份（向後相容）
+        try {
+          const legacyBackupDir = path.join(projectRoot, 'data', 'backups', user);
+          await fs.mkdir(legacyBackupDir, { recursive: true });
+          for (const backup of backupFiles) {
+            await fs.writeFile(path.join(legacyBackupDir, backup.name), backup.content, 'utf-8');
+          }
+        } catch (err) {
+          console.warn('無法更新舊路徑備份:', err.message);
+        }
+      }
+
+      // Stage 變更
+      await git.add(`users/${user}/*`);
       await git.add(`data/${user}.json`);
-      await git.add(`data/backups/${user}/*`);
+      try {
+        await git.add(`data/backups/${user}/*`);
+      } catch (err) {
+        // 忽略
+      }
 
       const status = await git.status();
       if (!status.isClean()) {
-        await git.commit(`sync: 更新 ${user} 資料`);
+        await git.commit(`sync: 更新 ${user} 用戶資料`);
         await git.push('origin', 'gh-pages');
         console.log('gh-pages 同步完成');
       } else {

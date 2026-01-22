@@ -580,7 +580,16 @@ async function loadData() {
 
   try {
     const username = currentUsername.value
-    const response = await fetch(`${import.meta.env.BASE_URL}data/${username}.json?t=${Date.now()}`)
+
+    // 優先嘗試從用戶專屬目錄載入（新架構）
+    // 如果失敗則 fallback 到舊路徑（向後相容）
+    let response = await fetch(`${import.meta.env.BASE_URL}users/${username}/data.json?t=${Date.now()}`)
+
+    if (!response.ok) {
+      // Fallback 到舊路徑
+      response = await fetch(`${import.meta.env.BASE_URL}data/${username}.json?t=${Date.now()}`)
+    }
+
     if (!response.ok) {
       if (response.status === 404) {
         throw new Error(`找不到使用者 "${username}" 的資料`)
