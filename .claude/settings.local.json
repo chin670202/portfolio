@@ -62,7 +62,15 @@
       "Bash(dir:*)",
       "Bash(gh run list:*)",
       "Bash(ls -la \"d:\\\\我的投資現況\\\\.github\\\\workflows\"\" 2>/dev/null || echo \"目錄不存在 \")",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(Get-Content \"C:\\\\Users\\\\CHINGH~1\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--------\\\\tasks\\\\bd10229.output\" -Tail 10)",
+      "Bash(cmd //c \"taskkill /PID 45540 /F\")",
+      "Bash(cmd //c \"taskkill /PID 1692 /F\")",
+      "Bash(cmd //c \"tasklist | findstr node\")",
+      "Bash(cmd //c \"where node\")",
+      "Bash(cmd //c \"nvm list\")",
+      "Bash(cmd //c:*)",
+      "Bash(npx vue-tsc --noEmit)"
     ]
   }
 }

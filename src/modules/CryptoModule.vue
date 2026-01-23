@@ -3,10 +3,17 @@
  * 加密貨幣模組
  * UID: crypto
  * 顯示加密貨幣持倉，包含價格、損益資訊
+ * 支援桌面版（表格）和手機版（卡片）
  */
 import CryptoTable from '../components/CryptoTable.vue'
+import AssetCard from '../components/mobile/AssetCard.vue'
+import SummaryCard from '../components/mobile/SummaryCard.vue'
+import { useResponsive } from '../composables/useResponsive'
+import { cryptoCardConfig } from '../components/mobile/cardConfigs'
 
-defineProps({
+const { isMobile } = useResponsive()
+
+const props = defineProps({
   config: {
     type: Object,
     required: true
@@ -61,11 +68,23 @@ const emit = defineEmits(['open-news'])
 function handleOpenNews(symbol, name) {
   emit('open-news', symbol, name)
 }
+
+// 檢查價格是否載入中
+function isPriceLoading(symbol) {
+  return props.priceStatus[symbol]?.loading
+}
+
+// 檢查價格是否失敗
+function isPriceFailed(symbol) {
+  return props.priceStatus[symbol]?.failed
+}
 </script>
 
 <template>
   <div class="module crypto-module" :data-module-uid="config.uid">
+    <!-- 桌面版：表格 -->
     <CryptoTable
+      v-if="!isMobile"
       :cryptos="calculatedCryptos"
       :subtotal="cryptoSubtotal"
       :price-status="priceStatus"
@@ -78,11 +97,40 @@ function handleOpenNews(symbol, name) {
       :column-config="config.columns"
       @open-news="handleOpenNews"
     />
+
+    <!-- 手機版：卡片列表 -->
+    <div v-else class="mobile-card-list">
+      <AssetCard
+        v-for="crypto in calculatedCryptos"
+        :key="crypto.代號"
+        :item="crypto"
+        :config="cryptoCardConfig"
+        :price-loading="isPriceLoading(crypto.代號)"
+        :price-failed="isPriceFailed(crypto.代號)"
+        :news-count="getNewsCount(crypto.代號)"
+        :highlight="highlightSymbol === crypto.代號"
+        @open-news="handleOpenNews"
+      />
+
+      <!-- 小計卡片 -->
+      <SummaryCard
+        title="加密貨幣小計"
+        :data="cryptoSubtotal"
+        :total-assets="totalAssets"
+      />
+    </div>
   </div>
 </template>
 
 <style scoped>
 .module {
   margin-bottom: 20px;
+}
+
+.mobile-card-list {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 </style>

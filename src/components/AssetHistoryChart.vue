@@ -137,6 +137,7 @@ const chartOptions = {
 <style scoped>
 .chart-container {
   width: 100%;
+  max-width: 100%;
   height: 400px;
   margin-top: 20px;
   margin-bottom: 25px;
@@ -144,5 +145,15 @@ const chartOptions = {
   background: white;
   border: 1px solid #ccc;
   border-radius: 4px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .chart-container {
+    height: 300px;
+    padding: 10px;
+    margin-top: 12px;
+  }
 }
 </style>
