@@ -396,8 +396,11 @@ const getPercentage = (value) => {
 }
 
 const getPriceStatus = (symbol, market) => {
-  const prefix = market === 'us' ? 'other_' : 'etf_'
-  return props.priceStatus[`${prefix}${symbol}`] || { loading: false, failed: false }
+  if (market === 'us') {
+    return props.priceStatus[`other_${symbol}`] || { loading: false, failed: false }
+  }
+  // 台股可能來自 ETF 或其它資產，兩個都檢查
+  return props.priceStatus[`etf_${symbol}`] || props.priceStatus[`other_${symbol}`] || { loading: false, failed: false }
 }
 
 const getDividendStatus = (symbol) => {

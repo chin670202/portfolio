@@ -9,8 +9,8 @@
  */
 
 // CORS Proxy 設定
-// 自架 Cloudflare Worker: 'https://muddy-glade-88a0.chinghunglai.workers.dev/?url='
 const CORS_PROXY = 'https://corsproxy.io/?'
+const CORS_PROXY_BACKUP = 'https://muddy-glade-88a0.chinghunglai.workers.dev/?url='
 
 // 共用 Headers
 const DEFAULT_HEADERS = {
@@ -72,22 +72,97 @@ export async function getBondPrices(isinList) {
 }
 
 // ============================================================
-// 台股 / ETF 價格（Yahoo Finance 台灣）
+// 台股 / ETF 價格（Yahoo Finance 台灣 + TWSE 官方 API 備用）
 // ============================================================
 
 /**
- * 從 Yahoo Finance 抓取台股/ETF價格
- * @param {string} stockCode - 股票代碼（例如 "00725B"）
- * @returns {Promise<string>} 格式化後的價格（小數點後3位）
+ * 判斷股票是否為上市（TWSE）
+ * @param {string} stockCode - 股票代碼
+ * @returns {boolean} true=上市, false=上櫃
  */
-export async function getStockPrice(stockCode) {
-  if (!stockCode) {
-    return '請輸入股票代碼'
+function isTWSE(stockCode) {
+  // 上櫃債券 ETF：00xxxB 格式（如 00725B, 00720B, 00937B）
+  if (/^00\d{3}B$/.test(stockCode)) return false
+
+  // 其他大部分是上市（包含一般股票和 ETF）
+  return true
+}
+
+/**
+ * 檢查價格結果是否有效
+ * @param {string} result - 價格查詢結果
+ * @returns {boolean} 是否為有效價格
+ */
+function isValidPrice(result) {
+  if (typeof result !== 'string') return false
+  // 有效價格應該是純數字格式（如 "580.000"）
+  return /^\d+\.\d{3}$/.test(result)
+}
+
+/**
+ * 從 Yahoo Finance 抓取台股/ETF價格（使用指定的 CORS proxy）
+ * @param {string} stockCode - 股票代碼
+ * @param {string} proxy - CORS proxy URL
+ * @returns {Promise<string>} 價格或錯誤訊息
+ */
+async function fetchYahooPrice(stockCode, proxy) {
+  const suffix = isTWSE(stockCode) ? '.TW' : '.TWO'
+  const url = `https://tw.stock.yahoo.com/quote/${stockCode}${suffix}`
+
+  const response = await fetch(proxy + encodeURIComponent(url), {
+    headers: DEFAULT_HEADERS
+  })
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`)
   }
 
-  // 判斷上市(.TW)或上櫃(.TWO)：ETF代號含字母或數字開頭超過4碼通常是上櫃
-  const suffix = /^00\d{3}[A-Z]?$/.test(stockCode) ? '.TWO' : '.TW'
-  const url = `https://tw.stock.yahoo.com/quote/${stockCode}${suffix}`
+  const content = await response.text()
+
+  // 使用正則表達式提取價格（找 Fz(32px) 樣式的 span，這是主要價格顯示區）
+  const priceMatch = content.match(/<span[^>]*class="[^"]*Fz\(32px\)[^"]*"[^>]*>([\d,.]+)<\/span>/)
+  if (!priceMatch) {
+    throw new Error('無法解析價格')
+  }
+
+  // 移除千分位逗號
+  const priceStr = priceMatch[1].replace(/,/g, '')
+  const price = parseFloat(priceStr)
+  const roundedPrice = Math.round(price * 1000) / 1000
+  return roundedPrice.toFixed(3)
+}
+
+/**
+ * 從 Yahoo Finance 抓取台股/ETF價格（內部函數，含備用 proxy）
+ * @param {string} stockCode - 股票代碼
+ * @returns {Promise<string>} 價格或錯誤訊息
+ */
+async function getStockPriceFromYahoo(stockCode) {
+  // 1. 先用主 proxy 嘗試
+  try {
+    return await fetchYahooPrice(stockCode, CORS_PROXY)
+  } catch (e) {
+    console.log(`[Yahoo] 主 proxy 失敗 (${e.message})，嘗試備用 proxy: ${stockCode}`)
+  }
+
+  // 2. 主 proxy 失敗，用備用 proxy 再試
+  try {
+    return await fetchYahooPrice(stockCode, CORS_PROXY_BACKUP)
+  } catch (e) {
+    console.error(`getStockPriceFromYahoo error for ${stockCode}:`, e)
+    return '錯誤: ' + e.message
+  }
+}
+
+/**
+ * 從 TWSE/TPEx 官方 API 查詢台股價格（備用來源）
+ * @param {string} stockCode - 股票代碼
+ * @returns {Promise<string>} 價格或錯誤訊息
+ */
+async function getStockPriceFromTWSE(stockCode) {
+  // 判斷上市(tse)或上櫃(otc)
+  const market = isTWSE(stockCode) ? 'tse' : 'otc'
+  const url = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${market}_${stockCode}.tw`
 
   try {
     const response = await fetch(CORS_PROXY + encodeURIComponent(url), {
@@ -98,23 +173,48 @@ export async function getStockPrice(stockCode) {
       throw new Error(`HTTP ${response.status}`)
     }
 
-    const content = await response.text()
+    const data = await response.json()
 
-    // 使用正則表達式提取價格（找 Fz(32px) 樣式的 span，這是主要價格顯示區）
-    const priceMatch = content.match(/<span[^>]*class="[^"]*Fz\(32px\)[^"]*"[^>]*>([\d,.]+)<\/span>/)
-    if (!priceMatch) {
-      return '無法找到價格'
+    // z 欄位是最新成交價，可能是 "-" 表示無成交
+    if (data.msgArray?.[0]?.z && data.msgArray[0].z !== '-') {
+      const price = parseFloat(data.msgArray[0].z)
+      return price.toFixed(3)
     }
 
-    // 移除千分位逗號
-    const priceStr = priceMatch[1].replace(/,/g, '')
-    const price = parseFloat(priceStr)
-    const roundedPrice = Math.round(price * 1000) / 1000
-    return roundedPrice.toFixed(3)
+    // 若無成交價，嘗試用昨收價 y
+    if (data.msgArray?.[0]?.y) {
+      const price = parseFloat(data.msgArray[0].y)
+      return price.toFixed(3)
+    }
+
+    return '無法取得價格'
   } catch (e) {
-    console.error(`getStockPrice error for ${stockCode}:`, e)
+    console.error(`getStockPriceFromTWSE error for ${stockCode}:`, e)
     return '錯誤: ' + e.message
   }
+}
+
+/**
+ * 抓取台股/ETF價格（主函數，含 fallback 機制）
+ * @param {string} stockCode - 股票代碼（例如 "00725B"）
+ * @returns {Promise<string>} 格式化後的價格（小數點後3位）
+ */
+export async function getStockPrice(stockCode) {
+  if (!stockCode) {
+    return '請輸入股票代碼'
+  }
+
+  // 1. 先嘗試 Yahoo Finance
+  const yahooResult = await getStockPriceFromYahoo(stockCode)
+
+  // 2. 檢查是否為有效價格
+  if (isValidPrice(yahooResult)) {
+    return yahooResult
+  }
+
+  // 3. Yahoo 失敗，fallback 到 TWSE API
+  console.log(`[Fallback] Yahoo 失敗 (${yahooResult})，改用 TWSE API: ${stockCode}`)
+  return await getStockPriceFromTWSE(stockCode)
 }
 
 /**
