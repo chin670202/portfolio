@@ -70,7 +70,8 @@
       "Bash(cmd //c \"where node\")",
       "Bash(cmd //c \"nvm list\")",
       "Bash(cmd //c:*)",
-      "Bash(npx vue-tsc --noEmit)"
+      "Bash(npx vue-tsc --noEmit)",
+      "Bash(git worktree:*)"
     ]
   }
 }

@@ -8,9 +8,9 @@
  * 3. 透過 CORS proxy 的前端調用
  */
 
-// CORS Proxy 設定
-const CORS_PROXY = 'https://corsproxy.io/?'
-const CORS_PROXY_BACKUP = 'https://muddy-glade-88a0.chinghunglai.workers.dev/?url='
+// CORS Proxy 設定（自架 Worker 為主，公共 proxy 為備用）
+const CORS_PROXY = 'https://muddy-glade-88a0.chinghunglai.workers.dev/?url='
+const CORS_PROXY_BACKUP = 'https://corsproxy.io/?'
 
 // 共用 Headers
 const DEFAULT_HEADERS = {
