@@ -155,39 +155,56 @@ async function getStockPriceFromYahoo(stockCode) {
 }
 
 /**
- * 從 TWSE/TPEx 官方 API 查詢台股價格（備用來源）
+ * 從 TWSE/TPEx 官方 API 查詢台股價格（使用指定的 CORS proxy）
+ * @param {string} stockCode - 股票代碼
+ * @param {string} proxy - CORS proxy URL
+ * @returns {Promise<string>} 價格或錯誤訊息
+ */
+async function fetchTWSEPrice(stockCode, proxy) {
+  const market = isTWSE(stockCode) ? 'tse' : 'otc'
+  const url = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${market}_${stockCode}.tw`
+
+  const response = await fetch(proxy + encodeURIComponent(url), {
+    headers: DEFAULT_HEADERS
+  })
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`)
+  }
+
+  const data = await response.json()
+
+  // z 欄位是最新成交價，可能是 "-" 表示無成交
+  if (data.msgArray?.[0]?.z && data.msgArray[0].z !== '-') {
+    const price = parseFloat(data.msgArray[0].z)
+    return price.toFixed(3)
+  }
+
+  // 若無成交價，嘗試用昨收價 y
+  if (data.msgArray?.[0]?.y) {
+    const price = parseFloat(data.msgArray[0].y)
+    return price.toFixed(3)
+  }
+
+  throw new Error('無法取得價格')
+}
+
+/**
+ * 從 TWSE/TPEx 官方 API 查詢台股價格（備用來源，含備用 proxy）
  * @param {string} stockCode - 股票代碼
  * @returns {Promise<string>} 價格或錯誤訊息
  */
 async function getStockPriceFromTWSE(stockCode) {
-  // 判斷上市(tse)或上櫃(otc)
-  const market = isTWSE(stockCode) ? 'tse' : 'otc'
-  const url = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${market}_${stockCode}.tw`
-
+  // 1. 先用主 proxy 嘗試
   try {
-    const response = await fetch(CORS_PROXY + encodeURIComponent(url), {
-      headers: DEFAULT_HEADERS
-    })
+    return await fetchTWSEPrice(stockCode, CORS_PROXY)
+  } catch (e) {
+    console.log(`[TWSE] 主 proxy 失敗 (${e.message})，嘗試備用 proxy: ${stockCode}`)
+  }
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`)
-    }
-
-    const data = await response.json()
-
-    // z 欄位是最新成交價，可能是 "-" 表示無成交
-    if (data.msgArray?.[0]?.z && data.msgArray[0].z !== '-') {
-      const price = parseFloat(data.msgArray[0].z)
-      return price.toFixed(3)
-    }
-
-    // 若無成交價，嘗試用昨收價 y
-    if (data.msgArray?.[0]?.y) {
-      const price = parseFloat(data.msgArray[0].y)
-      return price.toFixed(3)
-    }
-
-    return '無法取得價格'
+  // 2. 主 proxy 失敗，用備用 proxy 再試
+  try {
+    return await fetchTWSEPrice(stockCode, CORS_PROXY_BACKUP)
   } catch (e) {
     console.error(`getStockPriceFromTWSE error for ${stockCode}:`, e)
     return '錯誤: ' + e.message
