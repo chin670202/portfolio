@@ -71,7 +71,19 @@
       "Bash(cmd //c \"nvm list\")",
       "Bash(cmd //c:*)",
       "Bash(npx vue-tsc --noEmit)",
-      "Bash(git worktree:*)"
+      "Bash(git worktree:*)",
+      "WebFetch(domain:docs.openclaw.ai)",
+      "WebFetch(domain:query1.finance.yahoo.com)",
+      "Bash(openclaw:*)",
+      "WebFetch(domain:api.coingecko.com)",
+      "WebFetch(domain:mis.twse.com.tw)",
+      "WebFetch(domain:www.boerse-frankfurt.de)",
+      "WebFetch(domain:live.deutsche-boerse.com)",
+      "WebFetch(domain:www.bondsupermart.com)",
+      "WebFetch(domain:bondblox.com)",
+      "WebFetch(domain:cbonds.com)",
+      "Bash(python3 -c \"\nimport subprocess\nresult = subprocess.run\\([''git'', ''show'', ''d1f598b:public/data/chin.json''], capture_output=True, text=True\\)\nfor line in result.stdout.split\\(''\\\\n''\\):\n    if ''貸款餘額'' in line:\n        print\\(line.strip\\(\\)\\)\n\")",
+      "Bash(git ls-tree:*)"
     ]
   }
 }

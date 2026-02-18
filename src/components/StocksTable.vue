@@ -32,6 +32,8 @@
           </template>
           <!-- 損益(%) -->
           <template v-else-if="col.key === 'profitPercent'">{{ formatPercent(stock.損益百分比) }}</template>
+          <!-- 損益金額 -->
+          <template v-else-if="col.key === 'profitAmount'">{{ formatNumber(stock.台幣損益) }}</template>
           <!-- 台幣資產 -->
           <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(stock.台幣資產) }}</template>
           <!-- 佔比 -->
@@ -105,6 +107,8 @@
           </template>
           <!-- 損益(%) -->
           <template v-else-if="col.key === 'profitPercent'">{{ formatPercent(stock.損益百分比) }}</template>
+          <!-- 損益金額 -->
+          <template v-else-if="col.key === 'profitAmount'">{{ formatNumber(stock.台幣損益) }}</template>
           <!-- 台幣資產 -->
           <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(stock.台幣資產) }}</template>
           <!-- 佔比 -->
@@ -260,16 +264,17 @@ const columnDefinitions = {
   units: { label: '持有單位', defaultOrder: 4 },
   latestPrice: { label: '最新價格', defaultOrder: 5 },
   profitPercent: { label: '損益(%)', defaultOrder: 6 },
-  twdAsset: { label: '台幣資產', defaultOrder: 7 },
-  ratio: { label: '佔比', defaultOrder: 8 },
-  dividend: { label: '每股配息', defaultOrder: 9 },
-  yield: { label: '年殖利率', defaultOrder: 10 },
-  annualInterest: { label: '每年利息', defaultOrder: 11 },
-  nextPaymentDate: { label: '下次配息日', defaultOrder: 12 },
-  daysToPayment: { label: '剩餘天配息', defaultOrder: 13 },
-  nextPayment: { label: '下次配息', defaultOrder: 14 },
-  latestYield: { label: '最新殖利率', defaultOrder: 15 },
-  news: { label: '新聞', defaultOrder: 16 }
+  profitAmount: { label: '損益金額', defaultOrder: 7 },
+  twdAsset: { label: '台幣資產', defaultOrder: 8 },
+  ratio: { label: '佔比', defaultOrder: 9 },
+  dividend: { label: '每股配息', defaultOrder: 10 },
+  yield: { label: '年殖利率', defaultOrder: 11 },
+  annualInterest: { label: '每年利息', defaultOrder: 12 },
+  nextPaymentDate: { label: '下次配息日', defaultOrder: 13 },
+  daysToPayment: { label: '剩餘天配息', defaultOrder: 14 },
+  nextPayment: { label: '下次配息', defaultOrder: 15 },
+  latestYield: { label: '最新殖利率', defaultOrder: 16 },
+  news: { label: '新聞', defaultOrder: 17 }
 }
 
 const allColumnKeys = Object.keys(columnDefinitions)
@@ -360,9 +365,9 @@ const getCellClass = (key, stock) => {
   const classes = []
   if (key === 'name') classes.push('text-left')
   if (key === 'buyPrice') classes.push('cost-price')
-  if (['twdAsset', 'annualInterest', 'nextPayment'].includes(key)) classes.push('text-right')
+  if (['twdAsset', 'annualInterest', 'nextPayment', 'profitAmount'].includes(key)) classes.push('text-right')
 
-  const calculatedCols = ['latestPrice', 'profitPercent', 'twdAsset', 'ratio', 'dividend', 'yield',
+  const calculatedCols = ['latestPrice', 'profitPercent', 'profitAmount', 'twdAsset', 'ratio', 'dividend', 'yield',
                           'annualInterest', 'nextPaymentDate', 'daysToPayment', 'nextPayment', 'latestYield']
   if (calculatedCols.includes(key)) classes.push('calculated')
 
@@ -370,6 +375,10 @@ const getCellClass = (key, stock) => {
   if (key === 'dividend' && getDividendStatus(stock.代號).failed) classes.push('price-failed')
   if (key === 'profitPercent') {
     const colorClass = getColorClass(stock.損益百分比)
+    if (colorClass) classes.push(colorClass)
+  }
+  if (key === 'profitAmount') {
+    const colorClass = getColorClass(stock.台幣損益)
     if (colorClass) classes.push(colorClass)
   }
 

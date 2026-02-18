@@ -106,6 +106,9 @@ export function calculateEtfDerivedData(etf) {
   // G: 台幣資產 = E * D
   const 台幣資產 = E * D
 
+  // 台幣損益 = (E - C) * D
+  const 台幣損益 = (E - C) * D
+
   // I: 年殖利率 = H / C * freq
   const 年殖利率 = (H / C) * freq * 100
 
@@ -127,6 +130,7 @@ export function calculateEtfDerivedData(etf) {
   return {
     ...etf,
     損益百分比: Math.round(損益百分比 * 100) / 100,
+    台幣損益: Math.round(台幣損益),
     台幣資產: Math.round(台幣資產),
     年殖利率: Math.round(年殖利率 * 100) / 100,
     每年利息: Math.round(每年利息),

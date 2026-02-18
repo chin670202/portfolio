@@ -77,6 +77,7 @@ export const twStocksCardConfig = {
   },
   details: [
     { label: '台幣資產', value: (item) => formatCurrency(item.台幣資產) },
+    { label: '損益金額', value: (item) => formatCurrency(item.台幣損益), isProfit: true },
     {
       label: '殖利率',
       value: (item) => item.年殖利率 ? `${formatNumber(item.年殖利率, 2)}%` : '--',
@@ -114,7 +115,7 @@ export const usStocksCardConfig = {
   },
   details: [
     { label: '台幣資產', value: (item) => formatCurrency(item.台幣資產) },
-    { label: '台幣損益', value: (item) => formatCurrency(item.台幣損益), isProfit: true }
+    { label: '損益金額', value: (item) => formatCurrency(item.台幣損益), isProfit: true }
   ]
 }
 
@@ -140,7 +141,7 @@ export const cryptoCardConfig = {
   },
   details: [
     { label: '台幣資產', value: (item) => formatCurrency(item.台幣資產) },
-    { label: '台幣損益', value: (item) => formatCurrency(item.台幣損益), isProfit: true }
+    { label: '損益金額', value: (item) => formatCurrency(item.台幣損益), isProfit: true }
   ]
 }
 
