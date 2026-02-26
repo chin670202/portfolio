@@ -1,8 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Portfolio from '../views/Portfolio.vue'
 
-// 行銷頁面（獨立模組，懶載入）
 const LandingPage = () => import('../marketing/LandingPage.vue')
+const SidebarLayout = () => import('../layouts/SidebarLayout.vue')
+const TradeDashboardPage = () => import('../views/TradeDashboardPage.vue')
+const TradesPage = () => import('../views/TradesPage.vue')
+const PnlPage = () => import('../views/PnlPage.vue')
 
 const routes = [
   {
@@ -17,9 +20,33 @@ const routes = [
   },
   {
     path: '/:username',
-    name: 'portfolio',
-    component: Portfolio,
-    meta: { title: '投資現況' }
+    component: SidebarLayout,
+    children: [
+      {
+        path: '',
+        name: 'portfolio',
+        component: Portfolio,
+        meta: { title: '投資現況' }
+      },
+      {
+        path: 'dashboard',
+        name: 'trade-dashboard',
+        component: TradeDashboardPage,
+        meta: { title: '交易儀表板' }
+      },
+      {
+        path: 'trades',
+        name: 'trades',
+        component: TradesPage,
+        meta: { title: '交易紀錄' }
+      },
+      {
+        path: 'pnl',
+        name: 'pnl',
+        component: PnlPage,
+        meta: { title: '損益報表' }
+      }
+    ]
   }
 ]
 

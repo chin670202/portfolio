@@ -27,3 +27,6 @@ nul
 # Screenshots (testing artifacts)
 screenshots/
 .gh-pages-worktree/
+
+# SQLite database files
+server/data/

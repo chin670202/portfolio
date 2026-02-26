@@ -1,520 +1,522 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+@layer legacy {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-body {
-  font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
-  font-size: 18px;
-  background: #f5f5f5;
-  padding: 20px;
-}
+  body {
+    font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+    font-size: 18px;
+    background: #f5f5f5;
+    padding: 20px;
+  }
 
-.container {
-  max-width: 1600px;
-  margin: 0 auto;
-  background: white;
-  padding: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  min-width: fit-content;
-}
+  body.has-sidebar {
+    padding: 0;
+    overflow: hidden;
+  }
 
-h1 {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #333;
-}
+  .container {
+    max-width: 1600px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    min-width: fit-content;
+  }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
+  h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.8em;
+    font-weight: bold;
+  }
 
-.header h1 {
-  margin-bottom: 0;
-}
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
 
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
+  .header h1 {
+    margin-bottom: 0;
+  }
 
-.last-update {
-  color: #666;
-  font-size: 18px;
-}
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
 
-.version {
-  color: #999;
-  font-size: 16px;
-  padding: 3px 12px;
-  background: #f0f0f0;
-  border-radius: 4px;
-}
+  .last-update {
+    color: #666;
+    font-size: 18px;
+  }
 
-.module-gallery-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  padding: 10px 18px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 500;
-  transition: all 0.3s;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
+  .version {
+    color: #999;
+    font-size: 16px;
+    padding: 3px 12px;
+    background: #f0f0f0;
+    border-radius: 4px;
+  }
 
-.module-gallery-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
-}
+  .module-gallery-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  }
 
-.module-gallery-btn:active {
-  transform: translateY(0);
-}
+  .module-gallery-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+  }
 
-.settings-btn {
-  width: 42px;
-  height: 42px;
-  background: #f0f0f0;
-  border: 1px solid #ddd;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
+  .module-gallery-btn:active {
+    transform: translateY(0);
+  }
 
-.settings-btn:hover {
-  background: #e0e0e0;
-  transform: rotate(30deg);
-}
+  .settings-btn {
+    width: 42px;
+    height: 42px;
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
 
-/* 頂部摘要列 */
-.top-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 15px;
-  align-items: center;
-}
+  .settings-btn:hover {
+    background: #e0e0e0;
+    transform: rotate(30deg);
+  }
 
-.summary-item {
-  padding: 8px 15px;
-  font-weight: bold;
-  border-radius: 4px;
-  background: #90ee90;
-}
+  /* 頂部摘要列 */
+  .top-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+    align-items: center;
+  }
 
-.summary-item.asset {
-  background: #4472c4;
-  color: white;
-}
+  .summary-item {
+    padding: 8px 15px;
+    font-weight: bold;
+    border-radius: 4px;
+    background: #90ee90;
+  }
 
-.summary-item.liability {
-  background: #ff6b6b;
-  color: white;
-}
+  .summary-item.asset {
+    background: #4472c4;
+    color: white;
+  }
 
-.summary-item.interest {
-  background: #2e5a9e;
-  color: white;
-}
+  .summary-item.liability {
+    background: #ff6b6b;
+    color: white;
+  }
 
-.summary-item.equity {
-  background: #228b22;
-  color: white;
-}
+  .summary-item.interest {
+    background: #2e5a9e;
+    color: white;
+  }
 
-.summary-item.expense {
-  background: #dc3545;
-  color: white;
-}
+  .summary-item.equity {
+    background: #228b22;
+    color: white;
+  }
 
-.summary-item.income {
-  background: #ffa500;
-  color: white;
-}
+  .summary-item.expense {
+    background: #dc3545;
+    color: white;
+  }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 25px;
-  font-size: 16px;
-}
+  .summary-item.income {
+    background: #ffa500;
+    color: white;
+  }
 
-th,
-td {
-  border: 1px solid #ccc;
-  padding: 4px 3px;
-  text-align: center;
-  white-space: nowrap;
-}
+  /* 只套用到投資總覽的表格（.container 內） */
+  .container table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 25px;
+    font-size: 16px;
+  }
 
-th {
-  background: #e8e8e8;
-  font-weight: bold;
-}
+  .container th,
+  .container td {
+    border: 1px solid #ccc;
+    padding: 4px 3px;
+    text-align: center;
+    white-space: nowrap;
+  }
 
-.section-header {
-  background: #4472c4;
-  color: white;
-  font-weight: bold;
-  font-size: 20px;
-}
+  .container th {
+    background: #e8e8e8;
+    font-weight: bold;
+  }
 
-.section-header th {
-  background: #4472c4;
-}
+  .section-header {
+    background: #4472c4;
+    color: white;
+    font-weight: bold;
+    font-size: 20px;
+  }
 
-.sub-total {
-  background: #ffff99;
-  font-weight: bold;
-}
+  .section-header th {
+    background: #4472c4;
+  }
 
-.sub-total td {
-  background: #ffff99;
-}
+  .sub-total {
+    background: #ffff99;
+    font-weight: bold;
+  }
 
-.grand-total {
-  background: #ff6b6b;
-  color: white;
-  font-weight: bold;
-}
+  .sub-total td {
+    background: #ffff99;
+  }
 
-.grand-total td {
-  background: #ff6b6b;
-  color: white;
-}
+  .grand-total {
+    background: #ff6b6b;
+    color: white;
+    font-weight: bold;
+  }
 
-.positive {
-  color: #d32f2f;
-  font-weight: bold;
-}
+  .grand-total td {
+    background: #ff6b6b;
+    color: white;
+  }
 
-.negative {
-  color: #00ff00;
-  font-weight: bold;
-}
+  .positive {
+    color: #d32f2f;
+    font-weight: bold;
+  }
 
-/* 動態計算欄位樣式 */
-.calculated {
-  color: #0066cc;
-}
+  .negative {
+    color: #00ff00;
+    font-weight: bold;
+  }
 
-.calculated.positive {
-  color: #c62828;
-}
+  /* 動態計算欄位樣式 */
+  .calculated {
+    color: #0066cc;
+  }
 
-.calculated.negative {
-  color: #00ff00;
-}
+  .calculated.positive {
+    color: #c62828;
+  }
 
-/* 用於深色背景區域的計算欄位 */
-.calculated-value {
-  font-style: italic;
-}
+  .calculated.negative {
+    color: #00ff00;
+  }
 
-.highlight-green {
-  background: #90ee90;
-}
+  /* 用於深色背景區域的計算欄位 */
+  .calculated-value {
+    font-style: italic;
+  }
 
-.highlight-yellow {
-  background: #ffff99;
-}
+  .highlight-green {
+    background: #90ee90;
+  }
 
-.highlight-red {
-  background: #ff6b6b;
-  color: white;
-}
+  .highlight-yellow {
+    background: #ffff99;
+  }
 
-.highlight-orange {
-  background: #ffa500;
-}
+  .highlight-red {
+    background: #ff6b6b;
+    color: white;
+  }
 
-.text-right {
-  text-align: right;
-}
+  .highlight-orange {
+    background: #ffa500;
+  }
 
-.text-left {
-  text-align: left;
-}
+  .maintain-rate-section {
+    margin-top: 10px;
+    margin-bottom: 20px;
+  }
 
-.maintain-rate-section {
-  margin-top: 10px;
-  margin-bottom: 20px;
-}
+  .maintain-rate-box {
+    display: inline-block;
+    padding: 5px 12px;
+    margin-right: 15px;
+    font-weight: bold;
+    border-radius: 4px;
+  }
 
-.maintain-rate-box {
-  display: inline-block;
-  padding: 5px 12px;
-  margin-right: 15px;
-  font-weight: bold;
-  border-radius: 4px;
-}
+  .summary-section {
+    margin: 20px 0;
+  }
 
-.summary-section {
-  margin: 20px 0;
-}
+  .summary-box {
+    display: inline-block;
+    margin: 10px 20px 10px 0;
+    padding: 8px 15px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    font-weight: bold;
+  }
 
-.summary-box {
-  display: inline-block;
-  margin: 10px 20px 10px 0;
-  padding: 8px 15px;
-  background: #f0f0f0;
-  border-radius: 4px;
-  font-weight: bold;
-}
+  /* 總計台幣資產 - 藍色代表總資產 */
+  .summary-box.asset {
+    background: #4472c4;
+    color: white;
+  }
 
-/* 總計台幣資產 - 藍色代表總資產 */
-.summary-box.asset {
-  background: #4472c4;
-  color: white;
-}
+  /* 總計台幣負債 - 紅色代表負債 */
+  .summary-box.liability {
+    background: #ff6b6b;
+    color: white;
+  }
 
-/* 總計台幣負債 - 紅色代表負債 */
-.summary-box.liability {
-  background: #ff6b6b;
-  color: white;
-}
+  /* 總計每年利息 - 橘色代表利息收入 */
+  .summary-box.interest {
+    background: #ffa500;
+    color: white;
+  }
 
-/* 總計每年利息 - 橘色代表利息收入 */
-.summary-box.interest {
-  background: #ffa500;
-  color: white;
-}
+  /* 總計台幣權益 - 綠色代表淨值/權益 */
+  .summary-box.equity {
+    background: #90ee90;
+  }
 
-/* 總計台幣權益 - 綠色代表淨值/權益 */
-.summary-box.equity {
-  background: #90ee90;
-}
+  /* 全年淨收入 - 深藍色代表最終收益 */
+  .summary-box.income {
+    background: #2e5a9e;
+    color: white;
+  }
 
-/* 全年淨收入 - 深藍色代表最終收益 */
-.summary-box.income {
-  background: #2e5a9e;
-  color: white;
-}
+  .update-date {
+    margin-top: 20px;
+    color: #666;
+    font-size: 16px;
+  }
 
-.update-date {
-  margin-top: 20px;
-  color: #666;
-  font-size: 16px;
-}
+  .loading {
+    text-align: center;
+    padding: 50px;
+    font-size: 27px;
+    color: #666;
+  }
 
-.loading {
-  text-align: center;
-  padding: 50px;
-  font-size: 27px;
-  color: #666;
-}
+  .error {
+    text-align: center;
+    padding: 50px;
+    font-size: 27px;
+    color: #ff0000;
+  }
 
-.error {
-  text-align: center;
-  padding: 50px;
-  font-size: 27px;
-  color: #ff0000;
-}
+  /* 價格更新中的轉圈圈圖示 */
+  .spinner {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    margin-left: 6px;
+    border: 3px solid #ddd;
+    border-top-color: #4472c4;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+  }
 
-/* 價格更新中的轉圈圈圖示 */
-.spinner {
-  display: inline-block;
-  width: 15px;
-  height: 15px;
-  margin-left: 6px;
-  border: 3px solid #ddd;
-  border-top-color: #4472c4;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  vertical-align: middle;
+  /* 價格更新失敗，使用緩存值的紅色樣式 */
+  .price-failed {
+    color: #cc0000 !important;
+  }
+
+  /* 買入均價欄位 */
+  .cost-price {
+    color: #2c5282;
+    font-weight: bold;
+  }
+
+  /* Tooltip 樣式 */
+  .tooltip-container {
+    position: relative;
+    cursor: pointer;
+  }
+
+  .tooltip-text {
+    visibility: hidden;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    padding: 6px 12px;
+    border-radius: 4px;
+    position: absolute;
+    z-index: 100;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+  }
+
+  .tooltip-container:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  /* 新聞篩選按鈕組 */
+  .news-filter {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #f0f0f0;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
+  .news-filter .filter-label {
+    font-size: 14px;
+    color: #666;
+    margin-right: 4px;
+  }
+
+  .news-filter .filter-btn {
+    padding: 4px 10px;
+    font-size: 13px;
+    border: 1px solid #ccc;
+    background: white;
+    color: #666;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .news-filter .filter-btn:hover {
+    background: #e8e8e8;
+  }
+
+  .news-filter .filter-btn.active {
+    background: #4472c4;
+    color: white;
+    border-color: #4472c4;
+  }
+
+  .news-filter .filter-btn.bullish.active {
+    background: #2e7d32;
+    border-color: #2e7d32;
+  }
+
+  .news-filter .filter-btn.bearish.active {
+    background: #c62828;
+    border-color: #c62828;
+  }
+
+  /* ========== 手機版響應式樣式 ========== */
+  @media (max-width: 768px) {
+    html {
+      overflow-x: hidden;
+      width: 100vw;
+      max-width: 100vw;
+    }
+
+    body {
+      padding: 8px;
+      font-size: 14px;
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
+    }
+
+    .container {
+      padding: 10px;
+      min-width: 0 !important;
+      width: calc(100vw - 16px);
+      max-width: calc(100vw - 16px);
+      overflow-x: hidden;
+    }
+
+    /* 確保所有模組不超出容器 */
+    .module,
+    .module-container {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    /* 頂部 header 重新排列 */
+    .header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .header-actions {
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .last-update {
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .settings-btn {
+      width: 36px;
+      height: 36px;
+      font-size: 16px;
+    }
+
+    /* 頂部摘要卡片 */
+    .top-summary {
+      gap: 6px;
+    }
+
+    .summary-item {
+      padding: 6px 10px;
+      font-size: 13px;
+      flex: 1 1 45%;
+      text-align: center;
+    }
+
+    /* 資料更新日期 */
+    .update-date {
+      font-size: 12px;
+      text-align: center;
+    }
+  }
 }
 
 @keyframes spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-/* 價格更新失敗，使用緩存值的紅色樣式 */
-.price-failed {
-  color: #cc0000 !important;
-}
-
-/* 買入均價欄位 */
-.cost-price {
-  color: #2c5282;
-  font-weight: bold;
-}
-
-/* Tooltip 樣式 */
-.tooltip-container {
-  position: relative;
-  cursor: pointer;
-}
-
-.tooltip-text {
-  visibility: hidden;
-  background-color: #333;
-  color: #fff;
-  text-align: center;
-  padding: 6px 12px;
-  border-radius: 4px;
-  position: absolute;
-  z-index: 100;
-  bottom: 125%;
-  left: 50%;
-  transform: translateX(-50%);
-  white-space: nowrap;
-  font-size: 14px;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.tooltip-text::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: #333 transparent transparent transparent;
-}
-
-.tooltip-container:hover .tooltip-text {
-  visibility: visible;
-  opacity: 1;
-}
-
-/* 新聞篩選按鈕組 */
-.news-filter {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: #f0f0f0;
-  padding: 4px 8px;
-  border-radius: 6px;
-}
-
-.news-filter .filter-label {
-  font-size: 14px;
-  color: #666;
-  margin-right: 4px;
-}
-
-.news-filter .filter-btn {
-  padding: 4px 10px;
-  font-size: 13px;
-  border: 1px solid #ccc;
-  background: white;
-  color: #666;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.news-filter .filter-btn:hover {
-  background: #e8e8e8;
-}
-
-.news-filter .filter-btn.active {
-  background: #4472c4;
-  color: white;
-  border-color: #4472c4;
-}
-
-.news-filter .filter-btn.bullish.active {
-  background: #2e7d32;
-  border-color: #2e7d32;
-}
-
-.news-filter .filter-btn.bearish.active {
-  background: #c62828;
-  border-color: #c62828;
-}
-
-/* ========== 手機版響應式樣式 ========== */
-@media (max-width: 768px) {
-  html {
-    overflow-x: hidden;
-    width: 100vw;
-    max-width: 100vw;
-  }
-
-  body {
-    padding: 8px;
-    font-size: 14px;
-    overflow-x: hidden;
-    width: 100%;
-    max-width: 100vw;
-  }
-
-  .container {
-    padding: 10px;
-    min-width: 0 !important;
-    width: calc(100vw - 16px);
-    max-width: calc(100vw - 16px);
-    overflow-x: hidden;
-  }
-
-  /* 確保所有模組不超出容器 */
-  .module,
-  .module-container {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
-  }
-
-  /* 頂部 header 重新排列 */
-  .header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-
-  .header h1 {
-    font-size: 20px;
-    text-align: left;
-    white-space: nowrap;
-  }
-
-  .header-actions {
-    justify-content: space-between;
-    gap: 8px;
-  }
-
-  .last-update {
-    font-size: 12px;
-    white-space: nowrap;
-  }
-
-  .settings-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
-  }
-
-  /* 頂部摘要卡片 */
-  .top-summary {
-    gap: 6px;
-  }
-
-  .summary-item {
-    padding: 6px 10px;
-    font-size: 13px;
-    flex: 1 1 45%;
-    text-align: center;
-  }
-
-  /* 資料更新日期 */
-  .update-date {
-    font-size: 12px;
-    text-align: center;
   }
 }

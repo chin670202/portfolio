@@ -7,7 +7,7 @@
 export const updateService = {
   // 服務端點 URL
   // 開發環境使用本機，正式環境使用正式服務 URL
-  baseUrl: import.meta.env.VITE_UPDATE_SERVICE_URL || 'http://localhost:3001',
+  baseUrl: import.meta.env.VITE_UPDATE_SERVICE_URL || 'http://localhost:3002',
 
   // API 金鑰（選填，用於驗證請求）
   apiKey: import.meta.env.VITE_UPDATE_SERVICE_API_KEY || '',

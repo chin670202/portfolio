@@ -8,9 +8,13 @@ const express = require('express');
 const cors = require('cors');
 const updateRouter = require('./routes/update');
 const backupRouter = require('./routes/backup');
+const tradesRouter = require('./routes/trades');
+const pnlRouter = require('./routes/pnl');
+const statsRouter = require('./routes/stats');
+const brokersRouter = require('./routes/brokers');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 
 // CORS 設定
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
@@ -58,6 +62,10 @@ const apiKeyAuth = (req, res, next) => {
 // 路由
 app.use('/update', apiKeyAuth, updateRouter);
 app.use('/backup', apiKeyAuth, backupRouter);
+app.use('/trades', apiKeyAuth, tradesRouter);
+app.use('/pnl', apiKeyAuth, pnlRouter);
+app.use('/stats', apiKeyAuth, statsRouter);
+app.use('/brokers', apiKeyAuth, brokersRouter);
 
 // 健康檢查
 app.get('/health', (req, res) => {
@@ -103,6 +111,14 @@ API 端點:
   POST /update - 更新投資部位
   GET  /backup/:user - 取得備份列表
   POST /backup/:user/restore - 還原備份
+  GET  /trades/:user - 交易列表
+  POST /trades/:user - 新增交易
+  DELETE /trades/:user/:id - 刪除交易
+  POST /trades/:user/parse - AI 解析交易
+  GET  /pnl/:user - 損益報表
+  GET  /stats/:user - 交易統計
+  GET  /brokers - 券商列表
+  POST /brokers/calculate-fee - 計算手續費
   GET  /health - 健康檢查
   `);
 });
