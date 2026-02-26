@@ -5,7 +5,6 @@ import NewsModal from '../components/NewsModal.vue'
 import QuickUpdate from '../components/QuickUpdate.vue'
 import { ModuleContainer, getDefaultModuleConfig, mergeModuleConfig } from '../modules'
 import SettingsModal from '../components/SettingsModal.vue'
-import UserDashboard from '../components/UserDashboard.vue'
 import { updateService } from '../config'
 import {
   calculateBondDerivedData,
@@ -39,10 +38,6 @@ const priceStatus = ref({})
 
 // 模組配置（從用戶 JSON 載入，若無則使用預設）
 const moduleConfig = ref(getDefaultModuleConfig())
-
-// 用戶儀表板（動態載入）
-const userDashboardComponent = ref(null)
-const dashboardLoading = ref(false)
 
 // 設定視窗狀態
 const showSettings = ref(false)
@@ -622,79 +617,6 @@ async function loadData() {
   }
 }
 
-// 載入用戶儀表板配置
-async function loadUserDashboard() {
-  dashboardLoading.value = true
-  try {
-    // 直接從靜態檔案載入 dashboard.json
-    const response = await fetch(`/data/${currentUsername.value}.dashboard.json?t=${Date.now()}`)
-    if (response.ok) {
-      const data = await response.json()
-      // 版本檢查：如果用戶配置版本低於 2，重置為新分類配置
-      if (!data.version || data.version < 2) {
-        console.log('[Portfolio] 用戶儀表板配置版本過舊，重置為新配置')
-        userDashboardComponent.value = {
-          version: 2,
-          sectionOrder: ['summary', 'bonds', 'stocks', 'crypto', 'loans', 'history'],
-          sections: {
-            summary: true,
-            bonds: true,
-            stocks: true,
-            crypto: true,
-            loans: true,
-            history: true
-          },
-          theme: data.theme || {
-            primaryColor: '#667eea',
-            primaryGradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            sectionGap: '20px'
-          },
-          columns: {}, // 重置欄位配置
-          customCards: data.customCards || []
-        }
-      } else {
-        userDashboardComponent.value = data
-      }
-    } else {
-      // 如果找不到用戶專屬配置，使用預設配置
-      userDashboardComponent.value = {
-        version: 2,
-        sectionOrder: ['summary', 'bonds', 'stocks', 'crypto', 'loans', 'history'],
-        sections: {
-          summary: true,
-          bonds: true,
-          stocks: true,
-          crypto: true,
-          loans: true,
-          history: true
-        },
-        theme: {
-          primaryColor: '#667eea',
-          primaryGradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          sectionGap: '20px'
-        },
-        columns: {},
-        customCards: []
-      }
-    }
-  } catch (e) {
-    console.warn('[Portfolio] 載入用戶儀表板失敗，使用預設:', e)
-    userDashboardComponent.value = null
-  } finally {
-    dashboardLoading.value = false
-  }
-}
-
-// 處理儀表板更新事件
-function handleDashboardUpdated() {
-  loadUserDashboard()
-}
-
-function handleCustomDashboardCreated() {
-  // 自訂儀表板已建立，可以在這裡添加通知或其他邏輯
-  console.log('自訂儀表板已建立')
-}
-
 // 監聽路由變化，重新載入資料
 watch(() => route.params.username, () => {
   loadData()
@@ -702,7 +624,6 @@ watch(() => route.params.username, () => {
 
 onMounted(() => {
   loadData()
-  loadUserDashboard()
 })
 </script>
 
@@ -714,7 +635,7 @@ onMounted(() => {
         <span v-if="lastUpdateTime" class="last-update">
           最後更新: {{ lastUpdateTime }}
         </span>
-        <QuickUpdate :username="currentUsername" @updated="loadData" @dashboard-updated="handleDashboardUpdated" @custom-dashboard-created="handleCustomDashboardCreated" />
+        <QuickUpdate :username="currentUsername" @updated="loadData" />
         <button class="settings-btn" @click="showSettings = true" title="設定">
           ⚙️
         </button>
@@ -725,15 +646,7 @@ onMounted(() => {
     <div v-else-if="error" class="error">錯誤: {{ error }}</div>
 
     <template v-else-if="rawData">
-      <!-- 用戶儀表板（動態載入）或預設模組容器 -->
-      <UserDashboard
-        v-if="userDashboardComponent"
-        :dashboard-config="userDashboardComponent"
-        :module-props="moduleProps"
-        @open-news="handleOpenNews"
-      />
       <ModuleContainer
-        v-else
         :module-config="moduleConfig"
         :module-props="moduleProps"
         @open-news="handleOpenNews"

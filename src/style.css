@@ -465,7 +465,6 @@ th {
 
   /* 確保所有模組不超出容器 */
   .module,
-  .user-dashboard,
   .module-container {
     width: 100%;
     max-width: 100%;

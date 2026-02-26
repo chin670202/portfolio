@@ -8,8 +8,6 @@ const express = require('express');
 const cors = require('cors');
 const updateRouter = require('./routes/update');
 const backupRouter = require('./routes/backup');
-const dashboardRouter = require('./routes/dashboard');
-const customDashboardRouter = require('./routes/custom-dashboard');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -60,8 +58,6 @@ const apiKeyAuth = (req, res, next) => {
 // 路由
 app.use('/update', apiKeyAuth, updateRouter);
 app.use('/backup', apiKeyAuth, backupRouter);
-app.use('/dashboard', apiKeyAuth, dashboardRouter);
-app.use('/custom-dashboard', apiKeyAuth, customDashboardRouter);
 
 // 健康檢查
 app.get('/health', (req, res) => {
@@ -104,13 +100,9 @@ app.listen(PORT, () => {
   ngrok http ${PORT}
 
 API 端點:
-  POST /update - 更新投資部位（支援儀表板調整）
+  POST /update - 更新投資部位
   GET  /backup/:user - 取得備份列表
   POST /backup/:user/restore - 還原備份
-  GET  /dashboard/:user/compiled - 取得編譯後的用戶儀表板
-  GET  /custom-dashboard/:user/check - 檢查自訂儀表板是否存在
-  GET  /custom-dashboard/:user/html - 取得自訂儀表板 HTML
-  POST /custom-dashboard/:user/generate - 產生自訂儀表板
   GET  /health - 健康檢查
   `);
 });

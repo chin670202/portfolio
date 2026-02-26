@@ -8,102 +8,10 @@ const router = express.Router();
 const claudeService = require('../services/claude');
 const githubService = require('../services/github');
 const backupService = require('../services/backup');
-const dashboardBackupService = require('../services/dashboard-backup');
-const vueCompiler = require('../services/vue-compiler');
 const fs = require('fs').promises;
 const path = require('path');
 
 const PROJECT_ROOT = process.env.PROJECT_ROOT || path.resolve(__dirname, '../..');
-const DASHBOARDS_DIR = path.join(__dirname, '../dashboards');
-
-/**
- * 處理儀表板更新（JSON 配置）
- */
-async function handleDashboardUpdate(user, instruction, sendProgress, sendComplete, sendError, startTime, projectRoot) {
-  try {
-    // Dashboard JSON 路徑
-    const dashboardJsonPath = path.join(projectRoot, 'public', 'data', `${user}.dashboard.json`);
-
-    sendProgress('備份儀表板', '正在備份當前儀表板...');
-
-    // 讀取當前 dashboard.json 配置
-    let currentConfig;
-    try {
-      currentConfig = JSON.parse(await fs.readFile(dashboardJsonPath, 'utf-8'));
-    } catch (err) {
-      // 如果檔案不存在，使用預設配置
-      currentConfig = {
-        version: 1,
-        sectionOrder: ['summary', 'bonds', 'etf', 'otherAssets', 'loans', 'history'],
-        sections: {
-          summary: true,
-          bonds: true,
-          etf: true,
-          otherAssets: true,
-          loans: true,
-          history: true
-        },
-        theme: {
-          primaryColor: '#667eea',
-          primaryGradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          sectionGap: '20px'
-        },
-        columns: {},
-        customCards: []
-      };
-      // 建立預設配置檔
-      await fs.writeFile(dashboardJsonPath, JSON.stringify(currentConfig, null, 2), 'utf-8');
-    }
-
-    // 備份當前儀表板配置
-    const backupResult = await dashboardBackupService.createBackup(user, JSON.stringify(currentConfig, null, 2));
-    if (!backupResult.success && !backupResult.skipped) {
-      console.warn(`[Warning] 儀表板備份失敗: ${backupResult.error}`);
-    }
-
-    sendProgress('修改儀表板', 'AI 正在修改儀表板配置...');
-
-    // 讀取儀表板 prompt
-    const dashboardPrompt = await fs.readFile(
-      path.join(__dirname, '../prompts/dashboard.md'),
-      'utf-8'
-    );
-
-    // 組合 prompt
-    const prompt = dashboardPrompt
-      .replace('{{USER}}', user)
-      .replace('{{INSTRUCTION}}', instruction)
-      .replace('{{CURRENT_CONFIG}}', JSON.stringify(currentConfig, null, 2))
-      .replace(/\{\{DASHBOARD_PATH\}\}/g, dashboardJsonPath);
-
-    // 呼叫 Claude 修改儀表板配置
-    const result = await claudeService.runClaudeRaw(prompt, path.join(projectRoot, 'public', 'data'));
-
-    // 推送到 GitHub
-    sendProgress('推送變更', '正在推送到 GitHub...');
-    const gitResult = await githubService.commitAndPush(
-      user,
-      [{ type: 'update', category: '儀表板', item: instruction }],
-      projectRoot
-    );
-
-    const duration = Date.now() - startTime;
-    console.log(`\n儀表板更新完成！耗時 ${duration}ms`);
-
-    sendComplete({
-      success: true,
-      type: 'dashboard-updated',
-      message: `已更新 ${user} 的儀表板配置`,
-      changes: [{ type: 'update', category: '儀表板', item: instruction }],
-      summary: result,
-      duration: `${duration}ms`
-    });
-
-  } catch (error) {
-    console.error('儀表板更新失敗:', error);
-    sendError(error.message || '儀表板更新失敗');
-  }
-}
 
 /**
  * POST /update
@@ -221,15 +129,12 @@ router.post('/stream', async (req, res) => {
   };
 
   try {
-    const { user, type, content, mode } = req.body;
+    const { user, type, content } = req.body;
 
     // 驗證參數
     if (!user || !type || !content) {
       return sendError('缺少必要參數: user, type, content');
     }
-
-    // mode: 'position' = 部位更新, 'dashboard' = 儀表板調整
-    const updateMode = mode || 'position';
 
     sendProgress('驗證用戶', '正在驗證用戶資料...');
 
@@ -246,17 +151,8 @@ router.post('/stream', async (req, res) => {
     }
 
     console.log(`\n[${new Date().toISOString()}] 收到 SSE 更新請求`);
-    console.log(`用戶: ${user}, 類型: ${type}, 模式: ${updateMode}`);
+    console.log(`用戶: ${user}, 類型: ${type}`);
 
-    // 根據 mode 直接分流
-    if (updateMode === 'dashboard') {
-      // === 儀表板調整模式 ===
-      console.log('\n執行儀表板調整流程...');
-      await handleDashboardUpdate(user, content, sendProgress, sendComplete, sendError, startTime, PROJECT_ROOT);
-      return;
-    }
-
-    // === 部位更新模式 ===
     // 讀取現有 JSON
     const currentData = JSON.parse(await fs.readFile(jsonPath, 'utf-8'));
 
