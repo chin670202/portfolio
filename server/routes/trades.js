@@ -9,6 +9,29 @@ const db = require('../db');
 const { processBuyTrade, processSellTrade, recalculateSymbol } = require('../services/pnl-engine');
 const { parseTrade } = require('../services/trade-parser');
 const { calculateFees } = require('../services/fee-calculator');
+const { applyTradeToPortfolio, reverseTradeFromPortfolio } = require('../services/portfolio-sync');
+const fs = require('fs');
+const path = require('path');
+
+const DATA_DIR = path.join(__dirname, '..', '..', 'public', 'data');
+
+/**
+ * 從用戶 portfolio JSON 查找商品名稱
+ */
+function lookupNameFromPortfolio(user, symbol) {
+  try {
+    const jsonPath = path.join(DATA_DIR, `${user}.json`);
+    if (!fs.existsSync(jsonPath)) return null;
+    const data = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+    for (const key of ['股票', 'ETF', '其它資產']) {
+      const arr = data[key];
+      if (!Array.isArray(arr)) continue;
+      const found = arr.find(a => a['代號'] === symbol);
+      if (found) return found['名稱'] || found['公司名稱'] || null;
+    }
+  } catch { /* ignore */ }
+  return null;
+}
 
 // Validate user param
 function validateUser(req, res, next) {
@@ -88,20 +111,22 @@ router.post('/:user', validateUser, (req, res) => {
       tax = calc.tax;
     }
 
+    // 如果沒有名稱，從 portfolio JSON 查找
+    const resolvedName = name || lookupNameFromPortfolio(user, symbol.toUpperCase()) || null;
+
     const now = Date.now();
     const result = db.prepare(`
       INSERT INTO trades (user, trade_date, asset_type, symbol, name, side, price, quantity, fee, tax, notes, broker_id, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(user, tradeDate, assetType, symbol.toUpperCase(), name || null, side, price, quantity, fee, tax, notes || null, brokerId || null, now, now);
+    `).run(user, tradeDate, assetType, symbol.toUpperCase(), resolvedName, side, price, quantity, fee, tax, notes || null, brokerId || null, now, now);
 
     const trade = db.prepare('SELECT * FROM trades WHERE id = ?').get(result.lastInsertRowid);
 
-    // Process P&L matching
-    if (side === 'buy') {
-      processBuyTrade(trade.id);
-    } else {
-      processSellTrade(trade.id);
-    }
+    // Recalculate all P&L for this symbol (handles out-of-order entry: sell before buy)
+    recalculateSymbol(user, trade.symbol, trade.asset_type);
+
+    // Sync holdings to portfolio JSON
+    applyTradeToPortfolio(user, trade);
 
     res.status(201).json(trade);
   } catch (error) {
@@ -124,6 +149,9 @@ router.delete('/:user/:id', validateUser, (req, res) => {
 
     db.prepare('DELETE FROM trades WHERE id = ? AND user = ?').run(id, user);
     recalculateSymbol(user, existing.symbol, existing.asset_type);
+
+    // Reverse the trade's effect on portfolio JSON
+    reverseTradeFromPortfolio(user, existing);
 
     res.json({ success: true });
   } catch (error) {

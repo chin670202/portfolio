@@ -31,9 +31,7 @@ const moduleComponents = {
   'stocks': defineAsyncComponent(() => import('./StocksModule.vue')),
   'crypto': defineAsyncComponent(() => import('./CryptoModule.vue')),
   'loans': defineAsyncComponent(() => import('./LoansModule.vue')),
-  'asset-history': defineAsyncComponent(() => import('./AssetHistoryModule.vue')),
-  // 向後相容：舊的 UID 映射到新元件
-  'overseas-bonds': defineAsyncComponent(() => import('./OverseasBondsModule.vue'))
+  'asset-history': defineAsyncComponent(() => import('./AssetHistoryModule.vue'))
 }
 
 // 過濾並排序啟用的模組

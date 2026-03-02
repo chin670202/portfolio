@@ -119,6 +119,16 @@ export function getDefaultModuleConfig() {
 }
 
 /**
+ * 舊 UID → 新 UID 映射表（用於自動遷移用戶配置）
+ * null 表示該模組已被拆分/移除，不需要直接映射
+ */
+const UID_MIGRATION = {
+  'overseas-bonds': 'bonds',
+  'stocks-etf': 'stocks',
+  'other-assets': null, // 已拆分為 stocks + crypto
+}
+
+/**
  * 合併用戶配置與內建模組（自動加入新模組）
  * @param {Array} userConfig - 用戶現有的模組配置
  * @returns {Array} 合併後的配置
@@ -128,8 +138,20 @@ export function mergeModuleConfig(userConfig) {
     return getDefaultModuleConfig()
   }
 
-  const existingUids = new Set(userConfig.map(m => m.uid))
-  const mergedConfig = [...userConfig]
+  // 遷移舊 UID 到新 UID
+  const migrated = userConfig
+    .map(m => {
+      if (m.uid in UID_MIGRATION) {
+        const newUid = UID_MIGRATION[m.uid]
+        if (newUid === null) return null // 已移除的模組
+        return { ...m, uid: newUid }
+      }
+      return m
+    })
+    .filter(Boolean)
+
+  const existingUids = new Set(migrated.map(m => m.uid))
+  const mergedConfig = [...migrated]
 
   // 檢查所有內建模組，若用戶配置中沒有則加入
   for (const module of getAllModules()) {

@@ -6,7 +6,6 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const updateRouter = require('./routes/update');
 const backupRouter = require('./routes/backup');
 const tradesRouter = require('./routes/trades');
 const pnlRouter = require('./routes/pnl');
@@ -60,7 +59,6 @@ const apiKeyAuth = (req, res, next) => {
 };
 
 // 路由
-app.use('/update', apiKeyAuth, updateRouter);
 app.use('/backup', apiKeyAuth, backupRouter);
 app.use('/trades', apiKeyAuth, tradesRouter);
 app.use('/pnl', apiKeyAuth, pnlRouter);
@@ -108,7 +106,6 @@ app.listen(PORT, () => {
   ngrok http ${PORT}
 
 API 端點:
-  POST /update - 更新投資部位
   GET  /backup/:user - 取得備份列表
   POST /backup/:user/restore - 還原備份
   GET  /trades/:user - 交易列表

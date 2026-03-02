@@ -25,7 +25,12 @@ async function handleSubmit() {
     emit('parsed', parsed)
     input.value = ''
   } catch (err) {
-    error.value = err.message || '網路錯誤，請重試'
+    const msg = err.message || ''
+    if (msg.length > 100 || msg.includes('CLI')) {
+      error.value = 'AI 解析服務暫時無法使用，請稍後再試'
+    } else {
+      error.value = msg || '網路錯誤，請重試'
+    }
   } finally {
     loading.value = false
   }

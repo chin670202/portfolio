@@ -2,10 +2,10 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import NewsModal from '../components/NewsModal.vue'
-import QuickUpdate from '../components/QuickUpdate.vue'
 import { ModuleContainer, getDefaultModuleConfig, mergeModuleConfig } from '../modules'
 import SettingsModal from '../components/SettingsModal.vue'
-import { updateService } from '../config'
+import { usePriceCache } from '../composables/usePriceCache'
+import { clearNewsCache } from '../services/newsService'
 import {
   calculateBondDerivedData,
   calculateEtfDerivedData,
@@ -29,9 +29,13 @@ const loading = ref(true)
 const error = ref(null)
 const updating = ref(false)
 const lastUpdateTime = ref(null)
+const usingCache = ref(false) // 是否使用快取資料
 const currentUsername = computed(() => route.params.username || 'chin')
 // 顯示名稱（優先使用 JSON 中的顯示名稱，若無則用帳號）
 const displayName = computed(() => rawData.value?.顯示名稱 || currentUsername.value)
+
+// 價格快取
+const { getCache, saveCache, applyCache, clearCache: clearPriceCache } = usePriceCache()
 
 // 價格狀態追蹤: { [代號]: { loading: boolean, failed: boolean } }
 const priceStatus = ref({})
@@ -530,6 +534,10 @@ async function updateAllPrices() {
     // 觸發響應式更新
     rawData.value = { ...rawData.value }
     lastUpdateTime.value = new Date().toLocaleTimeString('zh-TW')
+    usingCache.value = false
+
+    // 儲存價格快取
+    saveCache(rawData.value)
 
     // 價格更新完成後，自動抓取所有商品的新聞
     fetchAllNews()
@@ -565,6 +573,13 @@ async function fetchAllNews() {
 
   // 批次抓取新聞
   await fetchBatchNews(newsQueries)
+}
+
+// 重新查詢：清除所有快取，重新呼叫 API
+async function handleRefresh() {
+  clearPriceCache()
+  clearNewsCache()
+  await updateAllPrices()
 }
 
 async function loadData() {
@@ -608,8 +623,20 @@ async function loadData() {
     // 載入模組配置（合併用戶配置與新內建模組）
     moduleConfig.value = mergeModuleConfig(rawData.value.模組配置)
 
-    // 載入完成後自動更新價格
-    updateAllPrices()
+    // 檢查當日價格快取
+    const cache = getCache()
+    if (cache) {
+      // 使用快取：套用快取價格，不呼叫 API
+      applyCache(rawData.value, cache)
+      rawData.value = { ...rawData.value } // 觸發響應式更新
+      lastUpdateTime.value = cache.fetchedAt
+      usingCache.value = true
+      // 新聞也使用 localStorage 快取（newsService 內部處理）
+      fetchAllNews()
+    } else {
+      // 無快取：呼叫所有 API
+      updateAllPrices()
+    }
   } catch (e) {
     error.value = e.message
   } finally {
@@ -633,9 +660,17 @@ onMounted(() => {
       <h1>{{ displayName }} 的投資現況</h1>
       <div class="header-actions">
         <span v-if="lastUpdateTime" class="last-update">
-          最後更新: {{ lastUpdateTime }}
+          {{ usingCache ? '快取' : '最後更新' }}: {{ lastUpdateTime }}
         </span>
-        <QuickUpdate :username="currentUsername" @updated="loadData" />
+        <button
+          class="settings-btn refresh-btn"
+          :class="{ spinning: updating }"
+          @click="handleRefresh"
+          :disabled="updating"
+          title="重新查詢"
+        >
+          ↻
+        </button>
         <button class="settings-btn" @click="showSettings = true" title="設定">
           ⚙️
         </button>

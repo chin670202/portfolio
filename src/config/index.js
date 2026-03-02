@@ -21,9 +21,6 @@ export const updateService = {
 
 // 功能開關
 export const features = {
-  // 是否顯示快速更新按鈕
-  quickUpdate: updateService.enabled,
-
   // 是否顯示新聞功能
   news: true,
 

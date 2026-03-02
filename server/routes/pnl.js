@@ -6,7 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-
+const { recalculateSymbol } = require('../services/pnl-engine');
 /**
  * GET /pnl/:user - Get P&L records with summary
  */
@@ -47,6 +47,33 @@ router.get('/:user', (req, res) => {
   } catch (error) {
     console.error('GET pnl error:', error);
     res.status(500).json({ error: '取得損益記錄失敗' });
+  }
+});
+
+/**
+ * POST /pnl/:user/recalculate - Recalculate all P&L for a user
+ */
+router.post('/:user/recalculate', (req, res) => {
+  try {
+    const { user } = req.params;
+
+    // Get all unique symbol + asset_type combinations
+    const symbols = db.prepare(`
+      SELECT DISTINCT symbol, asset_type FROM trades WHERE user = ?
+    `).all(user);
+
+    for (const { symbol, asset_type } of symbols) {
+      recalculateSymbol(user, symbol, asset_type);
+    }
+
+    const records = db.prepare(
+      'SELECT * FROM pnl_records WHERE user = ? ORDER BY sell_date DESC'
+    ).all(user);
+
+    res.json({ recalculated: symbols.length, records: records.length });
+  } catch (error) {
+    console.error('Recalculate P&L error:', error);
+    res.status(500).json({ error: '重算損益失敗' });
   }
 });
 

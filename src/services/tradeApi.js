@@ -13,7 +13,7 @@ export async function fetchTrades(user, params = {}) {
   const searchParams = new URLSearchParams({
     limit: '50',
     sortBy: 'trade_date',
-    sortOrder: 'desc',
+    sortOrder: 'asc',
     ...params,
   })
   const res = await fetch(`${BASE_URL}/trades/${user}?${searchParams}`, { headers: getHeaders() })

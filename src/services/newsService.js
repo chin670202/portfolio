@@ -329,11 +329,60 @@ export async function fetchBatchNews(queries, options = {}) {
 }
 
 // ============================================================
-// 新聞快取管理
+// 新聞快取管理（localStorage 持久化，當日有效）
 // ============================================================
 
+const NEWS_CACHE_KEY = 'portfolio_news_cache'
 const newsCache = new Map()
-const CACHE_TTL = 15 * 60 * 1000 // 15 分鐘快取
+
+/**
+ * 取得今日日期字串
+ */
+function getTodayKey() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+/**
+ * 從 localStorage 還原快取到 Map（僅在初次使用時執行）
+ */
+let cacheRestored = false
+function restoreCacheFromStorage() {
+  if (cacheRestored) return
+  cacheRestored = true
+  try {
+    const raw = localStorage.getItem(NEWS_CACHE_KEY)
+    if (!raw) return
+    const stored = JSON.parse(raw)
+    if (stored.date !== getTodayKey()) {
+      localStorage.removeItem(NEWS_CACHE_KEY)
+      return
+    }
+    // 還原到 Map（將 fetchedAt 字串轉回 Date）
+    for (const [key, value] of Object.entries(stored.entries || {})) {
+      newsCache.set(key, { ...value, fetchedAt: new Date(value.fetchedAt) })
+    }
+  } catch {
+    localStorage.removeItem(NEWS_CACHE_KEY)
+  }
+}
+
+/**
+ * 將 Map 快取持久化到 localStorage
+ */
+function persistCacheToStorage() {
+  try {
+    const entries = {}
+    for (const [key, value] of newsCache.entries()) {
+      entries[key] = value
+    }
+    localStorage.setItem(NEWS_CACHE_KEY, JSON.stringify({
+      date: getTodayKey(),
+      entries
+    }))
+  } catch (e) {
+    console.warn('[newsCache] 儲存快取失敗:', e)
+  }
+}
 
 /**
  * 從快取取得新聞，若無則抓取
@@ -343,13 +392,16 @@ const CACHE_TTL = 15 * 60 * 1000 // 15 分鐘快取
  * @returns {Promise<Object>} { news, riskScore, hasNegative, hasNews }
  */
 export async function getNewsWithCache(symbol, name, options = {}) {
+  // 初次使用時從 localStorage 還原
+  restoreCacheFromStorage()
+
   // 快取 key 需包含 assetType，因為同一公司債券和股票的新聞過濾結果不同
   const assetTypeSuffix = options.assetType ? `_${options.assetType}` : ''
   const cacheKey = `${symbol}_${currentLocale}${assetTypeSuffix}`
   const cached = newsCache.get(cacheKey)
 
-  // 檢查快取是否有效
-  if (cached && (Date.now() - cached.fetchedAt.getTime()) < CACHE_TTL) {
+  // 當日快取有效
+  if (cached) {
     return cached
   }
 
@@ -365,8 +417,9 @@ export async function getNewsWithCache(symbol, name, options = {}) {
     fetchedAt: new Date()
   }
 
-  // 存入快取
+  // 存入快取（Map + localStorage）
   newsCache.set(cacheKey, result)
+  persistCacheToStorage()
 
   return result
 }
@@ -385,6 +438,13 @@ export function clearNewsCache(symbol = null) {
     }
   } else {
     newsCache.clear()
+    cacheRestored = false
+  }
+  // 同步到 localStorage
+  if (newsCache.size > 0) {
+    persistCacheToStorage()
+  } else {
+    localStorage.removeItem(NEWS_CACHE_KEY)
   }
 }
 

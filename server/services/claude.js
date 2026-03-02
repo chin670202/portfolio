@@ -7,12 +7,22 @@ const { exec } = require('child_process');
 const fs = require('fs').promises;
 const path = require('path');
 
+// Ensure the current Node version is used when spawning child processes.
+// When using nvm, the system shell default may differ from the Node running this server.
+// process.execPath gives the exact Node binary that started this server,
+// so we prepend its directory to PATH for spawned processes (e.g. Claude CLI).
+const NODE_DIR = path.dirname(process.execPath);
+const spawnEnv = {
+  ...process.env,
+  PATH: `${NODE_DIR};${process.env.PATH}`,
+};
+
 /**
  * 檢查 Claude CLI 是否可用
  */
 async function checkAvailable() {
   return new Promise((resolve) => {
-    exec('claude --version', { timeout: 5000 }, (error, stdout) => {
+    exec('claude --version', { timeout: 5000, env: spawnEnv }, (error, stdout) => {
       resolve(!error && stdout.includes('Claude'));
     });
   });
@@ -35,7 +45,8 @@ async function runClaude(prompt, workDir) {
     ], {
       cwd: workDir,
       shell: true,
-      stdio: ['pipe', 'pipe', 'pipe']
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: spawnEnv,
     });
 
     let stdout = '';
