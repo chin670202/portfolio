@@ -55,6 +55,10 @@
           <template v-else-if="col.key === 'nextPayment'">{{ stock.下次配息 ? formatNumber(stock.下次配息) : '--' }}</template>
           <!-- 最新殖利率 -->
           <template v-else-if="col.key === 'latestYield'">{{ stock.最新殖利率 ? formatPercent(stock.最新殖利率) : '--' }}</template>
+          <!-- 累計配息 -->
+          <template v-else-if="col.key === 'cumulativeDividend'">
+            {{ getDividendInfo(stock.代號)?.累計配息 != null ? formatNumber(getDividendInfo(stock.代號).累計配息) : '--' }}
+          </template>
           <!-- 新聞 -->
           <template v-else-if="col.key === 'news'">
             <div class="news-cell">
@@ -82,6 +86,7 @@
           <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(twSubtotal.台幣資產) }}</template>
           <template v-else-if="col.key === 'ratio'">{{ formatPercent(getPercentage(twSubtotal.台幣資產)) }}</template>
           <template v-else-if="col.key === 'annualInterest'">{{ formatNumber(twSubtotal.每年利息) }}</template>
+          <template v-else-if="col.key === 'cumulativeDividend'">{{ twCumulativeDividend > 0 ? formatNumber(twCumulativeDividend) : '' }}</template>
           <template v-else></template>
         </td>
       </tr>
@@ -127,6 +132,8 @@
           <template v-else-if="col.key === 'nextPayment'">--</template>
           <!-- 最新殖利率 -->
           <template v-else-if="col.key === 'latestYield'">--</template>
+          <!-- 累計配息 -->
+          <template v-else-if="col.key === 'cumulativeDividend'">--</template>
           <!-- 新聞 -->
           <template v-else-if="col.key === 'news'">
             <div class="news-cell">
@@ -164,6 +171,7 @@
           <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(totalSubtotal.台幣資產) }}</template>
           <template v-else-if="col.key === 'ratio'">{{ formatPercent(getPercentage(totalSubtotal.台幣資產)) }}</template>
           <template v-else-if="col.key === 'annualInterest'">{{ formatNumber(totalSubtotal.每年利息) }}</template>
+          <template v-else-if="col.key === 'cumulativeDividend'">{{ twCumulativeDividend > 0 ? formatNumber(twCumulativeDividend) : '' }}</template>
           <template v-else></template>
         </td>
       </tr>
@@ -251,6 +259,10 @@ const props = defineProps({
   columnConfig: {
     type: [Array, Object],
     default: () => []
+  },
+  dividendData: {
+    type: Object,
+    default: () => ({})
   }
 })
 
@@ -274,13 +286,14 @@ const columnDefinitions = {
   daysToPayment: { label: '剩餘天配息', defaultOrder: 14 },
   nextPayment: { label: '下次配息', defaultOrder: 15 },
   latestYield: { label: '最新殖利率', defaultOrder: 16 },
-  news: { label: '新聞', defaultOrder: 17 }
+  cumulativeDividend: { label: '累計配息', defaultOrder: 17 },
+  news: { label: '新聞', defaultOrder: 18 }
 }
 
 const allColumnKeys = Object.keys(columnDefinitions)
 
 // 配息相關欄位（當所有股票都沒有配息時自動隱藏）
-const dividendColumns = ['dividend', 'yield', 'annualInterest', 'nextPaymentDate', 'daysToPayment', 'nextPayment', 'latestYield']
+const dividendColumns = ['dividend', 'yield', 'annualInterest', 'nextPaymentDate', 'daysToPayment', 'nextPayment', 'latestYield', 'cumulativeDividend']
 
 // 檢查是否有任何股票有配息資料
 const hasAnyDividend = computed(() => {
@@ -365,10 +378,11 @@ const getCellClass = (key, stock) => {
   const classes = []
   if (key === 'name') classes.push('text-left')
   if (key === 'buyPrice') classes.push('cost-price')
-  if (['twdAsset', 'annualInterest', 'nextPayment', 'profitAmount'].includes(key)) classes.push('text-right')
+  if (['twdAsset', 'annualInterest', 'nextPayment', 'profitAmount', 'cumulativeDividend'].includes(key)) classes.push('text-right')
 
   const calculatedCols = ['latestPrice', 'profitPercent', 'profitAmount', 'twdAsset', 'ratio', 'dividend', 'yield',
-                          'annualInterest', 'nextPaymentDate', 'daysToPayment', 'nextPayment', 'latestYield']
+                          'annualInterest', 'nextPaymentDate', 'daysToPayment', 'nextPayment', 'latestYield',
+                          'cumulativeDividend']
   if (calculatedCols.includes(key)) classes.push('calculated')
 
   if (key === 'latestPrice' && getPriceStatus(stock.代號, stock.market).failed) classes.push('price-failed')
@@ -387,14 +401,14 @@ const getCellClass = (key, stock) => {
 
 const getSubtotalCellClass = (key) => {
   const classes = []
-  if (['twdAsset', 'annualInterest'].includes(key)) classes.push('text-right', 'calculated')
+  if (['twdAsset', 'annualInterest', 'cumulativeDividend'].includes(key)) classes.push('text-right', 'calculated')
   if (key === 'ratio') classes.push('calculated')
   return classes.join(' ')
 }
 
 const getFooterCellClass = (key) => {
   const classes = []
-  if (['twdAsset', 'annualInterest'].includes(key)) classes.push('text-right', 'calculated')
+  if (['twdAsset', 'annualInterest', 'cumulativeDividend'].includes(key)) classes.push('text-right', 'calculated')
   if (key === 'ratio') classes.push('calculated')
   return classes.join(' ')
 }
@@ -425,6 +439,18 @@ const hasNews = (symbol) => {
   const data = props.newsData[symbol]
   return data?.hasNews || false
 }
+
+// 累計配息相關
+const getDividendInfo = (symbol) => {
+  return props.dividendData?.[symbol] || null
+}
+
+const twCumulativeDividend = computed(() => {
+  return props.twStocks.reduce((sum, stock) => {
+    const info = getDividendInfo(stock.代號)
+    return sum + (info?.累計配息 || 0)
+  }, 0)
+})
 
 // 維持率計算
 const showModal = ref(false)

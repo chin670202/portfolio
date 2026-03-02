@@ -5,6 +5,7 @@ import NewsModal from '../components/NewsModal.vue'
 import { ModuleContainer, getDefaultModuleConfig, mergeModuleConfig } from '../modules'
 import SettingsModal from '../components/SettingsModal.vue'
 import { usePriceCache } from '../composables/usePriceCache'
+import { useDividendHistory } from '../composables/useDividendHistory'
 import { clearNewsCache } from '../services/newsService'
 import {
   calculateBondDerivedData,
@@ -36,6 +37,9 @@ const displayName = computed(() => rawData.value?.顯示名稱 || currentUsernam
 
 // 價格快取
 const { getCache, saveCache, applyCache, clearCache: clearPriceCache } = usePriceCache()
+
+// 累計配息資料
+const { dividendData, fetchAndCalculate: fetchDividendData, clearCache: clearDividendCache } = useDividendHistory()
 
 // 價格狀態追蹤: { [代號]: { loading: boolean, failed: boolean } }
 const priceStatus = ref({})
@@ -434,7 +438,8 @@ const moduleProps = computed(() => ({
   getNewsCount,
   isNewsLoading,
   isNewsRead,
-  highlightSymbol: highlightSymbol.value
+  highlightSymbol: highlightSymbol.value,
+  dividendData: dividendData.value
 }))
 
 // 輔助函式：更新價格並追蹤狀態
@@ -539,8 +544,9 @@ async function updateAllPrices() {
     // 儲存價格快取
     saveCache(rawData.value)
 
-    // 價格更新完成後，自動抓取所有商品的新聞
+    // 價格更新完成後，自動抓取所有商品的新聞和累計配息
     fetchAllNews()
+    fetchDividendData(rawData.value, currentUsername.value, true)
 
   } catch (e) {
     console.error('價格更新失敗:', e)
@@ -579,6 +585,7 @@ async function fetchAllNews() {
 async function handleRefresh() {
   clearPriceCache()
   clearNewsCache()
+  clearDividendCache()
   await updateAllPrices()
 }
 
@@ -631,8 +638,9 @@ async function loadData() {
       rawData.value = { ...rawData.value } // 觸發響應式更新
       lastUpdateTime.value = cache.fetchedAt
       usingCache.value = true
-      // 新聞也使用 localStorage 快取（newsService 內部處理）
+      // 新聞和累計配息也使用 localStorage 快取
       fetchAllNews()
+      fetchDividendData(rawData.value, currentUsername.value)
     } else {
       // 無快取：呼叫所有 API
       updateAllPrices()

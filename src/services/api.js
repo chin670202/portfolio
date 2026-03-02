@@ -316,6 +316,62 @@ export async function getLatestDividend(stockCode) {
 }
 
 /**
+ * 從 cmoney.tw 抓取股票或 ETF 的完整歷史配息記錄
+ * @param {string} stockCode - 股票或 ETF 代碼（例如 "00725B"）
+ * @returns {Promise<Array>} 歷史配息記錄 [{ exDate, amount, paymentDate }, ...]
+ */
+export async function getDividendHistory(stockCode) {
+  try {
+    const content = await fetchDividendData(stockCode)
+
+    const tbodyMatch = content.match(/<tbody[^>]*>([\s\S]*?)<\/tbody>/i)
+    if (!tbodyMatch) return []
+
+    const rows = tbodyMatch[1].match(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)
+    if (!rows) return []
+
+    function extractText(td) {
+      const m = td.match(/>([\s\S]*?)</i)
+      return m ? m[1].trim() : ''
+    }
+
+    function parseDate(raw) {
+      if (!raw) return null
+      if (raw.length === 8 && /^\d{8}$/.test(raw)) {
+        return `${raw.substring(0, 4)}/${raw.substring(4, 6)}/${raw.substring(6, 8)}`
+      }
+      if (/^\d{4}\/\d{2}\/\d{2}$/.test(raw)) return raw
+      return null
+    }
+
+    const history = []
+    for (const row of rows) {
+      const tds = row.match(/<td[^>]*>([\s\S]*?)<\/td>/gi)
+      if (!tds || tds.length < 2) continue
+
+      const exDateRaw = extractText(tds[0])
+      const amountRaw = extractText(tds[1])
+      const paymentDateRaw = tds.length >= 4 ? extractText(tds[3]) : null
+
+      const exDate = parseDate(exDateRaw)
+      const amount = parseFloat(amountRaw)
+      if (!exDate || isNaN(amount) || amount <= 0) continue
+
+      history.push({
+        exDate,
+        amount,
+        paymentDate: parseDate(paymentDateRaw) || null,
+      })
+    }
+
+    return history
+  } catch (e) {
+    console.error(`getDividendHistory error for ${stockCode}:`, e)
+    return []
+  }
+}
+
+/**
  * 從 cmoney.tw 抓取股票或 ETF 的下次配息日期
  * @param {string} stockCode - 股票或 ETF 代碼（例如 "00937B"）
  * @returns {Promise<string>} 下次配息日期，格式為 "YYYY/MM/DD"

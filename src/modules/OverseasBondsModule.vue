@@ -65,6 +65,11 @@ const props = defineProps({
   highlightSymbol: {
     type: String,
     default: ''
+  },
+  // 累計配息資料
+  dividendData: {
+    type: Object,
+    default: () => ({})
   }
 })
 
@@ -106,6 +111,7 @@ function hasMaintenanceRatio() {
       :is-news-read="isNewsRead"
       :highlight-symbol="highlightSymbol"
       :column-config="config.columns"
+      :dividend-data="dividendData"
       @open-news="handleOpenNews"
     />
 

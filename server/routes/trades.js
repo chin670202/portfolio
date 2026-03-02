@@ -83,6 +83,35 @@ router.get('/:user', validateUser, (req, res) => {
 });
 
 /**
+ * GET /trades/:user/lots - Get open lots grouped by symbol
+ */
+router.get('/:user/lots', validateUser, (req, res) => {
+  try {
+    const { user } = req.params;
+    const rows = db.prepare(`
+      SELECT symbol, trade_date, remaining_qty, price
+      FROM open_lots
+      WHERE user = ? AND remaining_qty > 0
+      ORDER BY symbol, trade_date ASC
+    `).all(user);
+
+    const grouped = {};
+    for (const row of rows) {
+      if (!grouped[row.symbol]) grouped[row.symbol] = [];
+      grouped[row.symbol].push({
+        trade_date: row.trade_date,
+        remaining_qty: row.remaining_qty,
+        price: row.price,
+      });
+    }
+    res.json(grouped);
+  } catch (error) {
+    console.error('GET lots error:', error);
+    res.status(500).json({ error: '取得持倉明細失敗' });
+  }
+});
+
+/**
  * POST /trades/:user - Create a new trade
  */
 router.post('/:user', validateUser, (req, res) => {

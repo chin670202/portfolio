@@ -28,5 +28,6 @@ nul
 screenshots/
 .gh-pages-worktree/
 
-# SQLite database files
-server/data/
+# SQLite database (keep db, ignore journals/temp files)
+server/data/*
+!server/data/trades.db
