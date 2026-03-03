@@ -5,9 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:api": "wrangler pages dev dist --d1 DB=portfolio-db --port 8788",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "npm run build && node scripts/prepare-deploy.cjs && gh-pages -d dist",
+    "deploy": "npm run build && wrangler pages deploy dist",
+    "deploy:gh": "npm run build && node scripts/prepare-deploy.cjs && gh-pages -d dist",
+    "db:migrate:local": "wrangler d1 migrations apply portfolio-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply portfolio-db --remote",
     "test": "npx playwright test",
     "test:ui": "npx playwright test --ui",
     "test:headed": "npx playwright test --headed"
@@ -19,6 +23,7 @@
     "chart.js": "^4.5.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "hono": "^4.12.3",
     "lucide-vue-next": "^0.575.0",
     "radix-vue": "^1.9.17",
     "reka-ui": "^2.8.2",
@@ -34,6 +39,7 @@
     "playwright": "^1.57.0",
     "tailwindcss": "^4.2.1",
     "vite": "^5.4.21",
+    "wrangler": "^4.69.0",
     "xlsx": "^0.18.5"
   }
 }

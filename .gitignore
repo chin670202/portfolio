@@ -31,3 +31,7 @@ screenshots/
 # SQLite database (keep db, ignore journals/temp files)
 server/data/*
 !server/data/trades.db
+
+# Cloudflare
+.dev.vars
+.wrangler/

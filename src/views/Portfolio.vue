@@ -598,33 +598,13 @@ async function loadData() {
   try {
     const username = currentUsername.value
 
-    // 優先嘗試從用戶專屬目錄載入（新架構）
-    // 如果失敗則 fallback 到舊路徑（向後相容）
-    let response = await fetch(`${import.meta.env.BASE_URL}users/${username}/data.json?t=${Date.now()}`)
-    let data = null
-
-    // 檢查是否為有效的 JSON 回應（Vite SPA 會返回 200 但內容是 HTML）
-    if (response.ok) {
-      const contentType = response.headers.get('content-type')
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json()
-      }
-    }
-
-    // Fallback 到舊路徑
-    if (!data) {
-      response = await fetch(`${import.meta.env.BASE_URL}data/${username}.json?t=${Date.now()}`)
-      if (response.ok) {
-        const contentType = response.headers.get('content-type')
-        if (contentType && contentType.includes('application/json')) {
-          data = await response.json()
-        }
-      }
-    }
-
-    if (!data) {
+    // 從 API 載入用戶投資組合資料（Cloudflare D1）
+    const { updateService } = await import('../config')
+    const response = await fetch(`${updateService.baseUrl}/portfolio/${username}`)
+    if (!response.ok) {
       throw new Error(`找不到使用者 "${username}" 的資料`)
     }
+    const data = await response.json()
     rawData.value = data
 
     // 載入模組配置（合併用戶配置與新內建模組）
