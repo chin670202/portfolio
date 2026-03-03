@@ -294,7 +294,7 @@
     font-weight: bold;
   }
 
-  /* 總計台幣資產 - 藍色代表總資產 */
+  /* 總計台幣市值 - 藍色代表總資產 */
   .summary-box.asset {
     background: #4472c4;
     color: white;

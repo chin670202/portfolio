@@ -49,7 +49,7 @@ export const bondsCardConfig = {
   },
   // 詳細資訊列表
   details: [
-    { label: '台幣資產', value: (item) => formatCurrency(item.台幣資產) },
+    { label: '台幣市值', value: (item) => formatCurrency(item.台幣資產) },
     { label: '票面利率', value: (item) => `${formatNumber(item.票面利率, 3)}%`, extra: (item) => `年息 ${formatCurrency(item.每年利息)}` },
     { label: '到期日', value: (item) => item.到期日, extra: (item) => item.剩餘年數 ? `(${item.剩餘年數}年)` : '' }
   ]
@@ -76,7 +76,7 @@ export const twStocksCardConfig = {
     change: (item) => item.損益百分比
   },
   details: [
-    { label: '台幣資產', value: (item) => formatCurrency(item.台幣資產) },
+    { label: '台幣市值', value: (item) => formatCurrency(item.台幣資產) },
     { label: '損益金額', value: (item) => formatCurrency(item.台幣損益), isProfit: true },
     {
       label: '殖利率',
@@ -114,7 +114,7 @@ export const usStocksCardConfig = {
     change: (item) => item.損益百分比
   },
   details: [
-    { label: '台幣資產', value: (item) => formatCurrency(item.台幣資產) },
+    { label: '台幣市值', value: (item) => formatCurrency(item.台幣資產) },
     { label: '損益金額', value: (item) => formatCurrency(item.台幣損益), isProfit: true }
   ]
 }
@@ -140,7 +140,7 @@ export const cryptoCardConfig = {
     change: (item) => item.損益百分比
   },
   details: [
-    { label: '台幣資產', value: (item) => formatCurrency(item.台幣資產) },
+    { label: '台幣市值', value: (item) => formatCurrency(item.台幣資產) },
     { label: '損益金額', value: (item) => formatCurrency(item.台幣損益), isProfit: true }
   ]
 }

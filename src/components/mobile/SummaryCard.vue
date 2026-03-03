@@ -61,9 +61,9 @@ function getMaintenanceClass(ratio, info) {
     </div>
 
     <div class="summary-content">
-      <!-- 台幣資產/貸款餘額 -->
+      <!-- 台幣市值/貸款餘額 -->
       <div class="summary-row main">
-        <span class="label">{{ isDebt ? '貸款餘額' : '台幣資產' }}</span>
+        <span class="label">{{ isDebt ? '貸款餘額' : '台幣市值' }}</span>
         <span class="value">{{ formatCurrency(isDebt ? data.貸款餘額 : data.台幣資產) }}</span>
       </div>
 

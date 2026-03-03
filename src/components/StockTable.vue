@@ -13,10 +13,11 @@
     <tbody>
       <tr v-for="(stock, index) in stocks" :key="index" :class="{ 'highlighted-row': stock.代號 === highlightSymbol }">
         <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getCellClass(col.key, stock)">
-          <!-- 公司名稱 -->
-          <template v-if="col.key === 'companyName'">{{ stock.公司名稱 }}</template>
-          <!-- 代號 -->
-          <template v-else-if="col.key === 'symbol'">{{ stock.代號 }}</template>
+          <!-- 公司名稱（含代號） -->
+          <template v-if="col.key === 'companyName'">
+            {{ stock.公司名稱 }}
+            <div class="symbol-sub">{{ stock.代號 }}</div>
+          </template>
           <!-- 買入價格 -->
           <template v-else-if="col.key === 'buyPrice'">{{ formatDecimal(stock.買入價格) }}</template>
           <!-- 持有單位 -->
@@ -28,14 +29,12 @@
           </template>
           <!-- 損益(%) -->
           <template v-else-if="col.key === 'profitPercent'">{{ formatPercent(stock.損益百分比) }}</template>
-          <!-- 台幣資產 -->
+          <!-- 台幣市值 -->
           <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(stock.台幣資產) }}</template>
           <!-- 佔比 -->
           <template v-else-if="col.key === 'ratio'">{{ formatPercent(getPercentage(stock.台幣資產)) }}</template>
           <!-- 票面利率 -->
           <template v-else-if="col.key === 'couponRate'">{{ formatDecimal(stock.票面利率) }}</template>
-          <!-- 年殖利率 -->
-          <template v-else-if="col.key === 'yield'">{{ formatPercent(stock.年殖利率) }}</template>
           <!-- 每年利息 -->
           <template v-else-if="col.key === 'annualInterest'">{{ formatNumber(stock.每年利息) }}</template>
           <!-- 配息日 -->
@@ -84,7 +83,7 @@
         <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getFooterCellClass(col.key)">
           <!-- 小計標籤（第一欄） -->
           <template v-if="col === sortedVisibleColumns[0]">小計</template>
-          <!-- 台幣資產 -->
+          <!-- 台幣市值 -->
           <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(subtotal.台幣資產) }}</template>
           <!-- 佔比 -->
           <template v-else-if="col.key === 'ratio'">{{ formatPercent(getPercentage(subtotal.台幣資產)) }}</template>
@@ -185,25 +184,23 @@ defineEmits(['open-news'])
 // 欄位定義（含標籤和預設順序）
 const columnDefinitions = {
   companyName: { label: '公司名稱', defaultOrder: 1 },
-  symbol: { label: '代號', defaultOrder: 2 },
-  buyPrice: { label: '買入價格', defaultOrder: 3 },
-  units: { label: '持有單位', defaultOrder: 4 },
-  latestPrice: { label: '最新價格', defaultOrder: 5 },
-  profitPercent: { label: '損益(%)', defaultOrder: 6 },
-  twdAsset: { label: '台幣資產', defaultOrder: 7 },
-  ratio: { label: '佔比', defaultOrder: 8 },
-  couponRate: { label: '票面利率', defaultOrder: 9 },
-  yield: { label: '年殖利率', defaultOrder: 10 },
-  annualInterest: { label: '每年利息', defaultOrder: 11 },
-  paymentDate: { label: '配息日', defaultOrder: 12 },
-  daysToPayment: { label: '剩餘天配息', defaultOrder: 13 },
-  nextPayment: { label: '下次配息', defaultOrder: 14 },
-  buyDate: { label: '買入日', defaultOrder: 15 },
-  maturityDate: { label: '到期日', defaultOrder: 16 },
-  paymentCount: { label: '配息次數', defaultOrder: 17 },
-  yearsToMaturity: { label: '剩餘年數', defaultOrder: 18 },
-  cumulativeDividend: { label: '累計配息', defaultOrder: 19 },
-  news: { label: '新聞', defaultOrder: 20 }
+  buyPrice: { label: '買入價格', defaultOrder: 2 },
+  units: { label: '持有單位', defaultOrder: 3 },
+  latestPrice: { label: '最新價格', defaultOrder: 4 },
+  profitPercent: { label: '損益(%)', defaultOrder: 5 },
+  twdAsset: { label: '台幣市值', defaultOrder: 6 },
+  ratio: { label: '佔比', defaultOrder: 7 },
+  couponRate: { label: '票面利率', defaultOrder: 8 },
+  annualInterest: { label: '每年利息', defaultOrder: 9 },
+  paymentDate: { label: '配息日', defaultOrder: 10 },
+  daysToPayment: { label: '剩餘天配息', defaultOrder: 11 },
+  nextPayment: { label: '下次配息', defaultOrder: 12 },
+  buyDate: { label: '買入日', defaultOrder: 13 },
+  maturityDate: { label: '到期日', defaultOrder: 14 },
+  paymentCount: { label: '配息次數', defaultOrder: 15 },
+  yearsToMaturity: { label: '剩餘年數', defaultOrder: 16 },
+  cumulativeDividend: { label: '累計配息', defaultOrder: 17 },
+  news: { label: '新聞', defaultOrder: 18 }
 }
 
 const allColumnKeys = Object.keys(columnDefinitions)
@@ -391,6 +388,12 @@ const resultFormula = computed(() => {
 </script>
 
 <style scoped>
+.symbol-sub {
+  font-size: 12px;
+  color: #9ca3af;
+  line-height: 1.2;
+}
+
 .clickable {
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;

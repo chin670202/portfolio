@@ -42,7 +42,7 @@ const props = defineProps({
 // 預設顯示的欄位（全部顯示，與用戶截圖順序一致）
 const defaultColumns = [
   { key: 'usdRate', label: '美元匯率', visible: true, order: 1 },
-  { key: 'totalAssets', label: '台幣資產', visible: true, order: 2 },
+  { key: 'totalAssets', label: '台幣市值', visible: true, order: 2 },
   { key: 'totalLiability', label: '台幣負債', visible: true, order: 3 },
   { key: 'netWorth', label: '台幣淨值', visible: true, order: 4 },
   { key: 'annualInterestIncome', label: '每年收息', visible: true, order: 5 },
@@ -53,7 +53,7 @@ const defaultColumns = [
 // 標籤對應表
 const labelMap = {
   usdRate: '美元匯率',
-  totalAssets: '台幣資產',
+  totalAssets: '台幣市值',
   totalLiability: '台幣負債',
   netWorth: '台幣淨值',
   annualInterestIncome: '每年收息',
@@ -94,7 +94,7 @@ const cardData = computed(() => {
       value: totalAssets,
       displayValue: formatWan(totalAssets),
       color: 'blue',
-      tooltip: `台幣資產: ${formatNumber(totalAssets)} 元`
+      tooltip: `台幣市值: ${formatNumber(totalAssets)} 元`
     },
     totalLiability: {
       value: totalLiability,

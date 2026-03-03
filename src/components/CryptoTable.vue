@@ -13,10 +13,11 @@
     <tbody>
       <tr v-for="(crypto, index) in cryptos" :key="index" :class="{ 'highlighted-row': crypto.代號 === highlightSymbol }">
         <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getCellClass(col.key, crypto)">
-          <!-- 名稱 -->
-          <template v-if="col.key === 'name'">{{ crypto.名稱 }}</template>
-          <!-- 代號 -->
-          <template v-else-if="col.key === 'symbol'">{{ crypto.代號 }}</template>
+          <!-- 名稱（含代號） -->
+          <template v-if="col.key === 'name'">
+            {{ crypto.名稱 }}
+            <div class="symbol-sub">{{ crypto.代號 }}</div>
+          </template>
           <!-- 買入均價 -->
           <template v-else-if="col.key === 'buyPrice'">{{ formatDecimal(crypto.買入均價) }}</template>
           <!-- 持有單位 -->
@@ -30,7 +31,7 @@
           <template v-else-if="col.key === 'twdProfit'">{{ formatNumber(crypto.台幣損益) }}</template>
           <!-- 損益(%) -->
           <template v-else-if="col.key === 'profitPercent'">{{ formatPercent(crypto.損益百分比) }}</template>
-          <!-- 台幣資產 -->
+          <!-- 台幣市值 -->
           <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(crypto.台幣資產) }}</template>
           <!-- 佔比 -->
           <template v-else-if="col.key === 'ratio'">{{ formatPercent(getPercentage(crypto.台幣資產)) }}</template>
@@ -122,15 +123,14 @@ defineEmits(['open-news'])
 // 欄位定義（簡化版，無配息欄位）
 const columnDefinitions = {
   name: { label: '名稱', defaultOrder: 1 },
-  symbol: { label: '代號', defaultOrder: 2 },
-  buyPrice: { label: '買入均價', defaultOrder: 3 },
-  units: { label: '持有單位', defaultOrder: 4 },
-  latestPrice: { label: '最新價格', defaultOrder: 5 },
-  twdProfit: { label: '台幣損益', defaultOrder: 6 },
-  profitPercent: { label: '損益(%)', defaultOrder: 7 },
-  twdAsset: { label: '台幣資產', defaultOrder: 8 },
-  ratio: { label: '佔比', defaultOrder: 9 },
-  news: { label: '新聞', defaultOrder: 10 }
+  buyPrice: { label: '買入均價', defaultOrder: 2 },
+  units: { label: '持有單位', defaultOrder: 3 },
+  latestPrice: { label: '最新價格', defaultOrder: 4 },
+  twdProfit: { label: '台幣損益', defaultOrder: 5 },
+  profitPercent: { label: '損益(%)', defaultOrder: 6 },
+  twdAsset: { label: '台幣市值', defaultOrder: 7 },
+  ratio: { label: '佔比', defaultOrder: 8 },
+  news: { label: '新聞', defaultOrder: 9 }
 }
 
 const allColumnKeys = Object.keys(columnDefinitions)
@@ -246,6 +246,12 @@ const hasNews = (symbol) => {
 </script>
 
 <style scoped>
+.symbol-sub {
+  font-size: 12px;
+  color: #9ca3af;
+  line-height: 1.2;
+}
+
 .news-cell {
   display: flex;
   justify-content: center;

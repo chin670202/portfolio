@@ -20,6 +20,11 @@
 
 ## 服務管理規則
 
+### 啟動服務
+**當用戶要求「啟動服務」時，前後端都要啟動。**
+- 後端：Node v20 啟動 `server/index.js`（port 3002）
+- 前端：`npx vite`（port 5173）
+
 ### 後端服務重啟
 **每次修改 `server/` 目錄下的任何檔案後，必須自動重啟後端服務。**
 
@@ -187,6 +192,28 @@ git add .claude/settings.local.json
 ```
 
 這個檔案記錄了 Claude Code 的本地設定，需要同步到版本控制中。
+
+### SQLite 資料庫同步
+`server/data/trades.db` 已納入版控，用於跨電腦同步交易資料。
+
+**commit 前必須執行 WAL checkpoint**，否則其他電腦 pull 到的 db 會是空的：
+
+```bash
+# 1. 先停掉後端服務（釋放 db 鎖）
+PID=$(powershell -Command "(Get-NetTCPConnection -LocalPort 3002 -ErrorAction SilentlyContinue).OwningProcess" | head -1)
+if [ -n "$PID" ] && [ "$PID" != "0" ]; then taskkill //F //PID $PID; fi
+
+# 2. 執行 WAL checkpoint（把 .wal 資料寫回主檔）
+node -e "const db = require('./server/node_modules/better-sqlite3')('./server/data/trades.db'); db.pragma('wal_checkpoint(TRUNCATE)'); db.close()"
+
+# 3. 加入 commit
+git add server/data/trades.db
+
+# 4. 重啟後端
+cd /d/my-projects/portfolio && nohup /c/Users/chin/AppData/Roaming/nvm/v20.19.1/node.exe server/index.js > /tmp/portfolio-server.log 2>&1 &
+```
+
+**原因**：SQLite WAL 模式會將寫入暫存在 `trades.db-wal` 檔案中，主檔 `trades.db` 可能不包含最新資料。`.wal` 和 `.shm` 檔已被 `.gitignore` 排除，因此必須先 checkpoint 再 commit。
 
 ## 部署流程
 
