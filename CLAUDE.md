@@ -18,36 +18,40 @@
 - ❌ 重構表格欄位時破壞原有的資料綁定
 - ❌ 修改 props 名稱但未同步更新所有使用處
 
+## 架構概覽
+
+本專案已全面遷移至 **Cloudflare**：
+- **前端**：Vue 3 + Vite → Cloudflare Pages（靜態託管）
+- **後端 API**：Hono on Cloudflare Pages Functions（無伺服器）
+- **資料庫**：Cloudflare D1（雲端 SQLite）
+- **AI 解析**：Anthropic Messages HTTP API（Haiku 4.5）
+
+線上網址：`https://portfolio-c0n.pages.dev`
+
 ## 服務管理規則
 
 ### 啟動服務
 **當用戶要求「啟動服務」時，前後端都要啟動。**
-- 後端：Node v20 啟動 `server/index.js`（port 3002）
+- 後端（本地開發）：`npm run dev:api`（wrangler pages dev，port 8788）
 - 前端：`npx vite`（port 5173）
 
 ### 後端服務重啟
-**每次修改 `server/` 目錄下的任何檔案後，必須自動重啟後端服務。**
-
-**重要：不要使用 `Stop-Process -Name node` 這會殺掉所有 Node 進程（包括前端 Vite 開發伺服器）！**
-**重要：後端必須使用 Node v20（nvm-windows 路徑：`/c/Users/chin/AppData/Roaming/nvm/v20.19.1/node.exe`），v14 不支援 `static {}` 語法。**
-
-正確的重啟方式是只殺掉 port 3002 的進程：
+修改 `api/` 目錄下的檔案後，需要重新啟動 wrangler dev：
 
 ```bash
-# 在 bash 中找出 port 3002 的 PID 並殺掉
-PID=$(powershell -Command "(Get-NetTCPConnection -LocalPort 3002 -ErrorAction SilentlyContinue).OwningProcess" | head -1)
+# 殺掉 port 8788 的進程
+PID=$(powershell -Command "(Get-NetTCPConnection -LocalPort 8788 -State Listen -ErrorAction SilentlyContinue).OwningProcess" | head -1)
 if [ -n "$PID" ] && [ "$PID" != "0" ]; then taskkill //F //PID $PID; fi
 
-# 用 Node v20 啟動後端服務（背景執行）
-cd /d/my-projects/portfolio && nohup /c/Users/chin/AppData/Roaming/nvm/v20.19.1/node.exe server/index.js > /tmp/portfolio-server.log 2>&1 &
+# 重新建置並啟動
+npm run build && npm run dev:api
 ```
 
 需要重啟的情況包括：
-- 修改 `server/routes/*.js`
-- 修改 `server/services/*.js`
-- 修改 `server/prompts/*.md`
-- 修改 `server/index.js`
-- 修改 `server/.env`
+- 修改 `api/routes/*.js`
+- 修改 `api/services/*.js`
+- 修改 `api/index.js`
+- 修改 `functions/**/*.js`
 
 ### 前端開發伺服器
 前端使用 Vite，修改 `src/` 下的檔案會自動 HMR 熱更新，不需要手動重啟。
@@ -60,7 +64,6 @@ cd /d/my-projects/portfolio && nohup /c/Users/chin/AppData/Roaming/nvm/v20.19.1/
 ❌ 不要使用技術性訊息：
 - `Failed to fetch`
 - `NetworkError`
-- `ECONNREFUSED`
 - `500 Internal Server Error`
 
 ✅ 使用友善的中文提示：
@@ -69,14 +72,12 @@ cd /d/my-projects/portfolio && nohup /c/Users/chin/AppData/Roaming/nvm/v20.19.1/
 - `系統處理時發生問題，請稍後再試`
 - `操作失敗，請稍後再試`
 
-前端在各元件中針對錯誤訊息做友善轉換（例如 `TradeInput.vue` 將 CLI 錯誤轉為簡短提示）。
-
 ## 商業規則
 
 ### 交易與庫存同步
-- 交易記錄賣出時，必須同步減少庫存（`public/data/{user}.json`），全部賣出則移除該標的
+- 交易記錄賣出時，必須同步減少庫存（D1 `portfolios` 表），全部賣出則移除該標的
 - 新增買入時，同步新增或更新庫存（加權平均買入均價、持有數量）
-- 庫存同步由 `server/services/portfolio-sync.js` 負責，在 trades POST/DELETE 時自動觸發
+- 庫存同步由 `api/services/portfolio-sync.js` 負責，在 trades POST/DELETE 時自動觸發
 - 損益計算採 FIFO（先進先出）配對，支援先輸入賣出、後補輸入買進的情境（使用 `recalculateSymbol` 重算）
 
 ### 券商手續費
@@ -86,28 +87,37 @@ cd /d/my-projects/portfolio && nohup /c/Users/chin/AppData/Roaming/nvm/v20.19.1/
 
 ## 技術注意事項
 
-- 後端 port：3002，前端 Vite dev server port：5173 或 5174
-- DB：SQLite at `server/data/trades.db`（better-sqlite3）
+- 後端 API：Hono on Cloudflare Pages Functions（本地 port 8788，線上同源 `/api`）
+- 前端 Vite dev server port：5173 或 5174
+- DB：Cloudflare D1（`portfolio-db`，ID: `1dda6830-8226-4dbd-8159-2f5eceb85bf8`）
+- 本地 D1 與線上 D1 資料完全分離，互不影響
 - shadcn-vue Select 在 Dialog 內有 portal 衝突問題，改用原生 `<select>`
 - CSS cascade layers：`@layer theme, base, legacy, components, utilities;`（在 tailwind.css）
 - style.css 包在 `@layer legacy` 中，避免覆蓋 Tailwind utilities
 
 ## 專案結構
 
-- `server/` - Node.js + Express 後端服務（port 3002）
-  - `db/index.js` - SQLite 資料庫初始化（trades, open_lots, pnl_records, brokers, user_settings）
-  - `db/seed-brokers.js` - 14 家台灣券商費率資料
+- `api/` - Hono 後端 API（跑在 Cloudflare Pages Functions）
+  - `index.js` - Hono app 定義（CORS、auth middleware、路由掛載）
   - `routes/trades.js` - 交易 CRUD + AI 解析 API
   - `routes/pnl.js` - 損益報表 API
+  - `routes/stats.js` - 交易統計 API
   - `routes/brokers.js` - 券商 API
   - `routes/backup.js` - 備份 API 路由
+  - `routes/portfolio.js` - 投資組合 CRUD（D1 portfolios 表）
   - `services/pnl-engine.js` - FIFO 損益計算引擎
   - `services/fee-calculator.js` - 手續費計算
-  - `services/portfolio-sync.js` - 交易→庫存同步（delta-based）
-  - `services/trade-parser.js` - AI 語意交易解析（依賴 claude.js）
-  - `services/claude.js` - Claude CLI 整合（spawns `claude` command）
-  - `services/github.js` - Git 操作
-  - `services/backup.js` - 備份服務（建立、列表、還原）
+  - `services/portfolio-sync.js` - 交易→庫存同步（D1）
+  - `services/trade-parser.js` - AI 語意交易解析（依賴 anthropic.js）
+  - `services/anthropic.js` - Anthropic Messages API fetch wrapper
+  - `services/backup.js` - 備份服務（D1 backups 表）
+- `functions/` - Cloudflare Pages Functions 入口
+  - `api/[[route]].js` - catch-all → Hono app
+  - `_middleware.js` - SPA routing fallback
+- `migrations/` - D1 資料庫遷移
+  - `0001_init.sql` - 表 schema（trades, pnl_records, open_lots, brokers, user_settings, portfolios, backups）
+  - `0002_seed_brokers.sql` - 14 家台灣券商費率資料
+  - `0003_seed_data.sql` - 從舊 SQLite + JSON 遷移的資料
 - `src/` - Vue 3 前端
   - `views/Portfolio.vue` - 主儀表板頁面（投資現況）
   - `views/TradesPage.vue` - 交易紀錄頁面
@@ -130,8 +140,7 @@ cd /d/my-projects/portfolio && nohup /c/Users/chin/AppData/Roaming/nvm/v20.19.1/
     - `AssetHistoryModule.vue` - 資產變化記錄與趨勢圖模組
   - `services/tradeApi.js` - 交易/券商 API 客戶端
   - `services/newsService.js` - 新聞抓取與快取（localStorage 當日有效）
-- `public/data/` - 用戶投資資料 JSON 檔案
-  - `backups/{user}/` - 用戶備份資料夾
+  - `config/index.js` - API baseUrl 設定（`/api`）
 
 ## 模組系統
 
@@ -170,18 +179,15 @@ cd /d/my-projects/portfolio && nohup /c/Users/chin/AppData/Roaming/nvm/v20.19.1/
 
 ## 備份機制
 
-每次更新部位前會自動備份用戶的 JSON 檔案。
+每次更新部位前會自動備份用戶的投資組合資料到 D1 `backups` 表。
 
 備份限制：
 - 每用戶最多保留 **10 份**備份
 - 每天最多 **3 份**備份（避免同一天的備份覆蓋所有歷史）
 
-備份檔名格式：`{user}_{日期}_{時間}.json`
-例如：`test_2026-01-18_143052.json`
-
 API 端點：
-- `GET /backup/:user` - 取得備份列表
-- `POST /backup/:user/restore` - 還原指定備份
+- `GET /api/backup/:user` - 取得備份列表
+- `POST /api/backup/:user/restore` - 還原指定備份
 
 ## Git 提交規則
 
@@ -191,49 +197,39 @@ API 端點：
 git add .claude/settings.local.json
 ```
 
-這個檔案記錄了 Claude Code 的本地設定，需要同步到版本控制中。
-
-### SQLite 資料庫同步
-`server/data/trades.db` 已納入版控，用於跨電腦同步交易資料。
-
-**commit 前必須執行 WAL checkpoint**，否則其他電腦 pull 到的 db 會是空的：
-
-```bash
-# 1. 先停掉後端服務（釋放 db 鎖）
-PID=$(powershell -Command "(Get-NetTCPConnection -LocalPort 3002 -ErrorAction SilentlyContinue).OwningProcess" | head -1)
-if [ -n "$PID" ] && [ "$PID" != "0" ]; then taskkill //F //PID $PID; fi
-
-# 2. 執行 WAL checkpoint（把 .wal 資料寫回主檔）
-node -e "const db = require('./server/node_modules/better-sqlite3')('./server/data/trades.db'); db.pragma('wal_checkpoint(TRUNCATE)'); db.close()"
-
-# 3. 加入 commit
-git add server/data/trades.db
-
-# 4. 重啟後端
-cd /d/my-projects/portfolio && nohup /c/Users/chin/AppData/Roaming/nvm/v20.19.1/node.exe server/index.js > /tmp/portfolio-server.log 2>&1 &
-```
-
-**原因**：SQLite WAL 模式會將寫入暫存在 `trades.db-wal` 檔案中，主檔 `trades.db` 可能不包含最新資料。`.wal` 和 `.shm` 檔已被 `.gitignore` 排除，因此必須先 checkpoint 再 commit。
-
 ## 部署流程
 
-1. 建置前端：`npm run build`
-2. 提交變更：`git add . && git commit -m "message"`
-3. 推送到 GitHub：`git push`
+```bash
+# 建置 + 部署到 Cloudflare Pages
+npm run deploy
 
-## AI 語意交易輸入（換電腦設定指南）
+# 或分步執行
+npm run build
+npx wrangler pages deploy dist
+```
+
+D1 資料庫遷移：
+```bash
+# 本地
+npm run db:migrate:local
+
+# 線上
+npm run db:migrate:remote
+```
+
+## AI 語意交易輸入
 
 ### 功能流程
 
 ```
 使用者輸入口語描述（如「今天買了兩張台積電 680元」）
   → 前端 TradeInput.vue
-  → tradeApi.parseTrade() → POST /trades/:user/parse
-  → 後端 trades.js route → trade-parser.js
-  → claude.js → spawn `claude` CLI（--print 模式）
+  → tradeApi.parseTrade() → POST /api/trades/:user/parse
+  → Hono route → trade-parser.js
+  → anthropic.js → Anthropic Messages API（Haiku 4.5）
   → Claude AI 回傳結構化 JSON
   → 前端 TradePreview.vue 顯示確認卡片
-  → 使用者確認 → POST /trades/:user 寫入 DB + 同步庫存
+  → 使用者確認 → POST /api/trades/:user 寫入 D1 + 同步庫存
 ```
 
 ### 關鍵檔案
@@ -241,26 +237,20 @@ cd /d/my-projects/portfolio && nohup /c/Users/chin/AppData/Roaming/nvm/v20.19.1/
 | 檔案 | 角色 |
 |------|------|
 | `src/components/trades/TradeInput.vue` | 前端輸入框，送出到後端解析 |
-| `src/services/tradeApi.js` | 前端 API 客戶端，連接 `http://localhost:3002` |
-| `server/routes/trades.js` | 後端路由，`POST /:user/parse` 呼叫 trade-parser |
-| `server/services/trade-parser.js` | 組裝 prompt、呼叫 Claude CLI、解析回傳 JSON |
-| `server/services/claude.js` | 底層 Claude CLI wrapper，spawn 子進程執行 `claude --print` |
+| `src/services/tradeApi.js` | 前端 API 客戶端，連接 `/api` |
+| `api/routes/trades.js` | 後端路由，`POST /:user/parse` 呼叫 trade-parser |
+| `api/services/trade-parser.js` | 組裝 prompt、呼叫 Anthropic API、解析回傳 JSON |
+| `api/services/anthropic.js` | Anthropic Messages API fetch wrapper |
 
-### 環境需求
+### 環境變數（Cloudflare Secrets）
 
-1. **Node.js >= 18**（推薦 v20+）
-   - `better-sqlite3` 和 `simple-git` 需要 Node 18+
-   - Claude CLI 本身也需要 Node 18+
-   - 使用 nvm-windows 時，**啟動後端的 Node 版本很重要**：`claude.js` 使用 `process.execPath` 取得當前 Node 路徑，子進程會繼承這個版本
+| 變數 | 說明 |
+|------|------|
+| `ANTHROPIC_API_KEY` | Anthropic API 金鑰 |
+| `ANTHROPIC_MODEL` | 模型 ID（`claude-haiku-4-5-20251001`） |
+| `API_KEY` | API 認證金鑰（選填） |
 
-2. **Claude Code CLI**
-   - 安裝：`npm install -g @anthropic-ai/claude-code`
-   - 首次使用需登入：在終端機執行 `claude` 完成 OAuth 認證
-   - 認證資料存在 `~/.claude/` 目錄
-
-3. **後端服務必須運行**
-   - 啟動：`node server/index.js`（port 3002）
-   - 前端 `src/config/index.js` 預設連接 `http://localhost:3002`
+本地開發放在 `.dev.vars`（已加入 .gitignore）。
 
 ### 換電腦 Checklist
 
@@ -268,42 +258,20 @@ cd /d/my-projects/portfolio && nohup /c/Users/chin/AppData/Roaming/nvm/v20.19.1/
 # 1. Clone repo
 git clone <repo-url> && cd portfolio
 
-# 2. 確認 Node 版本 >= 18
-node -v  # 應該顯示 v18+ 或 v20+
-
-# 3. 安裝前端依賴
+# 2. 安裝依賴
 npm install
 
-# 4. 安裝後端依賴（better-sqlite3 需要編譯）
-cd server && npm install && cd ..
+# 3. 設定環境變數
+# 建立 .dev.vars 檔案，填入 ANTHROPIC_API_KEY 和 ANTHROPIC_MODEL
 
-# 5. 安裝 Claude Code CLI
-npm install -g @anthropic-ai/claude-code
+# 4. 套用本地 D1 migrations
+npm run db:migrate:local
 
-# 6. 登入 Claude（首次）
-claude  # 完成 OAuth 認證後 Ctrl+C 退出
+# 5. 啟動本地 API
+npm run dev:api
 
-# 7. 啟動後端
-node server/index.js
-# 應該看到「投資部位更新服務已啟動 http://localhost:3002」
-
-# 8. 啟動前端
+# 6. 啟動前端
 npx vite
-# 應該看到 Vite dev server 啟動
 
-# 9. 驗證 AI 解析
-curl -X POST http://localhost:3002/trades/chin/parse \
-  -H "Content-Type: application/json" \
-  -d '{"input":"今天買了一張台積電 680元"}'
-# 應該回傳 JSON: {"tradeDate":"...","symbol":"2330","side":"buy",...}
+# 7. 開啟 http://localhost:5173/chin
 ```
-
-### 常見問題
-
-| 症狀 | 原因 | 解法 |
-|------|------|------|
-| `Claude CLI 執行失敗` + 一堆 minified JS | Node 版本太舊（v14） | 用 Node v20 啟動後端 |
-| `claude: command not found` | Claude CLI 未安裝 | `npm install -g @anthropic-ai/claude-code` |
-| `AI 解析服務暫時無法使用` | Claude CLI 未登入或 API 錯誤 | 終端機執行 `claude` 完成登入 |
-| `ECONNREFUSED localhost:3002` | 後端服務未啟動 | `node server/index.js` |
-| `better-sqlite3` 編譯錯誤 | Node 版本不匹配或缺少 build tools | `cd server && npm rebuild better-sqlite3` |

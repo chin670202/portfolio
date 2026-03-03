@@ -555,6 +555,73 @@ async function updateAllPrices() {
   }
 }
 
+// 補抓快取中沒有的新商品價格
+async function fetchMissingPrices(cache) {
+  if (!rawData.value) return
+
+  const promises = []
+
+  // 檢查 ETF 中是否有快取沒有的項目
+  rawData.value.ETF?.forEach(etf => {
+    if (!cache.etfs?.[etf.代號]) {
+      promises.push(
+        updatePriceWithStatus(`etf_${etf.代號}`, () => getStockPrice(etf.代號), (price) => {
+          etf.最新價格 = price
+        })
+      )
+      promises.push(
+        updatePriceWithStatus(`etf_div_${etf.代號}`, () => getLatestDividend(etf.代號), (dividend) => {
+          etf.每股配息 = dividend
+        })
+      )
+    }
+  })
+
+  // 檢查其它資產中是否有快取沒有的項目
+  const cryptoMapping = { 'BTC/TWD': 'bitcoin', 'ETH/TWD': 'ethereum' }
+  rawData.value.其它資產?.forEach(asset => {
+    if (!cache.others?.[asset.代號]) {
+      const coinId = cryptoMapping[asset.代號]
+      if (coinId) {
+        promises.push(
+          updatePriceWithStatus(`other_${asset.代號}`, () => getCryptoPrice(coinId, 'twd'), (price) => {
+            asset.最新價格 = price
+          })
+        )
+      } else if (/^[A-Z]+$/.test(asset.代號)) {
+        promises.push(
+          updatePriceWithStatus(`other_${asset.代號}`, () => getUsStockPrice(asset.代號), (price) => {
+            asset.最新價格 = price
+          })
+        )
+      } else if (/^\d/.test(asset.代號)) {
+        promises.push(
+          updatePriceWithStatus(`other_${asset.代號}`, () => getStockPrice(asset.代號), (price) => {
+            asset.最新價格 = price
+          })
+        )
+      }
+    }
+  })
+
+  // 檢查債券中是否有快取沒有的項目
+  rawData.value.股票?.forEach(bond => {
+    if (!cache.bonds?.[bond.代號]) {
+      promises.push(
+        updatePriceWithStatus(`bond_${bond.代號}`, () => getBondPrice(bond.代號), (price) => {
+          bond.最新價格 = price
+        })
+      )
+    }
+  })
+
+  if (promises.length > 0) {
+    await Promise.all(promises)
+    rawData.value = { ...rawData.value } // 觸發響應式更新
+    saveCache(rawData.value) // 更新快取包含新商品
+  }
+}
+
 // 抓取所有商品的新聞
 async function fetchAllNews() {
   if (!rawData.value) return
@@ -621,6 +688,8 @@ async function loadData() {
       // 新聞和累計配息也使用 localStorage 快取
       fetchAllNews()
       fetchDividendData(rawData.value, currentUsername.value)
+      // 檢查是否有新增的商品沒有快取價格，補抓其最新價格
+      fetchMissingPrices(cache)
     } else {
       // 無快取：呼叫所有 API
       updateAllPrices()
