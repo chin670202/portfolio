@@ -189,9 +189,11 @@ const sortedVisibleColumns = computed(() => {
     .sort((a, b) => a.order - b.order)
 })
 
+const numericColumns = ['buyPrice', 'units', 'latestPrice', 'twdProfit', 'profitPercent', 'twdAsset', 'ratio']
+
 const getHeaderClass = (key) => {
   if (key === 'news') return 'text-center'
-  if (['twdProfit', 'twdAsset'].includes(key)) return 'text-right'
+  if (numericColumns.includes(key)) return 'text-right'
   return ''
 }
 
@@ -200,7 +202,7 @@ const getCellClass = (key, crypto) => {
 
   if (key === 'name') classes.push('text-left')
   if (key === 'buyPrice') classes.push('cost-price')
-  if (['twdProfit', 'twdAsset'].includes(key)) classes.push('text-right')
+  if (numericColumns.includes(key)) classes.push('text-right')
 
   const calculatedCols = ['latestPrice', 'twdProfit', 'profitPercent', 'twdAsset', 'ratio']
   if (calculatedCols.includes(key)) classes.push('calculated')
@@ -270,7 +272,7 @@ const hasNews = (symbol) => {
   height: 24px;
   border-radius: 50%;
   border: none;
-  background: #4472c4;
+  background: #6b7280;
   color: white;
   font-size: 12px;
   font-weight: bold;
@@ -283,7 +285,7 @@ const hasNews = (symbol) => {
 }
 
 .news-btn.has-negative {
-  background: #ff6b6b;
+  background: #ef4444;
   animation: pulse 1.5s infinite;
 }
 

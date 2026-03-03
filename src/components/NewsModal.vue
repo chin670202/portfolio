@@ -118,8 +118,9 @@ function getNewsClass(item) {
   justify-content: space-between;
   align-items: center;
   padding: 15px 20px;
-  background: #4472c4;
-  color: white;
+  background: #f9fafb;
+  color: #18181b;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .modal-header h3 {
@@ -130,14 +131,14 @@ function getNewsClass(item) {
 .nav-hint {
   font-size: 12px;
   font-weight: normal;
-  opacity: 0.8;
+  color: #9ca3af;
   margin-left: 8px;
 }
 
 .close-btn {
   background: none;
   border: none;
-  color: white;
+  color: #6b7280;
   font-size: 24px;
   cursor: pointer;
   padding: 0;
@@ -192,7 +193,7 @@ function getNewsClass(item) {
 }
 
 .news-list a:hover {
-  color: #4472c4;
+  color: #374151;
   text-decoration: underline;
 }
 
@@ -266,7 +267,7 @@ function getNewsClass(item) {
   margin: 0 -20px;
   padding-left: 20px !important;
   padding-right: 20px !important;
-  border-left: 3px solid #ff6b6b;
+  border-left: 3px solid #ef4444;
 }
 
 .bearish-news a {

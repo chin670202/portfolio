@@ -94,12 +94,13 @@ function close() {
 }
 
 .modal-header {
-  background: #4472c4;
-  color: white;
+  background: #f9fafb;
+  color: #18181b;
   padding: 15px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .modal-header h3 {
@@ -110,7 +111,7 @@ function close() {
 .close-btn {
   background: none;
   border: none;
-  color: white;
+  color: #6b7280;
   font-size: 24px;
   cursor: pointer;
   padding: 0;
@@ -145,7 +146,7 @@ function close() {
   font-family: 'Consolas', 'Monaco', monospace;
   font-size: 14px;
   color: #333;
-  border-left: 4px solid #4472c4;
+  border-left: 4px solid #6b7280;
 }
 
 .values-table {
@@ -167,7 +168,7 @@ function close() {
   text-align: right;
   font-family: 'Consolas', 'Monaco', monospace;
   font-size: 14px;
-  color: #0066cc;
+  color: #374151;
   font-weight: bold;
 }
 
@@ -176,7 +177,8 @@ function close() {
 }
 
 .result-box {
-  background: linear-gradient(135deg, #90ee90 0%, #7ddc7d 100%);
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
   padding: 15px;
   border-radius: 8px;
   text-align: center;
@@ -194,6 +196,6 @@ function close() {
   display: block;
   font-size: 20px;
   font-weight: bold;
-  color: #006600;
+  color: #166534;
 }
 </style>

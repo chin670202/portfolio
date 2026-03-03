@@ -285,7 +285,10 @@ const getCellClass = (key, stock) => {
 
   // 對齊
   if (key === 'companyName') classes.push('text-left')
-  if (['twdAsset', 'annualInterest', 'nextPayment', 'cumulativeDividend'].includes(key)) classes.push('text-right')
+  const rightAlignCols = ['buyPrice', 'units', 'latestPrice', 'profitPercent', 'twdAsset', 'ratio',
+                           'couponRate', 'annualInterest', 'daysToPayment', 'nextPayment',
+                           'yearsToMaturity', 'paymentCount', 'cumulativeDividend']
+  if (rightAlignCols.includes(key)) classes.push('text-right')
   if (key === 'buyPrice') classes.push('cost-price')
 
   // 計算值
@@ -422,7 +425,7 @@ const resultFormula = computed(() => {
   height: 24px;
   border-radius: 50%;
   border: none;
-  background: #4472c4;
+  background: #6b7280;
   color: white;
   font-size: 12px;
   font-weight: bold;
@@ -435,7 +438,7 @@ const resultFormula = computed(() => {
 }
 
 .news-btn.has-negative {
-  background: #ff6b6b;
+  background: #ef4444;
   animation: pulse 1.5s infinite;
 }
 

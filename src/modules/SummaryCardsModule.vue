@@ -181,74 +181,69 @@ function getCardInfo(column) {
   flex: 1;
   min-width: 140px;
   max-width: 200px;
-  padding: 16px 20px;
-  border-radius: 12px;
+  padding: 10px 16px;
+  border-radius: 8px;
   cursor: default;
-  transition: transform 0.2s, box-shadow 0.2s;
+  background: white;
+  border: 1px solid #e5e7eb;
+  transition: box-shadow 0.2s;
 }
 
 .summary-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .card-label {
   font-size: 13px;
   font-weight: 500;
-  margin-bottom: 6px;
-  opacity: 0.9;
+  margin-bottom: 4px;
+  color: #6b7280;
 }
 
 .card-value {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
+  color: #18181b;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-/* 顏色主題 */
+/* 顏色主題 - 底部色條 */
 .card-green {
-  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
-  color: white;
+  border-bottom: 3px solid #16a34a;
 }
 
 .card-blue {
-  background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
-  color: white;
+  border-bottom: 3px solid #2563eb;
 }
 
 .card-orange {
-  background: linear-gradient(135deg, #e67e22 0%, #f39c12 100%);
-  color: white;
+  border-bottom: 3px solid #d97706;
 }
 
 .card-red {
-  background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
-  color: white;
+  border-bottom: 3px solid #dc2626;
 }
 
 .card-teal {
-  background: linear-gradient(135deg, #00796b 0%, #26a69a 100%);
-  color: white;
+  border-bottom: 3px solid #0d9488;
 }
 
 .card-pink {
-  background: linear-gradient(135deg, #ad1457 0%, #e91e63 100%);
-  color: white;
+  border-bottom: 3px solid #db2777;
 }
 
 .card-purple {
-  background: linear-gradient(135deg, #6a1b9a 0%, #9c27b0 100%);
-  color: white;
+  border-bottom: 3px solid #7c3aed;
 }
 
 /* Loading spinner */
 .card-spinner {
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
+  border: 2px solid #e5e7eb;
+  border-top-color: #6b7280;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

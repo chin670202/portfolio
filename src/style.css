@@ -65,25 +65,23 @@
   }
 
   .module-gallery-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
+    background: #f4f4f5;
+    color: #374151;
+    border: 1px solid #d1d5db;
     padding: 10px 18px;
     border-radius: 8px;
     cursor: pointer;
     font-size: 16px;
     font-weight: 500;
-    transition: all 0.3s;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    transition: all 0.2s;
   }
 
   .module-gallery-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+    background: #e5e7eb;
   }
 
   .module-gallery-btn:active {
-    transform: translateY(0);
+    background: #d1d5db;
   }
 
   .settings-btn {
@@ -138,37 +136,45 @@
     padding: 8px 15px;
     font-weight: bold;
     border-radius: 4px;
-    background: #90ee90;
+    background: #f0fdf4;
+    color: #374151;
+    border: 1px solid #e5e7eb;
   }
 
   .summary-item.asset {
-    background: #4472c4;
-    color: white;
+    background: #eff6ff;
+    color: #1e40af;
+    border-color: #bfdbfe;
   }
 
   .summary-item.liability {
-    background: #ff6b6b;
-    color: white;
+    background: #fef2f2;
+    color: #991b1b;
+    border-color: #fecaca;
   }
 
   .summary-item.interest {
-    background: #2e5a9e;
-    color: white;
+    background: #eef2ff;
+    color: #3730a3;
+    border-color: #c7d2fe;
   }
 
   .summary-item.equity {
-    background: #228b22;
-    color: white;
+    background: #f0fdf4;
+    color: #166534;
+    border-color: #bbf7d0;
   }
 
   .summary-item.expense {
-    background: #dc3545;
-    color: white;
+    background: #fef2f2;
+    color: #991b1b;
+    border-color: #fecaca;
   }
 
   .summary-item.income {
-    background: #ffa500;
-    color: white;
+    background: #fff7ed;
+    color: #9a3412;
+    border-color: #fed7aa;
   }
 
   /* 只套用到投資總覽的表格（.container 內） */
@@ -176,51 +182,54 @@
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 25px;
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .container th,
   .container td {
-    border: 1px solid #ccc;
-    padding: 4px 3px;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 8px 10px;
     text-align: center;
     white-space: nowrap;
   }
 
   .container th {
-    background: #e8e8e8;
-    font-weight: bold;
+    background: #f9fafb;
+    font-weight: 500;
+    color: #374151;
   }
 
   .section-header {
-    background: #4472c4;
-    color: white;
+    background: #f4f4f5;
+    color: #18181b;
     font-weight: bold;
-    font-size: 20px;
+    font-size: 16px;
+    border-bottom: 2px solid #e5e7eb;
   }
 
   .section-header th {
-    background: #4472c4;
+    background: #f4f4f5;
   }
 
   .sub-total {
-    background: #ffff99;
+    background: #f9fafb;
     font-weight: bold;
   }
 
   .sub-total td {
-    background: #ffff99;
+    background: #f9fafb;
   }
 
   .grand-total {
-    background: #ff6b6b;
-    color: white;
+    background: #f4f4f5;
+    color: #18181b;
     font-weight: bold;
+    border-top: 2px solid #d1d5db;
   }
 
   .grand-total td {
-    background: #ff6b6b;
-    color: white;
+    background: #f4f4f5;
+    color: #18181b;
   }
 
   .positive {
@@ -252,20 +261,20 @@
   }
 
   .highlight-green {
-    background: #90ee90;
+    background: #ecfdf5;
   }
 
   .highlight-yellow {
-    background: #ffff99;
+    background: #fefce8;
   }
 
   .highlight-red {
-    background: #ff6b6b;
-    color: white;
+    background: #fef2f2;
+    color: #991b1b;
   }
 
   .highlight-orange {
-    background: #ffa500;
+    background: #fff7ed;
   }
 
   .maintain-rate-section {
@@ -289,38 +298,45 @@
     display: inline-block;
     margin: 10px 20px 10px 0;
     padding: 8px 15px;
-    background: #f0f0f0;
+    background: #f9fafb;
     border-radius: 4px;
     font-weight: bold;
+    border: 1px solid #e5e7eb;
   }
 
   /* 總計台幣市值 - 藍色代表總資產 */
   .summary-box.asset {
-    background: #4472c4;
-    color: white;
+    background: #eff6ff;
+    color: #1e40af;
+    border-color: #bfdbfe;
   }
 
   /* 總計台幣負債 - 紅色代表負債 */
   .summary-box.liability {
-    background: #ff6b6b;
-    color: white;
+    background: #fef2f2;
+    color: #991b1b;
+    border-color: #fecaca;
   }
 
   /* 總計每年利息 - 橘色代表利息收入 */
   .summary-box.interest {
-    background: #ffa500;
-    color: white;
+    background: #fff7ed;
+    color: #9a3412;
+    border-color: #fed7aa;
   }
 
   /* 總計台幣權益 - 綠色代表淨值/權益 */
   .summary-box.equity {
-    background: #90ee90;
+    background: #f0fdf4;
+    color: #166534;
+    border-color: #bbf7d0;
   }
 
   /* 全年淨收入 - 深藍色代表最終收益 */
   .summary-box.income {
-    background: #2e5a9e;
-    color: white;
+    background: #eef2ff;
+    color: #3730a3;
+    border-color: #c7d2fe;
   }
 
   .update-date {
@@ -350,7 +366,7 @@
     height: 15px;
     margin-left: 6px;
     border: 3px solid #ddd;
-    border-top-color: #4472c4;
+    border-top-color: #6b7280;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
     vertical-align: middle;
@@ -439,9 +455,9 @@
   }
 
   .news-filter .filter-btn.active {
-    background: #4472c4;
+    background: #374151;
     color: white;
-    border-color: #4472c4;
+    border-color: #374151;
   }
 
   .news-filter .filter-btn.bullish.active {

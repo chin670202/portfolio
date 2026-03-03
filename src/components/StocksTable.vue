@@ -369,9 +369,13 @@ const sortedVisibleColumns = computed(() => {
   return columns
 })
 
+const numericColumns = ['buyPrice', 'units', 'latestPrice', 'profitPercent', 'profitAmount',
+                        'twdAsset', 'ratio', 'dividend', 'yield', 'annualInterest',
+                        'daysToPayment', 'nextPayment', 'latestYield', 'cumulativeDividend']
+
 const getHeaderClass = (key) => {
   if (key === 'news' || key === 'nextPaymentDate') return 'text-center'
-  if (key === 'name') return ''
+  if (numericColumns.includes(key)) return 'text-right'
   return ''
 }
 
@@ -379,7 +383,7 @@ const getCellClass = (key, stock) => {
   const classes = []
   if (key === 'name') classes.push('text-left')
   if (key === 'buyPrice') classes.push('cost-price')
-  if (['twdAsset', 'annualInterest', 'nextPayment', 'profitAmount', 'cumulativeDividend'].includes(key)) classes.push('text-right')
+  if (numericColumns.includes(key)) classes.push('text-right')
 
   const calculatedCols = ['latestPrice', 'profitPercent', 'profitAmount', 'twdAsset', 'ratio', 'dividend', 'yield',
                           'annualInterest', 'nextPaymentDate', 'daysToPayment', 'nextPayment', 'latestYield',
@@ -496,18 +500,16 @@ const resultFormula = computed(() => {
   letter-spacing: 0.5px;
 }
 
-/* 台股 - 藍色系 */
+/* 台股 - 淺藍底 */
 .tw-header td {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  background: #eff6ff;
+  color: #1e40af;
 }
 
-/* 美股 - 綠色系 */
+/* 美股 - 淺綠底 */
 .us-header td {
-  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  background: #f0fdf4;
+  color: #166534;
 }
 
 .category-subtotal td {
@@ -543,7 +545,7 @@ const resultFormula = computed(() => {
   height: 24px;
   border-radius: 50%;
   border: none;
-  background: #4472c4;
+  background: #6b7280;
   color: white;
   font-size: 12px;
   font-weight: bold;
@@ -556,7 +558,7 @@ const resultFormula = computed(() => {
 }
 
 .news-btn.has-negative {
-  background: #ff6b6b;
+  background: #ef4444;
   animation: pulse 1.5s infinite;
 }
 
