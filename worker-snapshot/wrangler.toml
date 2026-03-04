@@ -1,0 +1,11 @@
+name = "portfolio-snapshot"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+
+[triggers]
+crons = ["0 1 * * 1"]  # 每週一 01:00 UTC = 09:00 台灣時間
+
+[[d1_databases]]
+binding = "DB"
+database_name = "portfolio-db"
+database_id = "1dda6830-8226-4dbd-8159-2f5eceb85bf8"

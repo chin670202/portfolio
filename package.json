@@ -12,6 +12,7 @@
     "deploy:gh": "npm run build && node scripts/prepare-deploy.cjs && gh-pages -d dist",
     "db:migrate:local": "wrangler d1 migrations apply portfolio-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply portfolio-db --remote",
+    "snapshot:deploy": "cd worker-snapshot && npx wrangler deploy",
     "test": "npx playwright test",
     "test:ui": "npx playwright test --ui",
     "test:headed": "npx playwright test --headed"

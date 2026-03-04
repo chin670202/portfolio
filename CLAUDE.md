@@ -111,6 +111,11 @@ npm run build && npm run dev:api
   - `services/trade-parser.js` - AI 語意交易解析（依賴 anthropic.js）
   - `services/anthropic.js` - Anthropic Messages API fetch wrapper
   - `services/backup.js` - 備份服務（D1 backups 表）
+- `worker-snapshot/` - 每週資產快照 Cron Worker（獨立 Cloudflare Worker）
+  - `wrangler.toml` - Worker 設定 + Cron trigger（每週一 09:00 台灣時間）
+  - `src/index.js` - Worker 入口（scheduled + fetch handler）
+  - `src/price-fetcher.js` - 後端即時價格抓取（移植自前端 api.js，無 CORS proxy）
+  - `src/snapshot-calculator.js` - 資產快照計算
 - `functions/` - Cloudflare Pages Functions 入口
   - `api/[[route]].js` - catch-all → Hono app
   - `_middleware.js` - SPA routing fallback
@@ -188,6 +193,27 @@ npm run build && npm run dev:api
 API 端點：
 - `GET /api/backup/:user` - 取得備份列表
 - `POST /api/backup/:user/restore` - 還原指定備份
+
+## 資產快照 Cron Worker
+
+獨立的 Cloudflare Worker（`worker-snapshot/`），每週一 09:00（台灣時間）自動：
+1. 讀取所有使用者的 portfolio 資料
+2. 抓取即時價格（匯率、債券、股票、加密貨幣）
+3. 計算資產快照（部位總額、負債總額、還原匯率30版本）
+4. 追加一筆記錄到 `資產變化記錄` 陣列
+
+部署與手動觸發：
+```bash
+# 部署 Worker
+cd worker-snapshot && npx wrangler deploy
+
+# 手動觸發（指定使用者）
+curl -X POST https://portfolio-snapshot.chinghunglai.workers.dev/snapshot \
+  -H 'Content-Type: application/json' -d '{"user":"chin"}'
+
+# 手動觸發（所有使用者）
+curl -X POST https://portfolio-snapshot.chinghunglai.workers.dev/snapshot
+```
 
 ## Git 提交規則
 
