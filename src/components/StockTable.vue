@@ -20,8 +20,6 @@
           </template>
           <!-- 買入價格 -->
           <template v-else-if="col.key === 'buyPrice'">{{ formatDecimal(stock.買入價格) }}</template>
-          <!-- 持有單位 -->
-          <template v-else-if="col.key === 'units'">{{ formatNumber(stock.持有單位) }}</template>
           <!-- 最新價格 -->
           <template v-else-if="col.key === 'latestPrice'">
             {{ formatDecimal(stock.最新價格) }}
@@ -30,30 +28,37 @@
           <!-- 損益(%) -->
           <template v-else-if="col.key === 'profitPercent'">{{ formatPercent(stock.損益百分比) }}</template>
           <!-- 台幣市值 -->
-          <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(stock.台幣資產) }}</template>
+          <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(Math.round(stock.台幣資產 / 10000)) }}<span class="unit-suffix">萬</span></template>
           <!-- 佔比 -->
           <template v-else-if="col.key === 'ratio'">{{ formatPercent(getPercentage(stock.台幣資產)) }}</template>
           <!-- 票面利率 -->
           <template v-else-if="col.key === 'couponRate'">{{ formatDecimal(stock.票面利率) }}</template>
-          <!-- 每年利息 -->
-          <template v-else-if="col.key === 'annualInterest'">{{ formatNumber(stock.每年利息) }}</template>
-          <!-- 配息日 -->
-          <template v-else-if="col.key === 'paymentDate'">{{ stock.配息日 }}</template>
+          <!-- 配息日（上下排列） -->
+          <template v-else-if="col.key === 'paymentDate'">
+            <div class="stacked-cell" v-if="stock.配息日">
+              <div v-for="(d, i) in stock.配息日.split(/[,，]\s*/)" :key="i">{{ d }}</div>
+            </div>
+            <template v-else>--</template>
+          </template>
           <!-- 剩餘天配息 -->
           <template v-else-if="col.key === 'daysToPayment'">{{ stock.剩餘天配息 }}</template>
           <!-- 下次配息 -->
           <template v-else-if="col.key === 'nextPayment'">{{ formatNumber(stock.下次配息) }}</template>
-          <!-- 買入日 -->
-          <template v-else-if="col.key === 'buyDate'">{{ stock.交易日 || '--' }}</template>
-          <!-- 到期日 -->
-          <template v-else-if="col.key === 'maturityDate'">{{ stock.到期日 }}</template>
-          <!-- 配息次數 -->
-          <template v-else-if="col.key === 'paymentCount'">{{ getDividendInfo(stock.代號)?.配息次數 != null ? getDividendInfo(stock.代號).配息次數 : '--' }}</template>
+          <!-- 買入/到期（合併上下排） -->
+          <template v-else-if="col.key === 'dateRange'">
+            <div class="stacked-cell">
+              <div>{{ stock.交易日 || '--' }}</div>
+              <div class="sub-line">{{ stock.到期日 || '--' }}</div>
+            </div>
+          </template>
           <!-- 剩餘年數 -->
           <template v-else-if="col.key === 'yearsToMaturity'">{{ getRemainingYears(stock.到期日) }}</template>
-          <!-- 累計配息 -->
+          <!-- 累計息 + 已配次 -->
           <template v-else-if="col.key === 'cumulativeDividend'">
-            {{ getDividendInfo(stock.代號)?.累計配息 != null ? formatNumber(getDividendInfo(stock.代號).累計配息) : '--' }}
+            <div class="stacked-cell">
+              <div>{{ getDividendInfo(stock.代號)?.累計配息 != null ? formatNumber(Math.round(getDividendInfo(stock.代號).累計配息 / 10000)) : '--' }}<span v-if="getDividendInfo(stock.代號)?.累計配息 != null" class="unit-suffix">萬</span></div>
+              <div class="sub-line">{{ getDividendInfo(stock.代號)?.配息次數 != null ? getDividendInfo(stock.代號).配息次數 + '次' : '' }}</div>
+            </div>
           </template>
           <!-- 新聞 -->
           <template v-else-if="col.key === 'news'">
@@ -84,13 +89,11 @@
           <!-- 小計標籤（第一欄） -->
           <template v-if="col === sortedVisibleColumns[0]">小計</template>
           <!-- 台幣市值 -->
-          <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(subtotal.台幣資產) }}</template>
+          <template v-else-if="col.key === 'twdAsset'">{{ formatNumber(Math.round(subtotal.台幣資產 / 10000)) }}<span class="unit-suffix">萬</span></template>
           <!-- 佔比 -->
           <template v-else-if="col.key === 'ratio'">{{ formatPercent(getPercentage(subtotal.台幣資產)) }}</template>
-          <!-- 每年利息 -->
-          <template v-else-if="col.key === 'annualInterest'">{{ formatNumber(subtotal.每年利息) }}</template>
           <!-- 累計配息小計 -->
-          <template v-else-if="col.key === 'cumulativeDividend'">{{ totalCumulativeDividend > 0 ? formatNumber(totalCumulativeDividend) : '' }}</template>
+          <template v-else-if="col.key === 'cumulativeDividend'">{{ totalCumulativeDividend > 0 ? formatNumber(Math.round(totalCumulativeDividend / 10000)) : '' }}<span v-if="totalCumulativeDividend > 0" class="unit-suffix">萬</span></template>
           <!-- 其他欄位留空 -->
           <template v-else></template>
         </td>
@@ -183,24 +186,20 @@ defineEmits(['open-news'])
 
 // 欄位定義（含標籤和預設順序）
 const columnDefinitions = {
-  companyName: { label: '公司名稱', defaultOrder: 1 },
-  buyPrice: { label: '買入價格', defaultOrder: 2 },
-  units: { label: '持有單位', defaultOrder: 3 },
-  latestPrice: { label: '最新價格', defaultOrder: 4 },
-  profitPercent: { label: '損益(%)', defaultOrder: 5 },
-  twdAsset: { label: '台幣市值', defaultOrder: 6 },
-  ratio: { label: '佔比', defaultOrder: 7 },
-  couponRate: { label: '票面利率', defaultOrder: 8 },
-  annualInterest: { label: '每年利息', defaultOrder: 9 },
-  paymentDate: { label: '配息日', defaultOrder: 10 },
-  daysToPayment: { label: '剩餘天配息', defaultOrder: 11 },
-  nextPayment: { label: '下次配息', defaultOrder: 12 },
-  buyDate: { label: '買入日', defaultOrder: 13 },
-  maturityDate: { label: '到期日', defaultOrder: 14 },
-  paymentCount: { label: '配息次數', defaultOrder: 15 },
-  yearsToMaturity: { label: '剩餘年數', defaultOrder: 16 },
-  cumulativeDividend: { label: '累計配息', defaultOrder: 17 },
-  news: { label: '新聞', defaultOrder: 18 }
+  companyName: { label: '名稱', defaultOrder: 1 },
+  buyPrice: { label: '買價', defaultOrder: 2 },
+  latestPrice: { label: '現價', defaultOrder: 3 },
+  profitPercent: { label: '損益%', defaultOrder: 4 },
+  twdAsset: { label: '市值', defaultOrder: 5 },
+  ratio: { label: '佔比', defaultOrder: 6 },
+  couponRate: { label: '票息', defaultOrder: 7 },
+  paymentDate: { label: '配息日', defaultOrder: 8 },
+  daysToPayment: { label: '距配息', defaultOrder: 9 },
+  nextPayment: { label: '下次息', defaultOrder: 10 },
+  dateRange: { label: '起/迄', defaultOrder: 11 },
+  yearsToMaturity: { label: '距到期', defaultOrder: 12 },
+  cumulativeDividend: { label: '累計息', defaultOrder: 13 },
+  news: { label: '新聞', defaultOrder: 14 }
 }
 
 const allColumnKeys = Object.keys(columnDefinitions)
@@ -271,11 +270,11 @@ const sortedVisibleColumns = computed(() => {
 
 // 取得表頭樣式
 const getHeaderClass = (key) => {
-  const alignRight = ['buyPrice', 'units', 'latestPrice', 'profitPercent', 'twdAsset', 'ratio',
-                      'couponRate', 'yield', 'annualInterest', 'daysToPayment', 'nextPayment', 'yearsToMaturity',
-                      'paymentCount', 'cumulativeDividend']
+  const alignRight = ['buyPrice', 'latestPrice', 'profitPercent', 'twdAsset', 'ratio',
+                      'couponRate', 'daysToPayment', 'nextPayment', 'yearsToMaturity',
+                      'cumulativeDividend']
   if (alignRight.includes(key)) return 'text-right'
-  if (['paymentDate', 'buyDate', 'maturityDate', 'news'].includes(key)) return 'text-center'
+  if (['paymentDate', 'dateRange', 'news'].includes(key)) return 'text-center'
   return ''
 }
 
@@ -285,16 +284,16 @@ const getCellClass = (key, stock) => {
 
   // 對齊
   if (key === 'companyName') classes.push('text-left')
-  const rightAlignCols = ['buyPrice', 'units', 'latestPrice', 'profitPercent', 'twdAsset', 'ratio',
-                           'couponRate', 'annualInterest', 'daysToPayment', 'nextPayment',
-                           'yearsToMaturity', 'paymentCount', 'cumulativeDividend']
+  const rightAlignCols = ['buyPrice', 'latestPrice', 'profitPercent', 'twdAsset', 'ratio',
+                           'couponRate', 'daysToPayment', 'nextPayment',
+                           'yearsToMaturity', 'cumulativeDividend']
   if (rightAlignCols.includes(key)) classes.push('text-right')
   if (key === 'buyPrice') classes.push('cost-price')
 
   // 計算值
   const calculatedCols = ['latestPrice', 'profitPercent', 'twdAsset', 'ratio', 'yield',
-                          'annualInterest', 'daysToPayment', 'nextPayment', 'yearsToMaturity',
-                          'paymentCount', 'cumulativeDividend']
+                          'daysToPayment', 'nextPayment', 'yearsToMaturity',
+                          'cumulativeDividend']
   if (calculatedCols.includes(key)) classes.push('calculated')
 
   // 價格載入失敗
@@ -312,7 +311,7 @@ const getCellClass = (key, stock) => {
 // 取得小計行樣式
 const getFooterCellClass = (key) => {
   const classes = []
-  if (['twdAsset', 'annualInterest', 'cumulativeDividend'].includes(key)) {
+  if (['twdAsset', 'cumulativeDividend'].includes(key)) {
     classes.push('text-right', 'calculated')
   }
   if (key === 'ratio') {
@@ -395,6 +394,21 @@ const resultFormula = computed(() => {
   font-size: 12px;
   color: #9ca3af;
   line-height: 1.2;
+}
+
+.stacked-cell {
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.stacked-cell .sub-line {
+  opacity: 0.55;
+}
+
+.unit-suffix {
+  font-size: 0.75em;
+  color: #9ca3af;
+  margin-left: 1px;
 }
 
 .clickable {

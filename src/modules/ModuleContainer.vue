@@ -50,13 +50,15 @@ function getModuleComponent(uid) {
 <template>
   <div class="module-container">
     <template v-for="config in enabledModules" :key="config.uid">
-      <component
-        :is="getModuleComponent(config.uid)"
-        v-if="getModuleComponent(config.uid)"
-        :config="config"
-        v-bind="moduleProps"
-        @open-news="handleOpenNews"
-      />
+      <div class="module-scroll-wrapper">
+        <component
+          :is="getModuleComponent(config.uid)"
+          v-if="getModuleComponent(config.uid)"
+          :config="config"
+          v-bind="moduleProps"
+          @open-news="handleOpenNews"
+        />
+      </div>
     </template>
   </div>
 </template>
@@ -66,5 +68,9 @@ function getModuleComponent(uid) {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.module-scroll-wrapper {
+  overflow-x: auto;
 }
 </style>

@@ -60,7 +60,7 @@ export const builtInModules = {
   },
   'loans': {
     uid: 'loans',
-    name: '貸款別',
+    name: '貸款',
     description: '顯示各項貸款資訊，包含餘額、利率、每月還款',
     component: 'LoansModule',
     icon: '🏦',

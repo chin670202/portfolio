@@ -1,8 +1,9 @@
 <template>
-  <table>
+  <!-- 桌面版 -->
+  <table v-if="!isMobile">
     <thead>
       <tr class="section-header">
-        <th :colspan="sortedVisibleColumns.length">貸款別</th>
+        <th :colspan="sortedVisibleColumns.length">貸款</th>
       </tr>
       <tr>
         <th v-for="col in sortedVisibleColumns" :key="col.key" :class="getHeaderClass(col.key)">
@@ -13,18 +14,13 @@
     <tbody>
       <tr v-for="(loan, index) in loans" :key="index">
         <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getCellClass(col.key)">
-          <!-- 貸款別 -->
           <template v-if="col.key === 'loanType'">
             {{ loan.貸款別 }}
             <span v-if="loan.備註">({{ loan.備註 }})</span>
           </template>
-          <!-- 貸款餘額 -->
           <template v-else-if="col.key === 'balance'">{{ formatNumber(loan.貸款餘額) }}</template>
-          <!-- 貸款利率 -->
           <template v-else-if="col.key === 'rate'">{{ formatPercent(loan.貸款利率) }}</template>
-          <!-- 月繳金額 -->
           <template v-else-if="col.key === 'monthlyPayment'">{{ formatNumber(loan.月繳金額) }}</template>
-          <!-- 每年利息 -->
           <template v-else-if="col.key === 'annualInterest'">{{ formatNumber(loan.每年利息) }}</template>
         </td>
       </tr>
@@ -32,15 +28,52 @@
     <tfoot>
       <tr class="grand-total">
         <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getFooterCellClass(col.key)">
-          <!-- 總計標籤（第一欄） -->
           <template v-if="col === sortedVisibleColumns[0]">總計</template>
-          <!-- 貸款餘額 -->
           <template v-else-if="col.key === 'balance'">{{ formatNumber(total.貸款餘額) }}</template>
-          <!-- 貸款利率 留空 -->
           <template v-else-if="col.key === 'rate'"></template>
-          <!-- 月繳金額 -->
           <template v-else-if="col.key === 'monthlyPayment'">{{ formatNumber(total.月繳金額) }}</template>
-          <!-- 每年利息 -->
+          <template v-else-if="col.key === 'annualInterest'">{{ formatNumber(total.每年利息) }}</template>
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <!-- 手機版：貸款名稱獨立一列 -->
+  <table v-else class="mobile-loan-table">
+    <thead>
+      <tr class="section-header">
+        <th :colspan="mobileDataColumns.length">貸款</th>
+      </tr>
+      <tr>
+        <th v-for="col in mobileDataColumns" :key="col.key" :class="getHeaderClass(col.key)">
+          {{ col.label }}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <template v-for="(loan, index) in loans" :key="index">
+        <tr class="loan-name-row">
+          <td :colspan="mobileDataColumns.length">
+            {{ loan.貸款別 }}<span v-if="loan.備註"> ({{ loan.備註 }})</span>
+          </td>
+        </tr>
+        <tr>
+          <td v-for="col in mobileDataColumns" :key="col.key" :class="getCellClass(col.key)">
+            <template v-if="col.key === 'balance'">{{ formatNumber(loan.貸款餘額) }}</template>
+            <template v-else-if="col.key === 'rate'">{{ formatPercent(loan.貸款利率) }}</template>
+            <template v-else-if="col.key === 'monthlyPayment'">{{ formatNumber(loan.月繳金額) }}</template>
+            <template v-else-if="col.key === 'annualInterest'">{{ formatNumber(loan.每年利息) }}</template>
+          </td>
+        </tr>
+      </template>
+    </tbody>
+    <tfoot>
+      <tr class="grand-total">
+        <td v-for="(col, i) in mobileDataColumns" :key="col.key" :class="getFooterCellClass(col.key)">
+          <template v-if="i === 0">總計 {{ formatNumber(total.貸款餘額) }}</template>
+          <template v-else-if="col.key === 'balance'">{{ formatNumber(total.貸款餘額) }}</template>
+          <template v-else-if="col.key === 'rate'"></template>
+          <template v-else-if="col.key === 'monthlyPayment'">{{ formatNumber(total.月繳金額) }}</template>
           <template v-else-if="col.key === 'annualInterest'">{{ formatNumber(total.每年利息) }}</template>
         </td>
       </tr>
@@ -50,8 +83,10 @@
 
 <script setup>
 import { computed } from 'vue'
-// eslint-disable-next-line no-unused-vars
 import { formatNumber, formatPercent } from '../utils/format'
+import { useResponsive } from '../composables/useResponsive'
+
+const { isMobile } = useResponsive()
 
 const props = defineProps({
   loans: {
@@ -70,11 +105,11 @@ const props = defineProps({
 
 // 欄位定義
 const columnDefinitions = {
-  loanType: { label: '貸款別', defaultOrder: 1 },
-  balance: { label: '貸款餘額', defaultOrder: 2 },
-  rate: { label: '貸款利率', defaultOrder: 3 },
-  monthlyPayment: { label: '月繳金額', defaultOrder: 4 },
-  annualInterest: { label: '每年利息', defaultOrder: 5 }
+  loanType: { label: '貸款', defaultOrder: 1 },
+  balance: { label: '餘額', defaultOrder: 2 },
+  rate: { label: '利率', defaultOrder: 3 },
+  monthlyPayment: { label: '月繳', defaultOrder: 4 },
+  annualInterest: { label: '年息', defaultOrder: 5 }
 }
 
 const allColumnKeys = Object.keys(columnDefinitions)
@@ -142,6 +177,11 @@ const sortedVisibleColumns = computed(() => {
     .sort((a, b) => a.order - b.order)
 })
 
+// 手機版：排除貸款名稱欄，名稱改為獨立 row
+const mobileDataColumns = computed(() =>
+  sortedVisibleColumns.value.filter(col => col.key !== 'loanType')
+)
+
 // 取得表頭樣式
 const getHeaderClass = (key) => {
   if (['balance', 'monthlyPayment', 'annualInterest'].includes(key)) return 'text-right'
@@ -167,6 +207,42 @@ const getFooterCellClass = (key) => {
 
 <style scoped>
 table {
+  width: 100% !important;
+  table-layout: fixed;
+}
+
+table td,
+table th {
+  white-space: normal;
+}
+
+/* 桌面版：貸款名稱佔 35%，其餘平均分配 */
+table:not(.mobile-loan-table) th:first-child,
+table:not(.mobile-loan-table) td:first-child {
+  width: 35%;
+}
+
+table:not(.mobile-loan-table) th:not(:first-child),
+table:not(.mobile-loan-table) td:not(:first-child) {
+  white-space: nowrap;
+}
+
+.mobile-loan-table {
+  width: 100% !important;
+}
+
+.mobile-loan-table th,
+.mobile-loan-table td {
   width: auto !important;
+  white-space: normal !important;
+}
+
+.loan-name-row td {
+  font-weight: 600;
+  font-size: 0.85em;
+  text-align: left !important;
+  padding-top: 8px !important;
+  padding-bottom: 2px !important;
+  border-bottom: none !important;
 }
 </style>

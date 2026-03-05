@@ -16,51 +16,47 @@ export const summaryCardsColumns = [
 
 // 海外債券欄位定義
 export const overseasBondsColumns = [
-  { key: 'companyName', label: '公司名稱', dataKey: '公司名稱', defaultVisible: true, defaultOrder: 1, align: 'left' },
-  { key: 'buyPrice', label: '買入價格', dataKey: '買入價格', defaultVisible: true, defaultOrder: 2, align: 'right' },
-  { key: 'units', label: '持有單位', dataKey: '持有單位', defaultVisible: true, defaultOrder: 3, align: 'right' },
-  { key: 'latestPrice', label: '最新價格', dataKey: '最新價格', defaultVisible: true, defaultOrder: 4, align: 'right', isCalculated: true },
-  { key: 'profitPercent', label: '損益(%)', dataKey: '損益百分比', defaultVisible: true, defaultOrder: 5, align: 'right', isCalculated: true },
-  { key: 'twdAsset', label: '台幣市值', dataKey: '台幣資產', defaultVisible: true, defaultOrder: 6, align: 'right', isCalculated: true },
-  { key: 'ratio', label: '佔比', dataKey: null, defaultVisible: true, defaultOrder: 7, align: 'right', isCalculated: true },
-  { key: 'couponRate', label: '票面利率', dataKey: '票面利率', defaultVisible: true, defaultOrder: 8, align: 'right' },
-  { key: 'annualInterest', label: '每年利息', dataKey: '每年利息', defaultVisible: true, defaultOrder: 9, align: 'right', isCalculated: true },
-  { key: 'paymentDate', label: '配息日', dataKey: '配息日', defaultVisible: true, defaultOrder: 10, align: 'center' },
-  { key: 'daysToPayment', label: '剩餘天配息', dataKey: '剩餘天配息', defaultVisible: true, defaultOrder: 11, align: 'right', isCalculated: true },
-  { key: 'nextPayment', label: '下次配息', dataKey: '下次配息', defaultVisible: true, defaultOrder: 12, align: 'right', isCalculated: true },
-  { key: 'maturityDate', label: '到期日', dataKey: '到期日', defaultVisible: true, defaultOrder: 13, align: 'center' },
-  { key: 'yearsToMaturity', label: '剩餘年數', dataKey: null, defaultVisible: true, defaultOrder: 14, align: 'right', isCalculated: true },
-  { key: 'news', label: '新聞', dataKey: null, defaultVisible: true, defaultOrder: 15, align: 'center', isAction: true }
+  { key: 'companyName', label: '名稱', dataKey: '公司名稱', defaultVisible: true, defaultOrder: 1, align: 'left' },
+  { key: 'buyPrice', label: '買價', dataKey: '買入價格', defaultVisible: true, defaultOrder: 2, align: 'right' },
+  { key: 'latestPrice', label: '現價', dataKey: '最新價格', defaultVisible: true, defaultOrder: 3, align: 'right', isCalculated: true },
+  { key: 'profitPercent', label: '損益%', dataKey: '損益百分比', defaultVisible: true, defaultOrder: 4, align: 'right', isCalculated: true },
+  { key: 'twdAsset', label: '市值', dataKey: '台幣資產', defaultVisible: true, defaultOrder: 5, align: 'right', isCalculated: true },
+  { key: 'ratio', label: '佔比', dataKey: null, defaultVisible: true, defaultOrder: 6, align: 'right', isCalculated: true },
+  { key: 'couponRate', label: '票息', dataKey: '票面利率', defaultVisible: true, defaultOrder: 7, align: 'right' },
+  { key: 'paymentDate', label: '配息日', dataKey: '配息日', defaultVisible: true, defaultOrder: 8, align: 'center' },
+  { key: 'daysToPayment', label: '距配息', dataKey: '剩餘天配息', defaultVisible: true, defaultOrder: 9, align: 'right', isCalculated: true },
+  { key: 'nextPayment', label: '下次息', dataKey: '下次配息', defaultVisible: true, defaultOrder: 10, align: 'right', isCalculated: true },
+  { key: 'dateRange', label: '起/迄', dataKey: null, defaultVisible: true, defaultOrder: 11, align: 'center' },
+  { key: 'yearsToMaturity', label: '距到期', dataKey: null, defaultVisible: true, defaultOrder: 12, align: 'right', isCalculated: true },
+  { key: 'cumulativeDividend', label: '累計息', dataKey: null, defaultVisible: true, defaultOrder: 13, align: 'right', isCalculated: true },
+  { key: 'news', label: '新聞', dataKey: null, defaultVisible: true, defaultOrder: 14, align: 'center', isAction: true }
 ]
 
 // 股票/ETF 欄位定義
 export const stocksEtfColumns = [
-  { key: 'name', label: 'ETF名稱', dataKey: '名稱', defaultVisible: true, defaultOrder: 1, align: 'left' },
-  { key: 'buyPrice', label: '買入均價', dataKey: '買入均價', defaultVisible: true, defaultOrder: 2, align: 'right' },
-  { key: 'units', label: '持有單位', dataKey: '持有單位', defaultVisible: true, defaultOrder: 3, align: 'right' },
-  { key: 'latestPrice', label: '最新價格', dataKey: '最新價格', defaultVisible: true, defaultOrder: 4, align: 'right', isCalculated: true },
-  { key: 'profitPercent', label: '損益(%)', dataKey: '損益百分比', defaultVisible: true, defaultOrder: 5, align: 'right', isCalculated: true },
-  { key: 'twdAsset', label: '台幣市值', dataKey: '台幣資產', defaultVisible: true, defaultOrder: 6, align: 'right', isCalculated: true },
+  { key: 'name', label: '名稱', dataKey: '名稱', defaultVisible: true, defaultOrder: 1, align: 'left' },
+  { key: 'buyPrice', label: '均價', dataKey: '買入均價', defaultVisible: true, defaultOrder: 2, align: 'right' },
+  { key: 'units', label: '股數', dataKey: '持有單位', defaultVisible: true, defaultOrder: 3, align: 'right' },
+  { key: 'latestPrice', label: '現價', dataKey: '最新價格', defaultVisible: true, defaultOrder: 4, align: 'right', isCalculated: true },
+  { key: 'profitPercent', label: '損益%', dataKey: '損益百分比', defaultVisible: true, defaultOrder: 5, align: 'right', isCalculated: true },
+  { key: 'twdAsset', label: '市值', dataKey: '台幣資產', defaultVisible: true, defaultOrder: 6, align: 'right', isCalculated: true },
   { key: 'ratio', label: '佔比', dataKey: null, defaultVisible: true, defaultOrder: 7, align: 'right', isCalculated: true },
-  { key: 'dividend', label: '每股配息', dataKey: '每股配息', defaultVisible: true, defaultOrder: 8, align: 'right', isCalculated: true },
-  { key: 'yield', label: '年殖利率', dataKey: '年殖利率', defaultVisible: true, defaultOrder: 9, align: 'right', isCalculated: true },
-  { key: 'annualInterest', label: '每年利息', dataKey: '每年利息', defaultVisible: true, defaultOrder: 10, align: 'right', isCalculated: true },
-  { key: 'nextPaymentDate', label: '下次配息日', dataKey: '下次配息日', defaultVisible: true, defaultOrder: 11, align: 'center' },
-  { key: 'daysToPayment', label: '剩餘天配息', dataKey: '剩餘天配息', defaultVisible: true, defaultOrder: 12, align: 'right', isCalculated: true },
-  { key: 'nextPayment', label: '下次配息', dataKey: '下次配息', defaultVisible: true, defaultOrder: 13, align: 'right', isCalculated: true },
-  { key: 'latestYield', label: '最新殖利率', dataKey: '最新殖利率', defaultVisible: true, defaultOrder: 14, align: 'right', isCalculated: true },
-  { key: 'news', label: '新聞', dataKey: null, defaultVisible: true, defaultOrder: 15, align: 'center', isAction: true }
+  { key: 'dividend', label: '配息', dataKey: '每股配息', defaultVisible: true, defaultOrder: 8, align: 'right', isCalculated: true },
+  { key: 'yieldInfo', label: '殖利率', dataKey: null, defaultVisible: true, defaultOrder: 9, align: 'right', isCalculated: true },
+  { key: 'interestInfo', label: '年息', dataKey: null, defaultVisible: true, defaultOrder: 10, align: 'right', isCalculated: true },
+  { key: 'paymentInfo', label: '配息日', dataKey: null, defaultVisible: true, defaultOrder: 11, align: 'center', isCalculated: true },
+  { key: 'news', label: '新聞', dataKey: null, defaultVisible: true, defaultOrder: 12, align: 'center', isAction: true }
 ]
 
 // 無配息資產欄位定義（保留向後相容）
 export const otherAssetsColumns = [
   { key: 'name', label: '名稱', dataKey: '名稱', defaultVisible: true, defaultOrder: 1, align: 'left' },
-  { key: 'buyPrice', label: '買入均價', dataKey: '買入均價', defaultVisible: true, defaultOrder: 2, align: 'right' },
-  { key: 'units', label: '持有單位', dataKey: '持有單位', defaultVisible: true, defaultOrder: 3, align: 'right' },
-  { key: 'latestPrice', label: '最新價格', dataKey: '最新價格', defaultVisible: true, defaultOrder: 4, align: 'right', isCalculated: true },
-  { key: 'twdProfit', label: '台幣損益', dataKey: '台幣損益', defaultVisible: true, defaultOrder: 5, align: 'right', isCalculated: true },
-  { key: 'profitPercent', label: '損益(%)', dataKey: '損益百分比', defaultVisible: true, defaultOrder: 6, align: 'right', isCalculated: true },
-  { key: 'twdAsset', label: '台幣市值', dataKey: '台幣資產', defaultVisible: true, defaultOrder: 7, align: 'right', isCalculated: true },
+  { key: 'buyPrice', label: '均價', dataKey: '買入均價', defaultVisible: true, defaultOrder: 2, align: 'right' },
+  { key: 'units', label: '股數', dataKey: '持有單位', defaultVisible: true, defaultOrder: 3, align: 'right' },
+  { key: 'latestPrice', label: '現價', dataKey: '最新價格', defaultVisible: true, defaultOrder: 4, align: 'right', isCalculated: true },
+  { key: 'twdProfit', label: '損益額', dataKey: '台幣損益', defaultVisible: true, defaultOrder: 5, align: 'right', isCalculated: true },
+  { key: 'profitPercent', label: '損益%', dataKey: '損益百分比', defaultVisible: true, defaultOrder: 6, align: 'right', isCalculated: true },
+  { key: 'twdAsset', label: '市值', dataKey: '台幣資產', defaultVisible: true, defaultOrder: 7, align: 'right', isCalculated: true },
   { key: 'ratio', label: '佔比', dataKey: null, defaultVisible: true, defaultOrder: 8, align: 'right', isCalculated: true },
   { key: 'news', label: '新聞', dataKey: null, defaultVisible: true, defaultOrder: 9, align: 'center', isAction: true }
 ]
@@ -68,46 +64,46 @@ export const otherAssetsColumns = [
 // 股票欄位定義（台股 + 美股）
 export const stocksColumns = [
   { key: 'name', label: '名稱', dataKey: '名稱', defaultVisible: true, defaultOrder: 1, align: 'left' },
-  { key: 'buyPrice', label: '買入均價', dataKey: '買入均價', defaultVisible: true, defaultOrder: 2, align: 'right' },
+  { key: 'buyPrice', label: '均價', dataKey: '買入均價', defaultVisible: true, defaultOrder: 2, align: 'right' },
   { key: 'units', label: '股數', dataKey: '股數', defaultVisible: true, defaultOrder: 3, align: 'right' },
-  { key: 'latestPrice', label: '最新價格', dataKey: '最新價格', defaultVisible: true, defaultOrder: 4, align: 'right', isCalculated: true },
-  { key: 'twdProfit', label: '台幣損益', dataKey: '台幣損益', defaultVisible: true, defaultOrder: 5, align: 'right', isCalculated: true },
-  { key: 'profitPercent', label: '損益(%)', dataKey: '報酬率', defaultVisible: true, defaultOrder: 6, align: 'right', isCalculated: true },
-  { key: 'twdAsset', label: '台幣市值', dataKey: '台幣資產', defaultVisible: true, defaultOrder: 7, align: 'right', isCalculated: true },
+  { key: 'latestPrice', label: '現價', dataKey: '最新價格', defaultVisible: true, defaultOrder: 4, align: 'right', isCalculated: true },
+  { key: 'twdProfit', label: '損益額', dataKey: '台幣損益', defaultVisible: true, defaultOrder: 5, align: 'right', isCalculated: true },
+  { key: 'profitPercent', label: '損益%', dataKey: '報酬率', defaultVisible: true, defaultOrder: 6, align: 'right', isCalculated: true },
+  { key: 'twdAsset', label: '市值', dataKey: '台幣資產', defaultVisible: true, defaultOrder: 7, align: 'right', isCalculated: true },
   { key: 'ratio', label: '佔比', dataKey: null, defaultVisible: true, defaultOrder: 8, align: 'right', isCalculated: true },
-  { key: 'dividend', label: '每股配息', dataKey: '每股配息', defaultVisible: true, defaultOrder: 9, align: 'right' },
-  { key: 'yield', label: '殖利率', dataKey: '殖利率', defaultVisible: true, defaultOrder: 10, align: 'right', isCalculated: true },
-  { key: 'annualDividend', label: '每年配息', dataKey: '每年配息', defaultVisible: true, defaultOrder: 11, align: 'right', isCalculated: true },
-  { key: 'nextPaymentDate', label: '下次配息日', dataKey: '下次配息日', defaultVisible: true, defaultOrder: 12, align: 'center' },
+  { key: 'dividend', label: '配息', dataKey: '每股配息', defaultVisible: true, defaultOrder: 9, align: 'right' },
+  { key: 'yieldInfo', label: '殖利率', dataKey: null, defaultVisible: true, defaultOrder: 10, align: 'right', isCalculated: true },
+  { key: 'interestInfo', label: '年息', dataKey: null, defaultVisible: true, defaultOrder: 11, align: 'right', isCalculated: true },
+  { key: 'paymentInfo', label: '配息日', dataKey: null, defaultVisible: true, defaultOrder: 12, align: 'center', isCalculated: true },
   { key: 'news', label: '新聞', dataKey: null, defaultVisible: true, defaultOrder: 13, align: 'center', isAction: true }
 ]
 
 // 加密貨幣欄位定義
 export const cryptoColumns = [
   { key: 'name', label: '名稱', dataKey: '名稱', defaultVisible: true, defaultOrder: 1, align: 'left' },
-  { key: 'buyPrice', label: '買入均價', dataKey: '買入均價', defaultVisible: true, defaultOrder: 2, align: 'right' },
-  { key: 'units', label: '持有數量', dataKey: '股數', defaultVisible: true, defaultOrder: 3, align: 'right' },
-  { key: 'latestPrice', label: '最新價格', dataKey: '最新價格', defaultVisible: true, defaultOrder: 4, align: 'right', isCalculated: true },
-  { key: 'twdProfit', label: '台幣損益', dataKey: '台幣損益', defaultVisible: true, defaultOrder: 5, align: 'right', isCalculated: true },
-  { key: 'profitPercent', label: '損益(%)', dataKey: '報酬率', defaultVisible: true, defaultOrder: 6, align: 'right', isCalculated: true },
-  { key: 'twdAsset', label: '台幣市值', dataKey: '台幣資產', defaultVisible: true, defaultOrder: 7, align: 'right', isCalculated: true },
+  { key: 'buyPrice', label: '均價', dataKey: '買入均價', defaultVisible: true, defaultOrder: 2, align: 'right' },
+  { key: 'units', label: '數量', dataKey: '股數', defaultVisible: true, defaultOrder: 3, align: 'right' },
+  { key: 'latestPrice', label: '現價', dataKey: '最新價格', defaultVisible: true, defaultOrder: 4, align: 'right', isCalculated: true },
+  { key: 'twdProfit', label: '損益額', dataKey: '台幣損益', defaultVisible: true, defaultOrder: 5, align: 'right', isCalculated: true },
+  { key: 'profitPercent', label: '損益%', dataKey: '報酬率', defaultVisible: true, defaultOrder: 6, align: 'right', isCalculated: true },
+  { key: 'twdAsset', label: '市值', dataKey: '台幣資產', defaultVisible: true, defaultOrder: 7, align: 'right', isCalculated: true },
   { key: 'ratio', label: '佔比', dataKey: null, defaultVisible: true, defaultOrder: 8, align: 'right', isCalculated: true },
   { key: 'news', label: '新聞', dataKey: null, defaultVisible: true, defaultOrder: 9, align: 'center', isAction: true }
 ]
 
 // 貸款欄位定義
 export const loansColumns = [
-  { key: 'loanType', label: '貸款別', dataKey: '貸款別', defaultVisible: true, defaultOrder: 1, align: 'left' },
-  { key: 'balance', label: '貸款餘額', dataKey: '貸款餘額', defaultVisible: true, defaultOrder: 2, align: 'right' },
-  { key: 'rate', label: '貸款利率', dataKey: '貸款利率', defaultVisible: true, defaultOrder: 3, align: 'right' },
-  { key: 'monthlyPayment', label: '月繳金額', dataKey: '月繳金額', defaultVisible: true, defaultOrder: 4, align: 'right', isCalculated: true },
-  { key: 'annualInterest', label: '每年利息', dataKey: '每年利息', defaultVisible: true, defaultOrder: 5, align: 'right', isCalculated: true }
+  { key: 'loanType', label: '貸款', dataKey: '貸款別', defaultVisible: true, defaultOrder: 1, align: 'left' },
+  { key: 'balance', label: '餘額', dataKey: '貸款餘額', defaultVisible: true, defaultOrder: 2, align: 'right' },
+  { key: 'rate', label: '利率', dataKey: '貸款利率', defaultVisible: true, defaultOrder: 3, align: 'right' },
+  { key: 'monthlyPayment', label: '月繳', dataKey: '月繳金額', defaultVisible: true, defaultOrder: 4, align: 'right', isCalculated: true },
+  { key: 'annualInterest', label: '年息', dataKey: '每年利息', defaultVisible: true, defaultOrder: 5, align: 'right', isCalculated: true }
 ]
 
 // 資產變化記錄欄位定義
 export const assetHistoryColumns = [
-  { key: 'recordTime', label: '記錄時間', dataKey: '記錄時間', defaultVisible: true, defaultOrder: 1, align: 'center' },
-  { key: 'usdRate', label: '美元匯率', dataKey: '美元匯率', defaultVisible: true, defaultOrder: 2, align: 'right' },
+  { key: 'recordTime', label: '日期', dataKey: '記錄時間', defaultVisible: true, defaultOrder: 1, align: 'center' },
+  { key: 'usdRate', label: '匯率', dataKey: '美元匯率', defaultVisible: true, defaultOrder: 2, align: 'right' },
   { key: 'totalPosition', label: '部位總額', dataKey: '部位總額', defaultVisible: true, defaultOrder: 3, align: 'right' },
   { key: 'totalDebt', label: '負債總額', dataKey: '負債總額', defaultVisible: true, defaultOrder: 4, align: 'right' },
   { key: 'normalizedPosition', label: '還原匯率30部位總額', dataKey: '還原匯率30部位總額', defaultVisible: true, defaultOrder: 5, align: 'right' },

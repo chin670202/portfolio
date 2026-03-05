@@ -1,5 +1,18 @@
 <script setup>
-import { defineProps, computed } from 'vue'
+import { defineProps, computed, ref, onMounted, onUnmounted } from 'vue'
+import { useResponsive } from '../composables/useResponsive'
+
+const { isMobile } = useResponsive()
+
+const showTooltip = ref(false)
+function toggleTooltip() {
+  showTooltip.value = !showTooltip.value
+}
+function closeTooltip() {
+  showTooltip.value = false
+}
+onMounted(() => document.addEventListener('click', closeTooltip))
+onUnmounted(() => document.removeEventListener('click', closeTooltip))
 
 const props = defineProps({
   records: {
@@ -14,13 +27,13 @@ const props = defineProps({
 
 // 欄位定義（移除原始整數欄位，只保留萬元欄位，更精簡）
 const columnDefinitions = {
-  recordTime: { label: '記錄時間', defaultOrder: 1 },
-  usdRate: { label: '美元匯率', defaultOrder: 2 },
-  currentPositionWan: { label: '部位總額(萬)', defaultOrder: 3 },
-  debtWan: { label: '負債總額(萬)', defaultOrder: 4 },
-  currentNetWan: { label: '資產淨值(萬)', defaultOrder: 5 },
-  normalizedPositionWan: { label: '匯率30部位(萬)', defaultOrder: 6 },
-  normalizedNetWan: { label: '匯率30淨值(萬)', defaultOrder: 7 }
+  recordTime: { label: '日期', defaultOrder: 1 },
+  usdRate: { label: '匯率', defaultOrder: 2 },
+  currentPositionWan: { label: '資產', defaultOrder: 3 },
+  debtWan: { label: '負債', defaultOrder: 4 },
+  currentNetWan: { label: '淨值', defaultOrder: 5 },
+  normalizedPositionWan: { label: '資產 (匯率30)', defaultOrder: 6 },
+  normalizedNetWan: { label: '淨值 (匯率30)', defaultOrder: 7 }
 }
 
 const allColumnKeys = Object.keys(columnDefinitions)
@@ -52,6 +65,11 @@ const sortedVisibleColumns = computed(() => {
     }))
     .sort((a, b) => a.order - b.order)
 })
+
+// 手機版：日期+匯率合併、資產+負債合併
+const mobileColumns = computed(() =>
+  sortedVisibleColumns.value.filter(col => col.key !== 'usdRate' && col.key !== 'debtWan')
+)
 
 const numericCols = ['currentPositionWan', 'debtWan', 'currentNetWan', 'normalizedPositionWan', 'normalizedNetWan']
 
@@ -106,14 +124,16 @@ function formatWan(val) {
 </script>
 
 <template>
-  <table v-if="records && records.length > 0" class="history-table">
+  <!-- 桌面版 -->
+  <table v-if="records && records.length > 0 && !isMobile" class="history-table">
     <thead>
       <tr class="section-header">
-        <th :colspan="sortedVisibleColumns.length">資產變化記錄</th>
+        <th :colspan="sortedVisibleColumns.length">資產變化記錄<span class="unit-note">單位：萬元</span></th>
       </tr>
       <tr>
         <th v-for="col in sortedVisibleColumns" :key="col.key" :class="getHeaderClass(col.key)">
           {{ col.label }}
+          <span v-if="col.key === 'normalizedPositionWan'" class="tooltip-trigger" @click.stop="toggleTooltip">?<span v-show="showTooltip" class="tooltip-text">模擬美元匯率固定 30 元時的資產值，排除匯率波動影響，觀察資產是否實質成長</span></span>
         </th>
       </tr>
     </thead>
@@ -125,14 +145,114 @@ function formatWan(val) {
       </tr>
     </tbody>
   </table>
+
+  <!-- 手機版：日期+匯率合併 -->
+  <table v-else-if="records && records.length > 0" class="history-table mobile-history-table">
+    <thead>
+      <tr class="section-header">
+        <th :colspan="mobileColumns.length">資產變化記錄<span class="unit-note">單位：萬元</span></th>
+      </tr>
+      <tr>
+        <th v-for="col in mobileColumns" :key="col.key" :class="getHeaderClass(col.key)">
+          <template v-if="col.key === 'recordTime'">
+            <div>日期</div><div class="sub-line">匯率</div>
+          </template>
+          <template v-else-if="col.key === 'currentPositionWan'">
+            <div>資產</div><div class="sub-line">負債</div>
+          </template>
+          <template v-else-if="col.key === 'normalizedPositionWan'">
+            <div>資產 <span class="tooltip-trigger" @click.stop="toggleTooltip">?<span v-show="showTooltip" class="tooltip-text">模擬美元匯率固定 30 元，排除匯率波動，觀察資產是否實質成長</span></span></div><div class="sub-line">匯率30</div>
+          </template>
+          <template v-else-if="col.key === 'normalizedNetWan'">
+            <div>淨值</div><div class="sub-line">匯率30</div>
+          </template>
+          <template v-else>{{ col.label }}</template>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="(record, index) in records" :key="index">
+        <td v-for="col in mobileColumns" :key="col.key" :class="getCellClass(col.key, record)">
+          <template v-if="col.key === 'recordTime'">
+            <div>{{ record.記錄時間 }}</div>
+            <div class="sub-line">{{ record.美元匯率 }}</div>
+          </template>
+          <template v-else-if="col.key === 'currentPositionWan'">
+            <div>{{ getCellValue('currentPositionWan', record) }}</div>
+            <div class="sub-line">{{ getCellValue('debtWan', record) }}</div>
+          </template>
+          <template v-else>
+            {{ getCellValue(col.key, record) }}
+          </template>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </template>
 
 <style scoped>
 .history-table {
-  width: auto !important;
+  width: 100% !important;
+  table-layout: fixed;
+}
+
+.history-table td,
+.history-table th {
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .col-num {
   text-align: right !important;
+}
+
+.unit-note {
+  font-size: 0.75em;
+  font-weight: 400;
+  opacity: 0.7;
+  margin-left: 8px;
+}
+
+.mobile-history-table {
+  width: 100% !important;
+}
+
+.sub-line {
+  font-size: 0.8em;
+  opacity: 0.6;
+}
+
+.tooltip-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #999;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  cursor: help;
+  position: relative;
+  vertical-align: middle;
+  margin-left: 2px;
+}
+
+.tooltip-trigger .tooltip-text {
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 10;
 }
 </style>
