@@ -103,3 +103,30 @@ export async function calculateFee({ brokerId, assetType, price, quantity, side,
   if (!res.ok) throw new Error('計算手續費失敗')
   return res.json()
 }
+
+// Backup APIs
+
+export async function fetchBackups(user) {
+  const res = await fetch(`${BASE_URL}/backup/${user}`, { headers: getHeaders() })
+  if (!res.ok) throw new Error('取得備份列表失敗')
+  return res.json()
+}
+
+export async function fetchBackupData(user, filename) {
+  const res = await fetch(`${BASE_URL}/backup/${user}/${encodeURIComponent(filename)}`, { headers: getHeaders() })
+  if (!res.ok) throw new Error('取得備份資料失敗')
+  return res.json()
+}
+
+export async function restoreBackup(user, filename) {
+  const res = await fetch(`${BASE_URL}/backup/${user}/restore`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ filename }),
+  })
+  if (!res.ok) {
+    const data = await res.json()
+    throw new Error(data.error || '還原備份失敗')
+  }
+  return res.json()
+}

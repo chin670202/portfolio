@@ -189,6 +189,9 @@ tradesRoutes.delete('/:user/:id', async (c) => {
       return c.json({ error: '找不到此交易' }, 404)
     }
 
+    // Backup before modifying portfolio
+    await createBackup(db, user)
+
     await db.prepare('DELETE FROM trades WHERE id = ? AND user = ?').bind(id, user).run()
     await recalculateSymbol(db, user, existing.symbol, existing.asset_type)
 

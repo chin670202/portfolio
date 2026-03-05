@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
-import { Wallet, LayoutDashboard, ArrowLeftRight, TrendingUp } from 'lucide-vue-next'
+import { Wallet, LayoutDashboard, ArrowLeftRight, TrendingUp, Archive } from 'lucide-vue-next'
 
 const props = defineProps({
   username: { type: String, required: true }
@@ -14,6 +14,7 @@ const navItems = computed(() => [
   { to: `/${props.username}/dashboard`, label: '儀表板', icon: LayoutDashboard, exact: true },
   { to: `/${props.username}/trades`, label: '交易紀錄', icon: ArrowLeftRight, exact: true },
   { to: `/${props.username}/pnl`, label: '損益報表', icon: TrendingUp, exact: false },
+  { to: `/${props.username}/backups`, label: '備份管理', icon: Archive, exact: true },
 ])
 
 function isActive(item) {

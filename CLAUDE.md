@@ -184,11 +184,15 @@ npm run build && npm run dev:api
 
 ## 備份機制
 
-每次更新部位前會自動備份用戶的投資組合資料到 D1 `backups` 表。
+每次資料異動前會自動備份用戶的投資組合資料到 D1 `backups` 表。
+
+備份觸發時機：
+- `POST /api/trades/:user` — 新增交易前
+- `DELETE /api/trades/:user/:id` — 刪除交易前
+- `PUT /api/portfolio/:user` — 更新部位前
 
 備份限制：
-- 每用戶最多保留 **10 份**備份
-- 每天最多 **3 份**備份（避免同一天的備份覆蓋所有歷史）
+- 每用戶最多保留 **100 份**備份（超過自動刪除最舊的）
 
 API 端點：
 - `GET /api/backup/:user` - 取得備份列表

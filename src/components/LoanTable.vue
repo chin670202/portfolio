@@ -164,3 +164,9 @@ const getFooterCellClass = (key) => {
   return classes.join(' ')
 }
 </script>
+
+<style scoped>
+table {
+  width: auto !important;
+}
+</style>

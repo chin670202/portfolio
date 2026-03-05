@@ -4,6 +4,7 @@
  */
 
 import { Hono } from 'hono'
+import { createBackup } from '../services/backup.js'
 
 export const portfolioRoutes = new Hono()
 
@@ -35,6 +36,9 @@ portfolioRoutes.put('/:user', async (c) => {
     const db = c.env.DB
     const user = c.req.param('user')
     const data = await c.req.json()
+
+    // Backup before modifying portfolio
+    await createBackup(db, user)
 
     await db.prepare(
       'INSERT INTO portfolios (user, data, updated_at) VALUES (?, ?, ?) ON CONFLICT(user) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at'

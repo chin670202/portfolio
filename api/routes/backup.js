@@ -4,7 +4,7 @@
  */
 
 import { Hono } from 'hono'
-import { listBackups, restoreBackup } from '../services/backup.js'
+import { listBackups, getBackupData, restoreBackup } from '../services/backup.js'
 
 export const backupRoutes = new Hono()
 
@@ -31,6 +31,34 @@ backupRoutes.get('/:user', async (c) => {
   } catch (error) {
     console.error('[Backup API] Error:', error)
     return c.json({ success: false, error: '取得備份列表失敗' }, 500)
+  }
+})
+
+/**
+ * GET /backup/:user/:filename - Get a single backup's data for preview
+ */
+backupRoutes.get('/:user/:filename', async (c) => {
+  try {
+    const db = c.env.DB
+    const user = c.req.param('user')
+    const filename = c.req.param('filename')
+
+    const result = await getBackupData(db, user, filename)
+
+    if (!result.success) {
+      return c.json({ success: false, error: result.error }, 404)
+    }
+
+    return c.json({
+      success: true,
+      filename,
+      date: result.date,
+      time: result.time,
+      data: result.data
+    })
+  } catch (error) {
+    console.error('[Backup API] Get backup data error:', error)
+    return c.json({ success: false, error: '取得備份資料失敗' }, 500)
   }
 })
 

@@ -6,6 +6,7 @@ const SidebarLayout = () => import('../layouts/SidebarLayout.vue')
 const TradeDashboardPage = () => import('../views/TradeDashboardPage.vue')
 const TradesPage = () => import('../views/TradesPage.vue')
 const PnlPage = () => import('../views/PnlPage.vue')
+const BackupPage = () => import('../views/BackupPage.vue')
 
 const routes = [
   {
@@ -45,6 +46,12 @@ const routes = [
         name: 'pnl',
         component: PnlPage,
         meta: { title: '損益報表' }
+      },
+      {
+        path: 'backups',
+        name: 'backups',
+        component: BackupPage,
+        meta: { title: '備份管理' }
       }
     ]
   }

@@ -4,8 +4,7 @@
  * Migrated from server/services/backup.js (filesystem → D1)
  */
 
-const MAX_BACKUPS_PER_USER = 10
-const MAX_BACKUPS_PER_DAY = 3
+const MAX_BACKUPS_PER_USER = 100
 
 /**
  * Create a backup of user's portfolio data
@@ -16,16 +15,6 @@ export async function createBackup(db, user) {
   if (!portfolio) return { success: false, error: '找不到用戶資料' }
 
   const today = new Date().toISOString().split('T')[0]
-
-  // Check daily limit
-  const todayCount = await db.prepare(
-    'SELECT COUNT(*) as count FROM backups WHERE user = ? AND backup_date = ?'
-  ).bind(user, today).first()
-
-  if (todayCount.count >= MAX_BACKUPS_PER_DAY) {
-    return { success: true, skipped: true, reason: '今天已達備份上限' }
-  }
-
   const time = new Date().toTimeString().split(' ')[0].replace(/:/g, '')
   const filename = `${user}_${today}_${time}.json`
 
@@ -58,6 +47,25 @@ export async function listBackups(db, user) {
     time: b.backup_time.replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3'),
     displayName: `${b.backup_date} ${b.backup_time.replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3')}`
   }))
+}
+
+/**
+ * Get a single backup's data for preview
+ * @param {D1Database} db
+ */
+export async function getBackupData(db, user, filename) {
+  const backup = await db.prepare(
+    'SELECT data, backup_date, backup_time FROM backups WHERE user = ? AND filename = ?'
+  ).bind(user, filename).first()
+
+  if (!backup) return { success: false, error: '找不到指定的備份' }
+
+  return {
+    success: true,
+    data: JSON.parse(backup.data),
+    date: backup.backup_date,
+    time: backup.backup_time.replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3')
+  }
 }
 
 /**
