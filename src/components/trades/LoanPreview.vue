@@ -40,25 +40,9 @@ function formatAmount(val) {
   return `${val.toLocaleString('zh-TW')} 元`
 }
 
-function formatDescription(loan) {
+function loanDisplayName(loan) {
   if (!loan) return ''
-  const name = loan.loanType
-  switch (loan.action) {
-    case 'add':
-      return `新增「${name}」` +
-        (loan.balance != null ? `，餘額 ${formatAmount(loan.balance)}` : '') +
-        (loan.rate != null ? `，利率 ${loan.rate}%` : '')
-    case 'set':
-      return `修改「${name}」` +
-        (loan.balance != null ? `，餘額改為 ${formatAmount(loan.balance)}` : '') +
-        (loan.rate != null ? `，利率改為 ${loan.rate}%` : '')
-    case 'reduce':
-      return `「${name}」餘額減少 ${formatAmount(loan.balance)}`
-    case 'remove':
-      return `移除「${name}」貸款`
-    default:
-      return ''
-  }
+  return loan.remark ? `${loan.loanType}（${loan.remark}）` : loan.loanType
 }
 
 async function handleConfirm() {
@@ -87,26 +71,68 @@ function handleOpenChange(val) {
         <DialogTitle>確認貸款調整</DialogTitle>
       </DialogHeader>
 
-      <div v-if="loan" class="space-y-4 py-2">
-        <div class="rounded-lg bg-[var(--muted)] p-4 text-base leading-relaxed">
-          <div class="flex items-center gap-2 text-lg font-semibold">
-            <Badge :variant="ACTION_VARIANTS[loan.action]" class="text-sm">
-              {{ ACTION_LABELS[loan.action] }}
-            </Badge>
-            <span class="text-[var(--muted-foreground)] text-sm">貸款管理（不產生交易記錄）</span>
+      <div v-if="loan" class="space-y-3 py-2">
+        <!-- Action badge + label -->
+        <div class="flex items-center gap-2">
+          <Badge :variant="ACTION_VARIANTS[loan.action]" class="text-sm">
+            {{ ACTION_LABELS[loan.action] }}
+          </Badge>
+          <span class="text-[var(--muted-foreground)] text-sm">貸款管理（不產生交易記錄）</span>
+        </div>
+
+        <!-- Matched existing loan info (for set/reduce/remove) -->
+        <div v-if="loan.matchedLoan" class="rounded-lg border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 p-3">
+          <div class="text-xs font-medium text-amber-700 dark:text-amber-400 mb-1">將異動此筆貸款：</div>
+          <div class="text-base font-bold">{{ loan.matchedLoan.loanType }}
+            <span v-if="loan.matchedLoan.remark" class="font-normal text-[var(--muted-foreground)]">（{{ loan.matchedLoan.remark }}）</span>
+          </div>
+          <div class="text-sm text-[var(--muted-foreground)] mt-1">
+            目前餘額：<span class="font-semibold text-[var(--foreground)]">{{ formatAmount(loan.matchedLoan.balance) }}</span>
+            ・利率：<span class="font-semibold text-[var(--foreground)]">{{ loan.matchedLoan.rate }}%</span>
+          </div>
+        </div>
+
+        <!-- Change details -->
+        <div class="rounded-lg bg-[var(--muted)] p-4">
+          <div class="text-sm font-medium text-[var(--muted-foreground)] mb-2">
+            {{ loan.action === 'add' ? '新增內容' : loan.action === 'remove' ? '將移除此筆貸款' : '變更內容' }}
           </div>
 
-          <div class="mt-2 text-xl font-bold">
-            {{ loan.loanType }}
-          </div>
+          <!-- Add: show new loan info -->
+          <template v-if="loan.action === 'add'">
+            <div class="text-lg font-bold">{{ loanDisplayName(loan) }}</div>
+            <div v-if="loan.balance != null" class="text-sm mt-1">餘額：{{ formatAmount(loan.balance) }}</div>
+            <div v-if="loan.rate != null" class="text-sm">利率：{{ loan.rate }}%</div>
+            <div v-if="loan.usage" class="text-sm">用途：{{ loan.usage }}</div>
+          </template>
 
-          <div class="mt-2 text-base text-[var(--foreground)]">
-            {{ formatDescription(loan) }}
-          </div>
+          <!-- Set: show what changes -->
+          <template v-else-if="loan.action === 'set'">
+            <div v-if="loan.balance != null" class="text-sm">
+              餘額改為：<span class="font-semibold">{{ formatAmount(loan.balance) }}</span>
+              <span v-if="loan.matchedLoan" class="text-[var(--muted-foreground)]">
+                （原 {{ formatAmount(loan.matchedLoan.balance) }}）
+              </span>
+            </div>
+            <div v-if="loan.rate != null" class="text-sm">
+              利率改為：<span class="font-semibold">{{ loan.rate }}%</span>
+              <span v-if="loan.matchedLoan" class="text-[var(--muted-foreground)]">
+                （原 {{ loan.matchedLoan.rate }}%）
+              </span>
+            </div>
+          </template>
 
-          <div v-if="loan.usage" class="mt-1 text-sm text-[var(--muted-foreground)]">
-            用途：{{ loan.usage }}
-          </div>
+          <!-- Reduce: show amount to reduce -->
+          <template v-else-if="loan.action === 'reduce'">
+            <div class="text-sm">
+              減少金額：<span class="font-semibold text-red-600">{{ formatAmount(loan.balance) }}</span>
+            </div>
+            <div v-if="loan.matchedLoan" class="text-sm text-[var(--muted-foreground)] mt-1">
+              {{ formatAmount(loan.matchedLoan.balance) }} → {{ formatAmount(loan.matchedLoan.balance - (loan.balance || 0)) }}
+            </div>
+          </template>
+
+          <!-- Remove: no extra info needed -->
         </div>
 
         <div v-if="loan.notes" class="rounded-md border border-[var(--border)] p-3 text-sm text-[var(--muted-foreground)]">
@@ -116,9 +142,13 @@ function handleOpenChange(val) {
 
       <DialogFooter>
         <Button variant="outline" @click="emit('close')" :disabled="saving">取消</Button>
-        <Button @click="handleConfirm" :disabled="saving">
+        <Button
+          :variant="['reduce', 'remove'].includes(loan?.action) ? 'destructive' : 'default'"
+          @click="handleConfirm"
+          :disabled="saving"
+        >
           <Loader2 v-if="saving" class="mr-2 h-4 w-4 animate-spin" />
-          {{ saving ? '處理中...' : '確認' }}
+          {{ saving ? '處理中...' : '確認' + (ACTION_LABELS[loan?.action] || '') }}
         </Button>
       </DialogFooter>
     </DialogContent>

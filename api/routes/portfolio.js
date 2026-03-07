@@ -48,6 +48,25 @@ portfolioRoutes.post('/:user/parse', async (c) => {
     const portfolioData = row ? JSON.parse(row.data) : null
 
     const result = await parseUnified(input.trim(), c.env, portfolioData)
+
+    // For loan operations, attach the matched existing loan for preview
+    if (result.type === 'loan' && portfolioData && result.action !== 'add') {
+      const loans = portfolioData['貸款'] || []
+      const matched = loans.find(l => {
+        if (l['貸款別'] !== result.loanType) return false
+        if (result.remark) return l['備註'] === result.remark
+        return true
+      })
+      if (matched) {
+        result.matchedLoan = {
+          loanType: matched['貸款別'],
+          remark: matched['備註'] || null,
+          balance: matched['貸款餘額'] || 0,
+          rate: matched['貸款利率'] || 0,
+        }
+      }
+    }
+
     return c.json(result)
   } catch (error) {
     console.error('unified parse error:', error)
@@ -180,40 +199,63 @@ async function handlePositionAdjust(c, db, user, data, body) {
  * Handle loan adjustments
  */
 async function handleLoanAdjust(c, db, user, data, body) {
-  const { action, loanType, balance, rate, usage } = body
+  const { action, loanType, balance, rate, usage, remark } = body
   if (!action || !loanType) {
     return c.json({ error: '缺少貸款名稱' }, 400)
   }
 
   if (!data['貸款']) data['貸款'] = []
   const loans = data['貸款']
-  const idx = loans.findIndex(l => l['貸款別'] === loanType)
+
+  // Find all matching loans by type
+  const sameTypeLoans = loans
+    .map((l, i) => ({ ...l, _idx: i }))
+    .filter(l => l['貸款別'] === loanType)
+
+  let idx = -1
+  if (remark) {
+    // Specific remark: match exactly
+    idx = loans.findIndex(l => l['貸款別'] === loanType && l['備註'] === remark)
+  } else if (sameTypeLoans.length === 1) {
+    // Only one of this type: safe to match
+    idx = sameTypeLoans[0]._idx
+  } else if (sameTypeLoans.length > 1 && action !== 'add') {
+    // Multiple same-type loans without remark: reject with hint
+    const options = sameTypeLoans.map(l => l['備註'] ? `「${l['備註']}」` : '（無備註）').join('、')
+    return c.json({
+      error: `有 ${sameTypeLoans.length} 筆「${loanType}」，請指定是哪一筆：${options}`
+    }, 400)
+  }
 
   if (action === 'add') {
     if (idx >= 0) {
-      return c.json({ error: `「${loanType}」已存在，如需修改請用「修改」` }, 400)
+      const label = remark ? `「${loanType}（${remark}）」` : `「${loanType}」`
+      return c.json({ error: `${label}已存在，如需修改請用「修改」` }, 400)
     }
     const newLoan = { '貸款別': loanType }
     if (balance != null) newLoan['貸款餘額'] = balance
     if (rate != null) newLoan['貸款利率'] = rate
     if (usage) newLoan['用途'] = usage
+    if (remark) newLoan['備註'] = remark
     loans.push(newLoan)
   } else if (action === 'set') {
     if (idx < 0) {
-      // Auto-create if not found (user might say "把XX改成..." for a new loan)
       const newLoan = { '貸款別': loanType }
       if (balance != null) newLoan['貸款餘額'] = balance
       if (rate != null) newLoan['貸款利率'] = rate
       if (usage) newLoan['用途'] = usage
+      if (remark) newLoan['備註'] = remark
       loans.push(newLoan)
     } else {
       if (balance != null) loans[idx]['貸款餘額'] = balance
       if (rate != null) loans[idx]['貸款利率'] = rate
       if (usage) loans[idx]['用途'] = usage
+      if (remark) loans[idx]['備註'] = remark
     }
   } else if (action === 'reduce') {
+    const label = remark ? `${loanType}（${remark}）` : loanType
     if (idx < 0) {
-      return c.json({ error: `找不到「${loanType}」貸款` }, 404)
+      return c.json({ error: `找不到「${label}」貸款` }, 404)
     }
     if (balance == null || balance <= 0) {
       return c.json({ error: '減少餘額需要提供金額' }, 400)
@@ -226,8 +268,9 @@ async function handleLoanAdjust(c, db, user, data, body) {
       loans[idx]['貸款餘額'] = newBalance
     }
   } else if (action === 'remove') {
+    const label = remark ? `${loanType}（${remark}）` : loanType
     if (idx < 0) {
-      return c.json({ error: `找不到「${loanType}」貸款` }, 404)
+      return c.json({ error: `找不到「${label}」貸款` }, 404)
     }
     loans.splice(idx, 1)
   } else {
@@ -240,6 +283,51 @@ async function handleLoanAdjust(c, db, user, data, body) {
 
   return c.json({ success: true, type: 'loan', action, loanType })
 }
+
+/**
+ * POST /portfolio/:user/migrate-loans - One-time migration to split 貸款別 into 貸款別 + 備註
+ */
+portfolioRoutes.post('/:user/migrate-loans', async (c) => {
+  try {
+    const db = c.env.DB
+    const user = c.req.param('user')
+
+    const row = await db.prepare('SELECT data FROM portfolios WHERE user = ?').bind(user).first()
+    if (!row) return c.json({ error: `找不到使用者 "${user}" 的資料` }, 404)
+
+    await createBackup(db, user)
+    const data = JSON.parse(row.data)
+    const loans = data['貸款']
+    if (!Array.isArray(loans)) return c.json({ message: '沒有貸款資料', migrated: 0 })
+
+    let migrated = 0
+    for (const loan of loans) {
+      const original = loan['貸款別']
+      if (!original || loan['備註']) continue // already has remark
+
+      // Pattern: "房屋貸款 2.15% (民德路)" → 貸款別=房屋貸款, 備註=民德路
+      // Pattern: "其他貸款 2.15% (金交債)" → 貸款別=其他貸款, 備註=金交債
+      // Pattern: "循環理財貸款 2.69% (股票質借)" → 貸款別=循環理財貸款, 備註=股票質借
+      const match = original.match(/^(.+?)\s+[\d.]+%\s*\((.+?)\)$/)
+      if (match) {
+        loan['貸款別'] = match[1].trim()
+        loan['備註'] = match[2].trim()
+        migrated++
+      }
+    }
+
+    if (migrated > 0) {
+      data['資料更新日期'] = new Date().toISOString().slice(0, 10)
+      await db.prepare('UPDATE portfolios SET data = ?, updated_at = ? WHERE user = ?')
+        .bind(JSON.stringify(data), Date.now(), user).run()
+    }
+
+    return c.json({ success: true, migrated, loans: loans.map(l => ({ 貸款別: l['貸款別'], 備註: l['備註'] || null })) })
+  } catch (error) {
+    console.error('migrate-loans error:', error)
+    return c.json({ error: '遷移失敗' }, 500)
+  }
+})
 
 /**
  * PUT /portfolio/:user - Update portfolio data

@@ -11,7 +11,7 @@ function buildUnifiedPrompt(input, today, holdings, loans) {
     : '（目前沒有持倉）'
 
   const loanList = loans.length > 0
-    ? loans.map(l => `- ${l.loanType} (餘額 ${l.balance}, 利率 ${l.rate}%${l.usage ? ', 用途: ' + l.usage : ''})`).join('\n')
+    ? loans.map(l => `- ${l.loanType}${l.remark ? '（' + l.remark + '）' : ''} (餘額 ${l.balance}, 利率 ${l.rate}%${l.usage ? ', 用途: ' + l.usage : ''})`).join('\n')
     : '（目前沒有貸款）'
 
   return `你是一個投資組合助手。使用者會用口語描述，你需要判斷意圖並解析成結構化 JSON。
@@ -69,15 +69,17 @@ ${loanList}
 ### type = "loan"
 動作：add(新增貸款)、set(修改貸款，覆蓋欄位)、reduce(減少餘額)、remove(移除貸款)
 規則：
-1. loanType 是貸款名稱/別稱（如「房貸」「金交債貸款」「股票質押貸款」）。對照現有貸款列表匹配
-2. balance 是貸款餘額（萬元要轉換成元，如 500萬 = 5000000）
-3. rate 是年利率百分比數字（如 2.185 代表 2.185%）
-4. usage 是貸款用途（如「房貸」「投資」）
-5. 修改時只需提供要改的欄位，其餘設 null
-6. reduce 時 balance 是要減少的金額
+1. loanType 是貸款類型（如「房屋貸款」「其他貸款」「循環理財貸款」）。對照現有貸款列表匹配
+2. remark 是用來區分同類貸款的備註標識（如「民德路」「金交債」「股票質借」）。對照現有貸款列表匹配
+3. balance 是貸款餘額（萬元要轉換成元，如 500萬 = 5000000）
+4. rate 是年利率百分比數字（如 2.185 代表 2.185%）
+5. usage 是貸款用途（如「房貸」「投資」）
+6. 修改時只需提供要改的欄位，其餘設 null
+7. reduce 時 balance 是要減少的金額
+8. 當有多筆同類貸款時（如多筆房屋貸款），remark 是必要的，用來指定是哪一筆
 
 回傳：
-{"type":"loan","action":"add|set|reduce|remove","loanType":"貸款別","balance":數字或null,"rate":數字或null,"usage":"用途或null","notes":"備註或null"}
+{"type":"loan","action":"add|set|reduce|remove","loanType":"貸款別","remark":"備註標識或null","balance":數字或null,"rate":數字或null,"usage":"用途或null","notes":"備註或null"}
 
 請解析以下輸入，只回傳純 JSON，不要加任何其他文字或 markdown 格式：
 
@@ -108,6 +110,7 @@ function extractLoans(data) {
   for (const item of arr) {
     loans.push({
       loanType: item['貸款別'] || '',
+      remark: item['備註'] || '',
       balance: item['貸款餘額'] || 0,
       rate: item['貸款利率'] || 0,
       usage: item['用途'] || '',
@@ -184,6 +187,7 @@ export async function parseUnified(input, env, portfolioData) {
       type: 'loan',
       action,
       loanType: parsed.loanType ? String(parsed.loanType) : null,
+      remark: parsed.remark ? String(parsed.remark) : null,
       balance: parsed.balance != null ? Number(parsed.balance) : null,
       rate: parsed.rate != null ? Number(parsed.rate) : null,
       usage: parsed.usage ? String(parsed.usage) : null,

@@ -14,10 +14,8 @@
     <tbody>
       <tr v-for="(loan, index) in loans" :key="index">
         <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getCellClass(col.key)">
-          <template v-if="col.key === 'loanType'">
-            {{ loan.貸款別 }}
-            <span v-if="loan.備註">({{ loan.備註 }})</span>
-          </template>
+          <template v-if="col.key === 'loanType'">{{ loan.貸款別 }}</template>
+          <template v-else-if="col.key === 'remark'">{{ loan.備註 }}</template>
           <template v-else-if="col.key === 'balance'">{{ formatNumber(loan.貸款餘額) }}</template>
           <template v-else-if="col.key === 'rate'">{{ formatPercent(loan.貸款利率) }}</template>
           <template v-else-if="col.key === 'monthlyPayment'">{{ formatNumber(loan.月繳金額) }}</template>
@@ -29,6 +27,7 @@
       <tr class="grand-total">
         <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getFooterCellClass(col.key)">
           <template v-if="col === sortedVisibleColumns[0]">總計</template>
+          <template v-else-if="col.key === 'remark'"></template>
           <template v-else-if="col.key === 'balance'">{{ formatNumber(total.貸款餘額) }}</template>
           <template v-else-if="col.key === 'rate'"></template>
           <template v-else-if="col.key === 'monthlyPayment'">{{ formatNumber(total.月繳金額) }}</template>
@@ -54,7 +53,7 @@
       <template v-for="(loan, index) in loans" :key="index">
         <tr class="loan-name-row">
           <td :colspan="mobileDataColumns.length">
-            {{ loan.貸款別 }}<span v-if="loan.備註"> ({{ loan.備註 }})</span>
+            {{ loan.貸款別 }}<span v-if="loan.備註" class="remark-tag"> {{ loan.備註 }}</span>
           </td>
         </tr>
         <tr>
@@ -106,10 +105,11 @@ const props = defineProps({
 // 欄位定義
 const columnDefinitions = {
   loanType: { label: '貸款', defaultOrder: 1 },
-  balance: { label: '餘額', defaultOrder: 2 },
-  rate: { label: '利率', defaultOrder: 3 },
-  monthlyPayment: { label: '月繳', defaultOrder: 4 },
-  annualInterest: { label: '年息', defaultOrder: 5 }
+  remark: { label: '備註', defaultOrder: 2 },
+  balance: { label: '餘額', defaultOrder: 3 },
+  rate: { label: '利率', defaultOrder: 4 },
+  monthlyPayment: { label: '月繳', defaultOrder: 5 },
+  annualInterest: { label: '年息', defaultOrder: 6 }
 }
 
 const allColumnKeys = Object.keys(columnDefinitions)
@@ -177,21 +177,22 @@ const sortedVisibleColumns = computed(() => {
     .sort((a, b) => a.order - b.order)
 })
 
-// 手機版：排除貸款名稱欄，名稱改為獨立 row
+// 手機版：排除貸款名稱和備註欄，名稱改為獨立 row
 const mobileDataColumns = computed(() =>
-  sortedVisibleColumns.value.filter(col => col.key !== 'loanType')
+  sortedVisibleColumns.value.filter(col => col.key !== 'loanType' && col.key !== 'remark')
 )
 
 // 取得表頭樣式
 const getHeaderClass = (key) => {
   if (['balance', 'monthlyPayment', 'annualInterest'].includes(key)) return 'text-right'
+  if (['loanType', 'remark'].includes(key)) return 'text-left'
   return ''
 }
 
 // 取得儲存格樣式
 const getCellClass = (key) => {
   const classes = []
-  if (key === 'loanType') classes.push('text-left')
+  if (key === 'loanType' || key === 'remark') classes.push('text-left')
   if (['balance', 'monthlyPayment', 'annualInterest'].includes(key)) classes.push('text-right')
   if (['monthlyPayment', 'annualInterest'].includes(key)) classes.push('calculated')
   return classes.join(' ')
@@ -216,10 +217,15 @@ table th {
   white-space: normal;
 }
 
-/* 桌面版：貸款名稱佔 35%，其餘平均分配 */
+/* 桌面版：貸款名稱佔 20%，備註佔 15%，其餘平均分配 */
 table:not(.mobile-loan-table) th:first-child,
 table:not(.mobile-loan-table) td:first-child {
-  width: 35%;
+  width: 20%;
+}
+
+table:not(.mobile-loan-table) th:nth-child(2),
+table:not(.mobile-loan-table) td:nth-child(2) {
+  width: 15%;
 }
 
 table:not(.mobile-loan-table) th:not(:first-child),
@@ -244,5 +250,10 @@ table:not(.mobile-loan-table) td:not(:first-child) {
   padding-top: 8px !important;
   padding-bottom: 2px !important;
   border-bottom: none !important;
+}
+
+.remark-tag {
+  color: var(--muted-foreground);
+  font-weight: 400;
 }
 </style>
