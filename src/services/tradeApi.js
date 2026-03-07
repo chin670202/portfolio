@@ -56,6 +56,34 @@ export async function parseTrade(user, input) {
   return res.json()
 }
 
+// Unified AI parse (auto-detects trade/adjust/loan)
+
+export async function parseUnified(user, input) {
+  const res = await fetch(`${BASE_URL}/portfolio/${user}/parse`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ input }),
+  })
+  if (!res.ok) {
+    const data = await res.json()
+    throw new Error(data.error || '解析失敗')
+  }
+  return res.json()
+}
+
+export async function applyAdjust(user, adjustment) {
+  const res = await fetch(`${BASE_URL}/portfolio/${user}/adjust`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(adjustment),
+  })
+  if (!res.ok) {
+    const data = await res.json()
+    throw new Error(data.error || '操作失敗')
+  }
+  return res.json()
+}
+
 export async function fetchPnl(user, params = {}) {
   const searchParams = new URLSearchParams(params)
   const qs = searchParams.toString()

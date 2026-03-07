@@ -3,13 +3,13 @@ import { ref } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Send, Loader2 } from 'lucide-vue-next'
-import { parseTrade } from '@/services/tradeApi'
+import { parseUnified } from '@/services/tradeApi'
 
 const props = defineProps({
   username: { type: String, required: true }
 })
 
-const emit = defineEmits(['parsed'])
+const emit = defineEmits(['parsed', 'adjust-parsed', 'loan-parsed'])
 
 const input = ref('')
 const loading = ref(false)
@@ -21,8 +21,15 @@ async function handleSubmit() {
   error.value = ''
 
   try {
-    const parsed = await parseTrade(props.username, input.value.trim())
-    emit('parsed', parsed)
+    const result = await parseUnified(props.username, input.value.trim())
+
+    if (result.type === 'trade') {
+      emit('parsed', result)
+    } else if (result.type === 'adjust') {
+      emit('adjust-parsed', result)
+    } else if (result.type === 'loan') {
+      emit('loan-parsed', result)
+    }
     input.value = ''
   } catch (err) {
     const msg = err.message || ''
@@ -50,7 +57,7 @@ function handleKeyDown(e) {
       <Textarea
         v-model="input"
         @keydown="handleKeyDown"
-        placeholder="輸入交易記錄，例如：「今天買了兩張台積電 680元」「sell 100 AAPL at 235.5」"
+        placeholder="輸入交易或調整指令，例如：「買了兩張台積電 680元」「台積電改成 3000 股」「新增房貸 500萬 利率 2.1%」"
         class="min-h-[80px] pr-14 text-base"
         :disabled="loading"
       />
@@ -73,7 +80,7 @@ function handleKeyDown(e) {
     <p v-if="error" class="text-sm text-[var(--destructive)]">{{ error }}</p>
 
     <p v-if="!loading" class="text-xs text-[var(--muted-foreground)]">
-      按 Enter 送出，Shift+Enter 換行。支援中文或英文描述。
+      按 Enter 送出，Shift+Enter 換行。AI 自動辨識：交易紀錄 / 部位調整 / 貸款管理
     </p>
   </div>
 </template>
