@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-vue-next'
 import { ASSET_TYPE_LABELS, SIDE_LABELS } from '@/lib/constants'
 import { createTrade, calculateFee, setDefaultBroker } from '@/services/tradeApi'
+import { toast } from 'vue-sonner'
 
 const props = defineProps({
   trade: { type: Object, default: null },
@@ -94,10 +95,13 @@ async function handleConfirm() {
       } catch { /* non-critical */ }
     }
 
+    const side = props.trade.side === 'buy' ? '買入' : '賣出'
+    const name = props.trade.name || props.trade.symbol
+    toast.success(`${side} ${name} 已記錄`)
     emit('close')
     emit('saved')
   } catch (err) {
-    alert(err.message || '儲存失敗')
+    toast.error(err.message || '儲存失敗')
   } finally {
     saving.value = false
   }

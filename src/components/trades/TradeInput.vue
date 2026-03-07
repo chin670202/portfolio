@@ -1,86 +1,134 @@
 <script setup>
 import { ref } from 'vue'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Send, Loader2 } from 'lucide-vue-next'
-import { parseUnified } from '@/services/tradeApi'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { ASSET_TYPES } from '@/lib/constants'
 
 const props = defineProps({
   username: { type: String, required: true }
 })
 
-const emit = defineEmits(['parsed', 'adjust-parsed', 'loan-parsed'])
+const emit = defineEmits(['parsed'])
 
-const input = ref('')
-const loading = ref(false)
+const form = ref({
+  tradeDate: new Date().toISOString().slice(0, 10),
+  assetType: 'tw_stock',
+  symbol: '',
+  name: '',
+  side: 'buy',
+  price: '',
+  quantity: '',
+  notes: '',
+})
+
 const error = ref('')
 
-async function handleSubmit() {
-  if (!input.value.trim()) return
-  loading.value = true
+function handleSubmit() {
   error.value = ''
 
-  try {
-    const result = await parseUnified(props.username, input.value.trim())
-
-    if (result.type === 'trade') {
-      emit('parsed', result)
-    } else if (result.type === 'adjust') {
-      emit('adjust-parsed', result)
-    } else if (result.type === 'loan') {
-      emit('loan-parsed', result)
-    }
-    input.value = ''
-  } catch (err) {
-    const msg = err.message || ''
-    if (msg.length > 100 || msg.includes('CLI')) {
-      error.value = 'AI 解析服務暫時無法使用，請稍後再試'
-    } else {
-      error.value = msg || '網路錯誤，請重試'
-    }
-  } finally {
-    loading.value = false
+  if (!form.value.symbol.trim()) {
+    error.value = '請輸入代號'
+    return
   }
-}
-
-function handleKeyDown(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault()
-    handleSubmit()
+  if (!form.value.price || Number(form.value.price) <= 0) {
+    error.value = '請輸入有效價格'
+    return
   }
+  if (!form.value.quantity || Number(form.value.quantity) <= 0) {
+    error.value = '請輸入有效數量'
+    return
+  }
+
+  emit('parsed', {
+    tradeDate: form.value.tradeDate,
+    assetType: form.value.assetType,
+    symbol: form.value.symbol.trim().toUpperCase(),
+    name: form.value.name.trim() || null,
+    side: form.value.side,
+    price: Number(form.value.price),
+    quantity: Number(form.value.quantity),
+    notes: form.value.notes.trim() || null,
+  })
+
+  // 送出後清空（保留日期和類型）
+  form.value.symbol = ''
+  form.value.name = ''
+  form.value.price = ''
+  form.value.quantity = ''
+  form.value.notes = ''
 }
 </script>
 
 <template>
-  <div class="space-y-2">
-    <div class="relative">
-      <Textarea
-        v-model="input"
-        @keydown="handleKeyDown"
-        placeholder="輸入交易或調整指令，例如：「買了兩張台積電 680元」「台積電改成 3000 股」「新增房貸 500萬 利率 2.1%」"
-        class="min-h-[80px] pr-14 text-base"
-        :disabled="loading"
-      />
-      <Button
-        size="icon"
-        @click="handleSubmit"
-        :disabled="loading || !input.trim()"
-        class="absolute bottom-2 right-2"
-      >
-        <Loader2 v-if="loading" class="h-4 w-4 animate-spin" />
-        <Send v-else class="h-4 w-4" />
-      </Button>
+  <div class="space-y-4">
+    <!-- 第一行：日期、類型、買賣 -->
+    <div class="grid grid-cols-3 gap-3">
+      <div class="space-y-1">
+        <Label class="text-xs">日期</Label>
+        <Input v-model="form.tradeDate" type="date" />
+      </div>
+      <div class="space-y-1">
+        <Label class="text-xs">類型</Label>
+        <select
+          v-model="form.assetType"
+          class="flex h-9 w-full rounded-md border border-[var(--input)] bg-transparent px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--ring)]"
+        >
+          <option v-for="t in ASSET_TYPES" :key="t.value" :value="t.value">{{ t.label }}</option>
+        </select>
+      </div>
+      <div class="space-y-1">
+        <Label class="text-xs">方向</Label>
+        <div class="flex h-9 rounded-md overflow-hidden border border-[var(--input)]">
+          <button
+            type="button"
+            class="flex-1 text-sm font-medium transition-colors"
+            :class="form.side === 'buy' ? 'bg-green-600 text-white' : 'bg-transparent text-[var(--muted-foreground)] hover:bg-[var(--muted)]'"
+            @click="form.side = 'buy'"
+          >買入</button>
+          <button
+            type="button"
+            class="flex-1 text-sm font-medium transition-colors"
+            :class="form.side === 'sell' ? 'bg-red-600 text-white' : 'bg-transparent text-[var(--muted-foreground)] hover:bg-[var(--muted)]'"
+            @click="form.side = 'sell'"
+          >賣出</button>
+        </div>
+      </div>
     </div>
 
-    <div v-if="loading" class="flex items-center gap-2 rounded-md bg-[var(--muted)] px-3 py-2">
-      <Loader2 class="h-4 w-4 animate-spin text-[var(--primary)]" />
-      <span class="text-sm text-[var(--muted-foreground)]">AI 解析中，約需 10~20 秒，請稍候...</span>
+    <!-- 第二行：代號、名稱 -->
+    <div class="grid grid-cols-2 gap-3">
+      <div class="space-y-1">
+        <Label class="text-xs">代號</Label>
+        <Input v-model="form.symbol" placeholder="如：2330、AAPL" />
+      </div>
+      <div class="space-y-1">
+        <Label class="text-xs">名稱（選填）</Label>
+        <Input v-model="form.name" placeholder="如：台積電" />
+      </div>
+    </div>
+
+    <!-- 第三行：價格、數量 -->
+    <div class="grid grid-cols-2 gap-3">
+      <div class="space-y-1">
+        <Label class="text-xs">價格</Label>
+        <Input v-model="form.price" type="number" step="0.01" placeholder="0" />
+      </div>
+      <div class="space-y-1">
+        <Label class="text-xs">數量</Label>
+        <Input v-model="form.quantity" type="number" placeholder="0" />
+      </div>
+    </div>
+
+    <!-- 第四行：備註 + 送出 -->
+    <div class="flex gap-3 items-end">
+      <div class="flex-1 space-y-1">
+        <Label class="text-xs">備註（選填）</Label>
+        <Input v-model="form.notes" placeholder="備註" />
+      </div>
+      <Button @click="handleSubmit" class="h-9 px-6">送出</Button>
     </div>
 
     <p v-if="error" class="text-sm text-[var(--destructive)]">{{ error }}</p>
-
-    <p v-if="!loading" class="text-xs text-[var(--muted-foreground)]">
-      按 Enter 送出，Shift+Enter 換行。AI 自動辨識：交易紀錄 / 部位調整 / 貸款管理
-    </p>
   </div>
 </template>

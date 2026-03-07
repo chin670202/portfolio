@@ -69,17 +69,20 @@ ${loanList}
 ### type = "loan"
 動作：add(新增貸款)、set(修改貸款，覆蓋欄位)、reduce(減少餘額)、remove(移除貸款)
 規則：
-1. loanType 是貸款類型（如「房屋貸款」「其他貸款」「循環理財貸款」）。對照現有貸款列表匹配
-2. remark 是用來區分同類貸款的備註標識（如「民德路」「金交債」「股票質借」）。對照現有貸款列表匹配
-3. balance 是貸款餘額（萬元要轉換成元，如 500萬 = 5000000）
-4. rate 是年利率百分比數字（如 2.185 代表 2.185%）
-5. usage 是貸款用途（如「房貸」「投資」）
-6. 修改時只需提供要改的欄位，其餘設 null
-7. reduce 時 balance 是要減少的金額
-8. 當有多筆同類貸款時（如多筆房屋貸款），remark 是必要的，用來指定是哪一筆
+1. loanType 是貸款類型（如「房屋貸款」「其他貸款」「循環理財貸款」「汽車貸款」）。對照現有貸款列表匹配
+2. remark 是用來區分同類貸款的**現有**備註標識（如「民德路」「金交債」「股票質借」「CUSTIN汽車」）。用於匹配哪一筆貸款
+3. newRemark 是要**更新成**的新備註值。只有在使用者想修改備註時才需要填
+4. balance 是貸款餘額（萬元要轉換成元，如 500萬 = 5000000）
+5. rate 是年利率百分比數字（如 2.185 代表 2.185%）
+6. usage 是貸款用途（如「房貸」「投資」）
+7. 修改時只需提供要改的欄位，其餘設 null
+8. reduce 時 balance 是要減少的金額
+9. 當有多筆同類貸款時（如多筆房屋貸款），remark 是必要的，用來指定是哪一筆
+10. remove 時如果使用者提到了餘額或利率來辨識哪一筆，仍需填入 balance/rate 以利系統比對
+11. 如果使用者只提到備註相關的內容（如「CUSTIN汽車改成現代CUSTIN」），判定為 loan set，用 remark 匹配，newRemark 設為新值
 
 回傳：
-{"type":"loan","action":"add|set|reduce|remove","loanType":"貸款別","remark":"備註標識或null","balance":數字或null,"rate":數字或null,"usage":"用途或null","notes":"備註或null"}
+{"type":"loan","action":"add|set|reduce|remove","loanType":"貸款別","remark":"現有備註或null","newRemark":"新備註或null","balance":數字或null,"rate":數字或null,"usage":"用途或null","notes":"備註或null"}
 
 請解析以下輸入，只回傳純 JSON，不要加任何其他文字或 markdown 格式：
 
@@ -188,6 +191,7 @@ export async function parseUnified(input, env, portfolioData) {
       action,
       loanType: parsed.loanType ? String(parsed.loanType) : null,
       remark: parsed.remark ? String(parsed.remark) : null,
+      newRemark: parsed.newRemark ? String(parsed.newRemark) : null,
       balance: parsed.balance != null ? Number(parsed.balance) : null,
       rate: parsed.rate != null ? Number(parsed.rate) : null,
       usage: parsed.usage ? String(parsed.usage) : null,

@@ -63,7 +63,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['open-news'])
+const emit = defineEmits(['open-news', 'crypto-add', 'crypto-select'])
 
 function handleOpenNews(symbol, name) {
   emit('open-news', symbol, name)
@@ -96,6 +96,8 @@ function isPriceFailed(symbol) {
       :highlight-symbol="highlightSymbol"
       :column-config="config.columns"
       @open-news="handleOpenNews"
+      @add="emit('crypto-add')"
+      @select="(crypto) => emit('crypto-select', crypto)"
     />
 
     <!-- 手機版：卡片列表 -->

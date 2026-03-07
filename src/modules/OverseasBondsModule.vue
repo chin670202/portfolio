@@ -73,7 +73,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['open-news'])
+const emit = defineEmits(['open-news', 'bond-add', 'bond-select'])
 
 function handleOpenNews(symbol, name) {
   emit('open-news', symbol, name)
@@ -113,6 +113,8 @@ function hasMaintenanceRatio() {
       :column-config="config.columns"
       :dividend-data="dividendData"
       @open-news="handleOpenNews"
+      @add="emit('bond-add')"
+      @select="(bond) => emit('bond-select', bond)"
     />
 
     <!-- 手機版：卡片列表 -->

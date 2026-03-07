@@ -88,7 +88,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['open-news'])
+const emit = defineEmits(['open-news', 'position-add', 'position-select'])
 
 function handleOpenNews(symbol, name) {
   emit('open-news', symbol, name)
@@ -131,6 +131,8 @@ function hasTwMaintenanceRatio() {
       :column-config="config.columns"
       :dividend-data="dividendData"
       @open-news="handleOpenNews"
+      @add="emit('position-add')"
+      @select="(pos) => emit('position-select', pos)"
     />
 
     <!-- 手機版：卡片列表 -->

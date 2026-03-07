@@ -18,7 +18,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['open-news'])
+const emit = defineEmits(['open-news', 'loan-add', 'loan-select', 'position-add', 'position-select', 'bond-add', 'bond-select', 'crypto-add', 'crypto-select'])
 
 function handleOpenNews(symbol, name) {
   emit('open-news', symbol, name)
@@ -57,6 +57,14 @@ function getModuleComponent(uid) {
           :config="config"
           v-bind="moduleProps"
           @open-news="handleOpenNews"
+          @loan-add="emit('loan-add')"
+          @loan-select="(loan) => emit('loan-select', loan)"
+          @position-add="emit('position-add')"
+          @position-select="(pos) => emit('position-select', pos)"
+          @bond-add="emit('bond-add')"
+          @bond-select="(bond) => emit('bond-select', bond)"
+          @crypto-add="emit('crypto-add')"
+          @crypto-select="(crypto) => emit('crypto-select', crypto)"
         />
       </div>
     </template>

@@ -2,7 +2,12 @@
   <table>
     <thead>
       <tr class="section-header">
-        <th :colspan="sortedVisibleColumns.length">股票</th>
+        <th :colspan="sortedVisibleColumns.length">
+          <div class="section-header-layout">
+            <span class="section-title">股票</span>
+            <button class="add-btn" title="新增持倉" @click.stop="emit('add')">＋</button>
+          </div>
+        </th>
       </tr>
       <tr>
         <th v-for="col in sortedVisibleColumns" :key="col.key" :class="getHeaderClass(col.key)">
@@ -17,7 +22,7 @@
       <tr class="category-header tw-header">
         <td :colspan="sortedVisibleColumns.length">台股</td>
       </tr>
-      <tr v-for="(stock, index) in twStocks" :key="'tw-' + index" :class="{ 'highlighted-row': stock.代號 === highlightSymbol }">
+      <tr v-for="(stock, index) in twStocks" :key="'tw-' + index" class="clickable-row" :class="{ 'highlighted-row': stock.代號 === highlightSymbol }" @click="emit('select', stock)">
         <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getCellClass(col.key, stock)">
           <!-- 名稱（含代號） -->
           <template v-if="col.key === 'name'">
@@ -79,7 +84,7 @@
                   'has-negative': hasNegativeNews(stock.代號) && !isNewsRead(stock.代號),
                   'is-read': isNewsRead(stock.代號)
                 }"
-                @click="$emit('open-news', stock.代號, stock.名稱)"
+                @click.stop="emit('open-news', stock.代號, stock.名稱)"
               >
                 <span v-if="hasNegativeNews(stock.代號) && !isNewsRead(stock.代號)">!</span>
                 <span v-else>i</span>
@@ -103,7 +108,7 @@
       <tr class="category-header us-header">
         <td :colspan="sortedVisibleColumns.length">美股</td>
       </tr>
-      <tr v-for="(stock, index) in usStocks" :key="'us-' + index" :class="{ 'highlighted-row': stock.代號 === highlightSymbol }">
+      <tr v-for="(stock, index) in usStocks" :key="'us-' + index" class="clickable-row" :class="{ 'highlighted-row': stock.代號 === highlightSymbol }" @click="emit('select', stock)">
         <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getCellClass(col.key, stock)">
           <!-- 名稱（含代號） -->
           <template v-if="col.key === 'name'">
@@ -146,7 +151,7 @@
                   'has-negative': hasNegativeNews(stock.代號) && !isNewsRead(stock.代號),
                   'is-read': isNewsRead(stock.代號)
                 }"
-                @click="$emit('open-news', stock.代號, stock.名稱)"
+                @click.stop="emit('open-news', stock.代號, stock.名稱)"
               >
                 <span v-if="hasNegativeNews(stock.代號) && !isNewsRead(stock.代號)">!</span>
                 <span v-else>i</span>
@@ -283,7 +288,7 @@ const props = defineProps({
   }
 })
 
-defineEmits(['open-news'])
+const emit = defineEmits(['open-news', 'add', 'select'])
 
 // 欄位定義（使用原 ETF 的欄位）
 const columnDefinitions = {
@@ -669,5 +674,49 @@ const resultFormula = computed(() => {
 .highlight-orange {
   background: #fff3cd;
   color: #856404;
+}
+
+.section-header-layout {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.section-title {
+  flex: 1;
+  text-align: center;
+}
+
+.add-btn {
+  position: absolute;
+  right: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--foreground);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  opacity: 0.7;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.add-btn:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.clickable-row:hover {
+  background: rgba(0, 0, 0, 0.04);
 }
 </style>

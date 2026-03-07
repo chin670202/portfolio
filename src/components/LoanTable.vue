@@ -3,7 +3,12 @@
   <table v-if="!isMobile">
     <thead>
       <tr class="section-header">
-        <th :colspan="sortedVisibleColumns.length">貸款</th>
+        <th :colspan="sortedVisibleColumns.length">
+          <div class="section-header-layout">
+            <span class="section-title">貸款</span>
+            <button class="add-btn" title="新增貸款" @click.stop="emit('add')">＋</button>
+          </div>
+        </th>
       </tr>
       <tr>
         <th v-for="col in sortedVisibleColumns" :key="col.key" :class="getHeaderClass(col.key)">
@@ -12,7 +17,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(loan, index) in loans" :key="index">
+      <tr v-for="(loan, index) in loans" :key="index" class="clickable-row" @click="emit('select', loan)">
         <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getCellClass(col.key)">
           <template v-if="col.key === 'loanType'">{{ loan.貸款別 }}</template>
           <template v-else-if="col.key === 'remark'">{{ loan.備註 }}</template>
@@ -41,7 +46,12 @@
   <table v-else class="mobile-loan-table">
     <thead>
       <tr class="section-header">
-        <th :colspan="mobileDataColumns.length">貸款</th>
+        <th :colspan="mobileDataColumns.length">
+          <div class="section-header-layout">
+            <span class="section-title">貸款</span>
+            <button class="add-btn" title="新增貸款" @click.stop="emit('add')">＋</button>
+          </div>
+        </th>
       </tr>
       <tr>
         <th v-for="col in mobileDataColumns" :key="col.key" :class="getHeaderClass(col.key)">
@@ -51,12 +61,12 @@
     </thead>
     <tbody>
       <template v-for="(loan, index) in loans" :key="index">
-        <tr class="loan-name-row">
+        <tr class="loan-name-row clickable-row" @click="emit('select', loan)">
           <td :colspan="mobileDataColumns.length">
             {{ loan.貸款別 }}<span v-if="loan.備註" class="remark-tag"> {{ loan.備註 }}</span>
           </td>
         </tr>
-        <tr>
+        <tr class="clickable-row" @click="emit('select', loan)">
           <td v-for="col in mobileDataColumns" :key="col.key" :class="getCellClass(col.key)">
             <template v-if="col.key === 'balance'">{{ formatNumber(loan.貸款餘額) }}</template>
             <template v-else-if="col.key === 'rate'">{{ formatPercent(loan.貸款利率) }}</template>
@@ -87,6 +97,8 @@ import { useResponsive } from '../composables/useResponsive'
 
 const { isMobile } = useResponsive()
 
+const emit = defineEmits(['add', 'select'])
+
 const props = defineProps({
   loans: {
     type: Array,
@@ -116,14 +128,9 @@ const allColumnKeys = Object.keys(columnDefinitions)
 
 // 排序後的可見欄位
 const sortedVisibleColumns = computed(() => {
-  // 支援兩種格式：
-  // 1. Array 格式（舊）: [{ key, order, visible }]
-  // 2. Object 格式（新）: { order: [...], hidden: [...] }
-
   if (!props.columnConfig ||
       (Array.isArray(props.columnConfig) && props.columnConfig.length === 0) ||
       (typeof props.columnConfig === 'object' && !Array.isArray(props.columnConfig) && !props.columnConfig.order)) {
-    // 沒有配置，使用預設順序，全部顯示
     return allColumnKeys.map(key => ({
       key,
       label: columnDefinitions[key].label,
@@ -131,12 +138,10 @@ const sortedVisibleColumns = computed(() => {
     })).sort((a, b) => a.order - b.order)
   }
 
-  // 新格式：{ order: [], hidden: [] }
   if (typeof props.columnConfig === 'object' && !Array.isArray(props.columnConfig)) {
     const { order = [], hidden = [] } = props.columnConfig
     const hiddenSet = new Set(hidden)
 
-    // 如果有指定順序，按指定順序排列
     if (order.length > 0) {
       return order
         .filter(key => !hiddenSet.has(key) && columnDefinitions[key])
@@ -147,7 +152,6 @@ const sortedVisibleColumns = computed(() => {
         }))
     }
 
-    // 沒有指定順序，只過濾隱藏欄位
     return allColumnKeys
       .filter(key => !hiddenSet.has(key))
       .map(key => ({
@@ -158,7 +162,6 @@ const sortedVisibleColumns = computed(() => {
       .sort((a, b) => a.order - b.order)
   }
 
-  // 舊格式：Array
   const configMap = {}
   props.columnConfig.forEach(col => {
     configMap[col.key] = col
@@ -182,14 +185,12 @@ const mobileDataColumns = computed(() =>
   sortedVisibleColumns.value.filter(col => col.key !== 'loanType' && col.key !== 'remark')
 )
 
-// 取得表頭樣式
 const getHeaderClass = (key) => {
   if (['balance', 'monthlyPayment', 'annualInterest'].includes(key)) return 'text-right'
   if (['loanType', 'remark'].includes(key)) return 'text-left'
   return ''
 }
 
-// 取得儲存格樣式
 const getCellClass = (key) => {
   const classes = []
   if (key === 'loanType' || key === 'remark') classes.push('text-left')
@@ -198,7 +199,6 @@ const getCellClass = (key) => {
   return classes.join(' ')
 }
 
-// 取得小計行樣式
 const getFooterCellClass = (key) => {
   const classes = []
   if (['balance', 'monthlyPayment', 'annualInterest'].includes(key)) classes.push('text-right', 'calculated')
@@ -255,5 +255,49 @@ table:not(.mobile-loan-table) td:not(:first-child) {
 .remark-tag {
   color: var(--muted-foreground);
   font-weight: 400;
+}
+
+.section-header-layout {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.section-title {
+  flex: 1;
+  text-align: center;
+}
+
+.add-btn {
+  position: absolute;
+  right: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--foreground);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  opacity: 0.7;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.add-btn:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.clickable-row:hover {
+  background: rgba(0, 0, 0, 0.04);
 }
 </style>

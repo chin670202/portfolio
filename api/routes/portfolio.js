@@ -52,11 +52,27 @@ portfolioRoutes.post('/:user/parse', async (c) => {
     // For loan operations, attach the matched existing loan for preview
     if (result.type === 'loan' && portfolioData && result.action !== 'add') {
       const loans = portfolioData['貸款'] || []
-      const matched = loans.find(l => {
-        if (l['貸款別'] !== result.loanType) return false
-        if (result.remark) return l['備註'] === result.remark
-        return true
-      })
+      const sameType = loans.filter(l => l['貸款別'] === result.loanType)
+
+      let matched = null
+      if (result.remark) {
+        matched = sameType.find(l => l['備註'] === result.remark)
+      } else if (sameType.length === 1) {
+        matched = sameType[0]
+      } else if (sameType.length > 1) {
+        // Disambiguate by rate and/or balance
+        let candidates = sameType
+        if (result.rate != null) {
+          const byRate = candidates.filter(l => l['貸款利率'] === result.rate)
+          if (byRate.length > 0) candidates = byRate
+        }
+        if (candidates.length > 1 && result.balance != null) {
+          const byBalance = candidates.filter(l => l['貸款餘額'] === result.balance)
+          if (byBalance.length > 0) candidates = byBalance
+        }
+        if (candidates.length === 1) matched = candidates[0]
+      }
+
       if (matched) {
         result.matchedLoan = {
           loanType: matched['貸款別'],
@@ -107,7 +123,9 @@ portfolioRoutes.post('/:user/adjust', async (c) => {
  * Handle position (holding) adjustments
  */
 async function handlePositionAdjust(c, db, user, data, body) {
-  const { action, symbol, name, quantity, avgPrice } = body
+  const { action, symbol, name, quantity, avgPrice,
+    // Bond-specific fields
+    companyName, buyPrice, couponRate, paymentDate, tradeDate, maturityDate, pledgeUnits } = body
   if (!action || !symbol) {
     return c.json({ error: '缺少必要欄位' }, 400)
   }
@@ -132,6 +150,14 @@ async function handlePositionAdjust(c, db, user, data, body) {
       found.entry['持有單位'] = quantity
       if (avgPrice != null) found.entry['買入均價'] = Math.round(avgPrice * 100) / 100
       if (name) found.entry['名稱'] = name
+      // Bond-specific fields
+      if (companyName) found.entry['公司名稱'] = companyName
+      if (buyPrice != null) found.entry['買入價格'] = Math.round(buyPrice * 100) / 100
+      if (couponRate != null) found.entry['票面利率'] = couponRate
+      if (paymentDate !== undefined) found.entry['配息日'] = paymentDate || ''
+      if (tradeDate !== undefined) found.entry['交易日'] = tradeDate || ''
+      if (maturityDate !== undefined) found.entry['到期日'] = maturityDate || ''
+      if (pledgeUnits != null) found.entry['質押單位'] = pledgeUnits
     } else {
       if (!data['其它資產']) data['其它資產'] = []
       data['其它資產'].push({
@@ -199,7 +225,7 @@ async function handlePositionAdjust(c, db, user, data, body) {
  * Handle loan adjustments
  */
 async function handleLoanAdjust(c, db, user, data, body) {
-  const { action, loanType, balance, rate, usage, remark } = body
+  const { action, loanType, balance, rate, usage, remark, newRemark, newLoanType } = body
   if (!action || !loanType) {
     return c.json({ error: '缺少貸款名稱' }, 400)
   }
@@ -220,11 +246,24 @@ async function handleLoanAdjust(c, db, user, data, body) {
     // Only one of this type: safe to match
     idx = sameTypeLoans[0]._idx
   } else if (sameTypeLoans.length > 1 && action !== 'add') {
-    // Multiple same-type loans without remark: reject with hint
-    const options = sameTypeLoans.map(l => l['備註'] ? `「${l['備註']}」` : '（無備註）').join('、')
-    return c.json({
-      error: `有 ${sameTypeLoans.length} 筆「${loanType}」，請指定是哪一筆：${options}`
-    }, 400)
+    // Multiple same-type loans without remark: try disambiguating by rate/balance
+    let candidates = sameTypeLoans
+    if (rate != null) {
+      const byRate = candidates.filter(l => l['貸款利率'] === rate)
+      if (byRate.length > 0) candidates = byRate
+    }
+    if (candidates.length > 1 && balance != null && action === 'remove') {
+      const byBalance = candidates.filter(l => l['貸款餘額'] === balance)
+      if (byBalance.length > 0) candidates = byBalance
+    }
+    if (candidates.length === 1) {
+      idx = candidates[0]._idx
+    } else {
+      const options = sameTypeLoans.map(l => l['備註'] ? `「${l['備註']}」` : '（無備註）').join('、')
+      return c.json({
+        error: `有 ${sameTypeLoans.length} 筆「${loanType}」，請指定是哪一筆：${options}`
+      }, 400)
+    }
   }
 
   if (action === 'add') {
@@ -250,7 +289,9 @@ async function handleLoanAdjust(c, db, user, data, body) {
       if (balance != null) loans[idx]['貸款餘額'] = balance
       if (rate != null) loans[idx]['貸款利率'] = rate
       if (usage) loans[idx]['用途'] = usage
-      if (remark) loans[idx]['備註'] = remark
+      if (newLoanType) loans[idx]['貸款別'] = newLoanType
+      if (newRemark) loans[idx]['備註'] = newRemark
+      else if (remark && !loans[idx]['備註']) loans[idx]['備註'] = remark
     }
   } else if (action === 'reduce') {
     const label = remark ? `${loanType}（${remark}）` : loanType

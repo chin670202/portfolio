@@ -21,6 +21,9 @@ import {
 } from '../services/calculator'
 import { getBondPrice, getStockPrice, getLatestDividend, getNextDividendDate, getCryptoPrice, getUsdTwdRate, getUsStockPrice } from '../services/api'
 import { useNews } from '../composables/useNews'
+import LoanFormDialog from '../components/LoanFormDialog.vue'
+import PositionFormDialog from '../components/PositionFormDialog.vue'
+import BondFormDialog from '../components/BondFormDialog.vue'
 import packageJson from '../../package.json'
 
 const route = useRoute()
@@ -49,6 +52,70 @@ const moduleConfig = ref(getDefaultModuleConfig())
 
 // 設定視窗狀態
 const showSettings = ref(false)
+
+// 貸款表單 Dialog 狀態
+const loanDialog = ref({ open: false, mode: 'add', loan: null })
+
+function handleLoanAdd() {
+  loanDialog.value = { open: true, mode: 'add', loan: null }
+}
+function handleLoanSelect(loan) {
+  loanDialog.value = { open: true, mode: 'view', loan }
+}
+function closeLoanDialog() {
+  loanDialog.value = { open: false, mode: 'add', loan: null }
+}
+function handleLoanSaved() {
+  loadData()
+}
+
+// 持倉表單 Dialog 狀態
+const positionDialog = ref({ open: false, mode: 'add', position: null })
+
+function handlePositionAdd() {
+  positionDialog.value = { open: true, mode: 'add', position: null }
+}
+function handlePositionSelect(pos) {
+  positionDialog.value = { open: true, mode: 'view', position: pos }
+}
+function closePositionDialog() {
+  positionDialog.value = { open: false, mode: 'add', position: null }
+}
+function handlePositionSaved() {
+  loadData()
+}
+
+// 債券表單 Dialog 狀態
+const bondDialog = ref({ open: false, mode: 'add', bond: null })
+
+function handleBondAdd() {
+  bondDialog.value = { open: true, mode: 'add', bond: null }
+}
+function handleBondSelect(bond) {
+  bondDialog.value = { open: true, mode: 'view', bond }
+}
+function closeBondDialog() {
+  bondDialog.value = { open: false, mode: 'add', bond: null }
+}
+function handleBondSaved() {
+  loadData()
+}
+
+// 加密貨幣表單 Dialog 狀態（複用 PositionFormDialog）
+const cryptoDialog = ref({ open: false, mode: 'add', position: null })
+
+function handleCryptoAdd() {
+  cryptoDialog.value = { open: true, mode: 'add', position: null }
+}
+function handleCryptoSelect(crypto) {
+  cryptoDialog.value = { open: true, mode: 'view', position: crypto }
+}
+function closeCryptoDialog() {
+  cryptoDialog.value = { open: false, mode: 'add', position: null }
+}
+function handleCryptoSaved() {
+  loadData()
+}
 
 // 新聞管理（使用 composable）
 const {
@@ -742,6 +809,14 @@ onMounted(() => {
         :module-config="moduleConfig"
         :module-props="moduleProps"
         @open-news="handleOpenNews"
+        @loan-add="handleLoanAdd"
+        @loan-select="handleLoanSelect"
+        @position-add="handlePositionAdd"
+        @position-select="handlePositionSelect"
+        @bond-add="handleBondAdd"
+        @bond-select="handleBondSelect"
+        @crypto-add="handleCryptoAdd"
+        @crypto-select="handleCryptoSelect"
       />
 
       <div class="update-date">
@@ -758,6 +833,46 @@ onMounted(() => {
         :total-count="allProducts.length"
         @close="showNewsModal = false"
         @navigate="handleNewsNavigate"
+      />
+
+      <!-- 持倉表單 Dialog -->
+      <PositionFormDialog
+        :open="positionDialog.open"
+        :mode="positionDialog.mode"
+        :position="positionDialog.position"
+        :username="currentUsername"
+        @close="closePositionDialog"
+        @saved="handlePositionSaved"
+      />
+
+      <!-- 債券表單 Dialog -->
+      <BondFormDialog
+        :open="bondDialog.open"
+        :mode="bondDialog.mode"
+        :bond="bondDialog.bond"
+        :username="currentUsername"
+        @close="closeBondDialog"
+        @saved="handleBondSaved"
+      />
+
+      <!-- 加密貨幣表單 Dialog（複用 PositionFormDialog） -->
+      <PositionFormDialog
+        :open="cryptoDialog.open"
+        :mode="cryptoDialog.mode"
+        :position="cryptoDialog.position"
+        :username="currentUsername"
+        @close="closeCryptoDialog"
+        @saved="handleCryptoSaved"
+      />
+
+      <!-- 貸款表單 Dialog -->
+      <LoanFormDialog
+        :open="loanDialog.open"
+        :mode="loanDialog.mode"
+        :loan="loanDialog.loan"
+        :username="currentUsername"
+        @close="closeLoanDialog"
+        @saved="handleLoanSaved"
       />
 
       <!-- 設定視窗 -->

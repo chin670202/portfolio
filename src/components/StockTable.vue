@@ -2,7 +2,12 @@
   <table>
     <thead>
       <tr class="section-header">
-        <th :colspan="sortedVisibleColumns.length">債券</th>
+        <th :colspan="sortedVisibleColumns.length">
+          <div class="section-header-layout">
+            <span class="section-title">債券</span>
+            <button class="add-btn" title="新增債券" @click.stop="emit('add')">＋</button>
+          </div>
+        </th>
       </tr>
       <tr>
         <th v-for="col in sortedVisibleColumns" :key="col.key" :class="getHeaderClass(col.key)">
@@ -11,7 +16,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(stock, index) in stocks" :key="index" :class="{ 'highlighted-row': stock.代號 === highlightSymbol }">
+      <tr v-for="(stock, index) in stocks" :key="index" class="clickable-row" :class="{ 'highlighted-row': stock.代號 === highlightSymbol }" @click="emit('select', stock)">
         <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getCellClass(col.key, stock)">
           <!-- 公司名稱（含代號） -->
           <template v-if="col.key === 'companyName'">
@@ -71,7 +76,7 @@
                   'has-negative': hasNegativeNews(stock.代號) && !isNewsRead(stock.代號),
                   'is-read': isNewsRead(stock.代號)
                 }"
-                @click="$emit('open-news', stock.代號, stock.公司名稱)"
+                @click.stop="emit('open-news', stock.代號, stock.公司名稱)"
               >
                 <span v-if="hasNegativeNews(stock.代號) && !isNewsRead(stock.代號)">!</span>
                 <span v-else>i</span>
@@ -102,7 +107,7 @@
   </table>
 
   <div class="maintain-rate-section">
-    <span class="maintain-rate-box highlight-green clickable" @click="showModal = true">
+    <span class="maintain-rate-box highlight-green clickable" @click.stop="showModal = true">
       整戶維持率: <span class="calculated">{{ subtotal.整戶維持率百分比 }}%</span>
     </span>
     <span class="maintain-rate-box highlight-yellow">
@@ -182,7 +187,7 @@ const props = defineProps({
   }
 })
 
-defineEmits(['open-news'])
+const emit = defineEmits(['open-news', 'add', 'select'])
 
 // 欄位定義（含標籤和預設順序）
 const columnDefinitions = {
@@ -390,6 +395,50 @@ const resultFormula = computed(() => {
 </script>
 
 <style scoped>
+.section-header-layout {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.section-title {
+  flex: 1;
+  text-align: center;
+}
+
+.add-btn {
+  position: absolute;
+  right: 0;
+  font-size: 20px;
+  font-weight: 700;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid currentColor;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1;
+}
+
+.add-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  transform: scale(1.1);
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.clickable-row:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
 .symbol-sub {
   font-size: 12px;
   color: #9ca3af;

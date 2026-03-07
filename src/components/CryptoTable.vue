@@ -2,7 +2,12 @@
   <table>
     <thead>
       <tr class="section-header">
-        <th :colspan="sortedVisibleColumns.length">加密貨幣</th>
+        <th :colspan="sortedVisibleColumns.length">
+          <div class="section-header-layout">
+            <span class="section-title">加密貨幣</span>
+            <button class="add-btn" title="新增加密貨幣" @click.stop="emit('add')">＋</button>
+          </div>
+        </th>
       </tr>
       <tr>
         <th v-for="col in sortedVisibleColumns" :key="col.key" :class="getHeaderClass(col.key)">
@@ -11,7 +16,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(crypto, index) in cryptos" :key="index" :class="{ 'highlighted-row': crypto.代號 === highlightSymbol }">
+      <tr v-for="(crypto, index) in cryptos" :key="index" class="clickable-row" :class="{ 'highlighted-row': crypto.代號 === highlightSymbol }" @click="emit('select', crypto)">
         <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getCellClass(col.key, crypto)">
           <!-- 名稱（含代號） -->
           <template v-if="col.key === 'name'">
@@ -46,7 +51,7 @@
                   'has-negative': hasNegativeNews(crypto.代號) && !isNewsRead(crypto.代號),
                   'is-read': isNewsRead(crypto.代號)
                 }"
-                @click="$emit('open-news', crypto.代號, crypto.名稱)"
+                @click.stop="emit('open-news', crypto.代號, crypto.名稱)"
               >
                 <span v-if="hasNegativeNews(crypto.代號) && !isNewsRead(crypto.代號)">!</span>
                 <span v-else>i</span>
@@ -118,7 +123,7 @@ const props = defineProps({
   }
 })
 
-defineEmits(['open-news'])
+const emit = defineEmits(['open-news', 'add', 'select'])
 
 // 欄位定義（簡化版，無配息欄位）
 const columnDefinitions = {
@@ -248,6 +253,50 @@ const hasNews = (symbol) => {
 </script>
 
 <style scoped>
+.section-header-layout {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.section-title {
+  flex: 1;
+  text-align: center;
+}
+
+.add-btn {
+  position: absolute;
+  right: 0;
+  font-size: 20px;
+  font-weight: 700;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid currentColor;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1;
+}
+
+.add-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  transform: scale(1.1);
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.clickable-row:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
 .symbol-sub {
   font-size: 12px;
   color: #9ca3af;

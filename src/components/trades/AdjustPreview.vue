@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-vue-next'
 import { applyAdjust } from '@/services/tradeApi'
+import { toast } from 'vue-sonner'
 
 const ACTION_LABELS = {
   set: '設定',
@@ -55,10 +56,12 @@ async function handleConfirm() {
   saving.value = true
   try {
     await applyAdjust(props.username, props.adjustment)
+    const name = props.adjustment.name || props.adjustment.symbol
+    toast.success(`${ACTION_LABELS[props.adjustment.action]}${name} 完成`)
     emit('close')
     emit('saved')
   } catch (err) {
-    alert(err.message || '調整失敗')
+    toast.error(err.message || '調整失敗')
   } finally {
     saving.value = false
   }

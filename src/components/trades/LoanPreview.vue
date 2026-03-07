@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-vue-next'
 import { applyAdjust } from '@/services/tradeApi'
+import { toast } from 'vue-sonner'
 
 const ACTION_LABELS = {
   add: '新增',
@@ -50,10 +51,14 @@ async function handleConfirm() {
   saving.value = true
   try {
     await applyAdjust(props.username, props.loan)
+    const label = loanDisplayName(props.loan)
+    toast.success(`貸款${ACTION_LABELS[props.loan.action] || '操作'}成功`, {
+      description: label || undefined,
+    })
     emit('close')
     emit('saved')
   } catch (err) {
-    alert(err.message || '操作失敗')
+    toast.error(err.message || '操作失敗')
   } finally {
     saving.value = false
   }
@@ -108,6 +113,12 @@ function handleOpenChange(val) {
 
           <!-- Set: show what changes -->
           <template v-else-if="loan.action === 'set'">
+            <div v-if="loan.newRemark" class="text-sm">
+              備註改為：<span class="font-semibold">{{ loan.newRemark }}</span>
+              <span v-if="loan.matchedLoan?.remark" class="text-[var(--muted-foreground)]">
+                （原「{{ loan.matchedLoan.remark }}」）
+              </span>
+            </div>
             <div v-if="loan.balance != null" class="text-sm">
               餘額改為：<span class="font-semibold">{{ formatAmount(loan.balance) }}</span>
               <span v-if="loan.matchedLoan" class="text-[var(--muted-foreground)]">

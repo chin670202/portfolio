@@ -11,17 +11,17 @@ defineProps({
     type: Object,
     required: true
   },
-  // 計算後的貸款資料
   calculatedLoans: {
     type: Array,
     required: true
   },
-  // 貸款總計
   loanTotal: {
     type: Object,
     required: true
   }
 })
+
+const emit = defineEmits(['loan-add', 'loan-select'])
 </script>
 
 <template>
@@ -30,6 +30,8 @@ defineProps({
       :loans="calculatedLoans"
       :total="loanTotal"
       :column-config="config.columns"
+      @add="emit('loan-add')"
+      @select="(loan) => emit('loan-select', loan)"
     />
   </div>
 </template>

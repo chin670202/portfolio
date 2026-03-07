@@ -4,8 +4,6 @@ import { useRoute } from 'vue-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import TradeInput from '@/components/trades/TradeInput.vue'
 import TradePreview from '@/components/trades/TradePreview.vue'
-import AdjustPreview from '@/components/trades/AdjustPreview.vue'
-import LoanPreview from '@/components/trades/LoanPreview.vue'
 import TradeTable from '@/components/trades/TradeTable.vue'
 import { fetchTrades, fetchBrokers, getDefaultBroker, calculateFee } from '@/services/tradeApi'
 
@@ -16,10 +14,6 @@ const trades = ref([])
 const total = ref(0)
 const parsedTrade = ref(null)
 const previewOpen = ref(false)
-const parsedAdjust = ref(null)
-const adjustPreviewOpen = ref(false)
-const parsedLoan = ref(null)
-const loanPreviewOpen = ref(false)
 const brokers = ref([])
 const defaultBrokerId = ref(null)
 
@@ -47,7 +41,6 @@ async function loadBrokerData() {
 }
 
 async function handleParsed(parsed) {
-  // If user has a default broker, auto-calculate fees
   if (defaultBrokerId.value) {
     try {
       const { fee, tax } = await calculateFee({
@@ -74,26 +67,6 @@ function handleClosePreview() {
   parsedTrade.value = null
 }
 
-function handleAdjustParsed(parsed) {
-  parsedAdjust.value = parsed
-  adjustPreviewOpen.value = true
-}
-
-function handleCloseAdjustPreview() {
-  adjustPreviewOpen.value = false
-  parsedAdjust.value = null
-}
-
-function handleLoanParsed(parsed) {
-  parsedLoan.value = parsed
-  loanPreviewOpen.value = true
-}
-
-function handleCloseLoanPreview() {
-  loanPreviewOpen.value = false
-  parsedLoan.value = null
-}
-
 function handleDefaultBrokerChanged(brokerId) {
   defaultBrokerId.value = brokerId
 }
@@ -110,10 +83,10 @@ onMounted(() => {
 
     <Card>
       <CardHeader>
-        <CardTitle>AI 語意輸入</CardTitle>
+        <CardTitle>新增交易</CardTitle>
       </CardHeader>
       <CardContent>
-        <TradeInput :username="username" @parsed="handleParsed" @adjust-parsed="handleAdjustParsed" @loan-parsed="handleLoanParsed" />
+        <TradeInput :username="username" @parsed="handleParsed" />
       </CardContent>
     </Card>
 
@@ -126,22 +99,6 @@ onMounted(() => {
       @close="handleClosePreview"
       @saved="loadTrades"
       @default-broker-changed="handleDefaultBrokerChanged"
-    />
-
-    <AdjustPreview
-      :adjustment="parsedAdjust"
-      :open="adjustPreviewOpen"
-      :username="username"
-      @close="handleCloseAdjustPreview"
-      @saved="loadTrades"
-    />
-
-    <LoanPreview
-      :loan="parsedLoan"
-      :open="loanPreviewOpen"
-      :username="username"
-      @close="handleCloseLoanPreview"
-      @saved="loadTrades"
     />
 
     <div class="flex items-center justify-between">

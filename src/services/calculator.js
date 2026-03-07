@@ -199,8 +199,8 @@ export function calculateOtherAssetDerivedData(asset, usdRate) {
  * - J: 每年利息 = G*H
  */
 export function calculateLoanDerivedData(loan) {
-  const G = loan.貸款餘額
-  const H = loan.貸款利率 / 100
+  const G = loan.貸款餘額 || 0
+  const H = (loan.貸款利率 || 0) / 100
 
   // J: 每年利息 = G * H
   const 每年利息 = G * H
@@ -278,9 +278,9 @@ export function calculateOtherAssetSubtotal(assets) {
  * 計算貸款總計（對應 Excel G47, I47, J47）
  */
 export function calculateLoanTotal(loans) {
-  const 貸款餘額 = loans.reduce((sum, l) => sum + l.貸款餘額, 0)
-  const 月繳金額 = loans.reduce((sum, l) => sum + l.月繳金額, 0)
-  const 每年利息 = loans.reduce((sum, l) => sum + l.每年利息, 0)
+  const 貸款餘額 = loans.reduce((sum, l) => sum + (l.貸款餘額 || 0), 0)
+  const 月繳金額 = loans.reduce((sum, l) => sum + (l.月繳金額 || 0), 0)
+  const 每年利息 = loans.reduce((sum, l) => sum + (l.每年利息 || 0), 0)
   return {
     貸款餘額: Math.round(貸款餘額),
     月繳金額: Math.round(月繳金額),
