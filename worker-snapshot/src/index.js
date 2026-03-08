@@ -85,6 +85,12 @@ async function generateSnapshots(env, specificUser = null) {
       // 計算快照
       const snapshot = calculateSnapshot(portfolioData, priceResult)
 
+      // 安全檢查：有持倉但部位總額為 0，代表價格全部抓取失敗，跳過
+      if (snapshot.部位總額 === 0 && hasHoldings) {
+        results.push({ user, success: false, error: '價格抓取失敗，部位總額為 0，跳過快照' })
+        continue
+      }
+
       // 重複偵測：同日已有記錄則跳過
       const existing = portfolioData.資產變化記錄 || []
       if (existing.some(r => r.記錄時間 === snapshot.記錄時間)) {
