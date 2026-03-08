@@ -328,11 +328,19 @@ const getLoanBalanceByUsage = (usage) => {
     .reduce((sum, loan) => sum + loan.貸款餘額, 0)
 }
 
+// 貸款用途匹配：檢查貸款別和備註欄位
+const BOND_LOAN_KEYWORDS = ['金交債', '債券貸款']
+const STOCK_LOAN_KEYWORDS = ['股票', '質借']
+
+function matchLoanKeywords(loan, keywords) {
+  const text = `${loan.貸款別 || ''} ${loan.備註 || ''}`
+  return keywords.some(kw => text.includes(kw))
+}
+
 // 債券小計（需要金交債相關貸款餘額來計算維持率）
 const bondSubtotal = computed(() => {
   if (!calculatedBonds.value.length) return {}
-  // 查找包含「金交債」的貸款，加總所有金交債相關貸款
-  const bondLoans = calculatedLoans.value.filter(l => l.貸款別.includes('金交債'))
+  const bondLoans = calculatedLoans.value.filter(l => matchLoanKeywords(l, BOND_LOAN_KEYWORDS))
   const totalBondLoan = bondLoans.reduce((sum, l) => sum + l.貸款餘額, 0)
   return calculateBondSubtotal(calculatedBonds.value, totalBondLoan, 0)
 })
@@ -340,8 +348,7 @@ const bondSubtotal = computed(() => {
 // ETF 小計（需要股票質借相關貸款餘額來計算維持率）
 const etfSubtotal = computed(() => {
   if (!calculatedEtfs.value.length) return {}
-  // 查找包含「股票」的貸款，加總所有股票相關貸款
-  const etfLoans = calculatedLoans.value.filter(l => l.貸款別.includes('股票'))
+  const etfLoans = calculatedLoans.value.filter(l => matchLoanKeywords(l, STOCK_LOAN_KEYWORDS))
   const totalEtfLoan = etfLoans.reduce((sum, l) => sum + l.貸款餘額, 0)
   return calculateEtfSubtotal(calculatedEtfs.value, totalEtfLoan, 0)
 })
@@ -446,16 +453,16 @@ const netIncome = computed(() => {
   return calculateNetIncome(grandTotal.value.每年利息, loanTotal.value.每年利息)
 })
 
-// 股票（海外債券）的貸款明細 - 查找包含「金交債」的貸款
+// 債券的貸款明細
 const bondLoanDetails = computed(() => {
-  const loans = calculatedLoans.value.filter(l => l.貸款別.includes('金交債'))
-  return loans.map(l => ({ name: l.貸款別, value: l.貸款餘額 }))
+  const loans = calculatedLoans.value.filter(l => matchLoanKeywords(l, BOND_LOAN_KEYWORDS))
+  return loans.map(l => ({ name: `${l.貸款別}${l.備註 ? ' ' + l.備註 : ''}`, value: l.貸款餘額 }))
 })
 
-// ETF 的貸款明細 - 查找包含「股票」的貸款
+// ETF/股票的貸款明細
 const etfLoanDetails = computed(() => {
-  const loans = calculatedLoans.value.filter(l => l.貸款別.includes('股票'))
-  return loans.map(l => ({ name: l.貸款別, value: l.貸款餘額 }))
+  const loans = calculatedLoans.value.filter(l => matchLoanKeywords(l, STOCK_LOAN_KEYWORDS))
+  return loans.map(l => ({ name: `${l.貸款別}${l.備註 ? ' ' + l.備註 : ''}`, value: l.貸款餘額 }))
 })
 
 // 傳遞給 ModuleContainer 的所有 props

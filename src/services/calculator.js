@@ -231,7 +231,8 @@ export function calculateBondSubtotal(bonds, loanG42, loanG43) {
   const 預警資產 = (loanG42 + loanG43) * 1.27
 
   // O14: 整戶維持率 = O12 / (G42+G43) * 100
-  const 整戶維持率百分比 = (已質押資產 / (loanG42 + loanG43)) * 100
+  const loanTotal = loanG42 + loanG43
+  const 整戶維持率百分比 = loanTotal > 0 ? (已質押資產 / loanTotal) * 100 : 0
 
   return {
     台幣資產: Math.round(台幣資產),
@@ -253,7 +254,8 @@ export function calculateEtfSubtotal(etfs, loanG44, loanG45) {
   const 已質押資產 = etfs.reduce((sum, e) => sum + e.已質押資產, 0)
 
   // O27: 整戶維持率 = O25 / (G44+G45) * 100
-  const 整戶維持率百分比 = (已質押資產 / (loanG44 + loanG45)) * 100
+  const loanTotal = loanG44 + loanG45
+  const 整戶維持率百分比 = loanTotal > 0 ? (已質押資產 / loanTotal) * 100 : 0
 
   return {
     台幣資產: Math.round(台幣資產),

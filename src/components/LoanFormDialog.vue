@@ -28,7 +28,6 @@ const form = ref({
   remark: '',
   balance: '',
   rate: '',
-  usage: '',
 })
 
 const dialogTitle = computed(() => {
@@ -49,14 +48,13 @@ watch(() => props.open, (val) => {
   if (!val) return
   internalMode.value = props.mode
   if (props.mode === 'add') {
-    form.value = { loanType: '', remark: '', balance: '', rate: '', usage: '' }
+    form.value = { loanType: '', remark: '', balance: '', rate: '' }
   } else if (props.loan) {
     form.value = {
       loanType: props.loan.貸款別 || '',
       remark: props.loan.備註 || '',
       balance: props.loan.貸款餘額 != null ? String(props.loan.貸款餘額) : '',
       rate: props.loan.貸款利率 != null ? String(props.loan.貸款利率) : '',
-      usage: props.loan.用途 || '',
     }
   }
 })
@@ -77,7 +75,6 @@ function switchToView() {
       remark: props.loan.備註 || '',
       balance: props.loan.貸款餘額 != null ? String(props.loan.貸款餘額) : '',
       rate: props.loan.貸款利率 != null ? String(props.loan.貸款利率) : '',
-      usage: props.loan.用途 || '',
     }
   }
 }
@@ -97,7 +94,6 @@ async function handleSubmit() {
         remark: form.value.remark.trim() || null,
         balance: form.value.balance ? Number(form.value.balance) : null,
         rate: form.value.rate ? Number(form.value.rate) : null,
-        usage: form.value.usage.trim() || null,
       })
       toast.success('貸款新增成功')
     } else if (internalMode.value === 'edit') {
@@ -110,12 +106,10 @@ async function handleSubmit() {
       const newBalance = form.value.balance ? Number(form.value.balance) : null
       const newRate = form.value.rate ? Number(form.value.rate) : null
       const newRemark = form.value.remark.trim()
-      const newUsage = form.value.usage.trim()
       const newLoanType = form.value.loanType.trim()
 
       if (newBalance != null) payload.balance = newBalance
       if (newRate != null) payload.rate = newRate
-      if (newUsage) payload.usage = newUsage
       if (newRemark !== (props.loan.備註 || '')) {
         payload.newRemark = newRemark || null
       }
@@ -162,7 +156,7 @@ function handleOpenChange(val) {
             <span class="detail-value font-semibold">{{ loan.貸款別 }}</span>
           </div>
           <div v-if="loan.備註" class="detail-row">
-            <span class="detail-label">備註</span>
+            <span class="detail-label">來源或備註</span>
             <span class="detail-value">{{ loan.備註 }}</span>
           </div>
           <div class="detail-row">
@@ -180,10 +174,6 @@ function handleOpenChange(val) {
           <div v-if="loan.每年利息" class="detail-row">
             <span class="detail-label">每年利息</span>
             <span class="detail-value calculated-text">{{ formatNumber(loan.每年利息) }}</span>
-          </div>
-          <div v-if="loan.用途" class="detail-row">
-            <span class="detail-label">用途</span>
-            <span class="detail-value">{{ loan.用途 }}</span>
           </div>
         </div>
 
@@ -209,8 +199,8 @@ function handleOpenChange(val) {
           />
         </div>
         <div class="space-y-2">
-          <Label>備註</Label>
-          <Input v-model="form.remark" placeholder="用於區分同類貸款（選填）" />
+          <Label>來源或備註</Label>
+          <Input v-model="form.remark" placeholder="如：民德路、金交債 2.15%（選填）" />
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div class="space-y-2">
@@ -221,10 +211,6 @@ function handleOpenChange(val) {
             <Label>貸款利率 (%)</Label>
             <Input v-model="form.rate" type="number" step="0.001" placeholder="0" />
           </div>
-        </div>
-        <div class="space-y-2">
-          <Label>用途（選填）</Label>
-          <Input v-model="form.usage" placeholder="如：房貸、投資" />
         </div>
       </div>
 

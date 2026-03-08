@@ -117,7 +117,7 @@ const props = defineProps({
 // 欄位定義
 const columnDefinitions = {
   loanType: { label: '貸款', defaultOrder: 1 },
-  remark: { label: '備註', defaultOrder: 2 },
+  remark: { label: '來源或備註', defaultOrder: 2 },
   balance: { label: '餘額', defaultOrder: 3 },
   rate: { label: '利率', defaultOrder: 4 },
   monthlyPayment: { label: '月繳', defaultOrder: 5 },

@@ -106,7 +106,7 @@
     </tfoot>
   </table>
 
-  <div class="maintain-rate-section">
+  <div v-if="subtotal.已質押資產 > 0 && subtotal.整戶維持率百分比 > 0" class="maintain-rate-section">
     <span class="maintain-rate-box highlight-green clickable" @click.stop="showModal = true">
       整戶維持率: <span class="calculated">{{ subtotal.整戶維持率百分比 }}%</span>
     </span>
@@ -409,25 +409,24 @@ const resultFormula = computed(() => {
 .add-btn {
   position: absolute;
   right: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
   font-size: 20px;
   font-weight: 700;
+  color: var(--foreground);
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid currentColor;
   border-radius: 6px;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  transition: all 0.15s;
-  line-height: 1;
+  opacity: 0.7;
 }
 
 .add-btn:hover {
+  opacity: 1;
   background: rgba(0, 0, 0, 0.08);
-  transform: scale(1.1);
 }
 
 .clickable-row {

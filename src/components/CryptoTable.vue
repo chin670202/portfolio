@@ -267,25 +267,24 @@ const hasNews = (symbol) => {
 .add-btn {
   position: absolute;
   right: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
   font-size: 20px;
   font-weight: 700;
+  color: var(--foreground);
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid currentColor;
   border-radius: 6px;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  transition: all 0.15s;
-  line-height: 1;
+  opacity: 0.7;
 }
 
 .add-btn:hover {
+  opacity: 1;
   background: rgba(0, 0, 0, 0.08);
-  transform: scale(1.1);
 }
 
 .clickable-row {

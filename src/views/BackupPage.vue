@@ -9,11 +9,14 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Loader2, Eye, EyeOff, RotateCcw, ChevronDown, ChevronUp } from 'lucide-vue-next'
+import { Loader2, RotateCcw, ArrowLeft, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import { fetchBackups, fetchBackupData, restoreBackup } from '@/services/tradeApi'
 
 const route = useRoute()
 const username = computed(() => route.params.username)
+
+// View state: 'list' or 'preview'
+const currentView = ref('list')
 
 // List state
 const backups = ref([])
@@ -21,7 +24,7 @@ const loading = ref(true)
 const error = ref(null)
 
 // Preview state
-const selectedFilename = ref(null)
+const selectedBackup = ref(null)
 const previewData = ref(null)
 const previewLoading = ref(false)
 const previewError = ref(null)
@@ -47,18 +50,12 @@ async function loadBackups() {
 }
 
 async function handlePreview(backup) {
-  // Toggle off
-  if (selectedFilename.value === backup.filename) {
-    selectedFilename.value = null
-    previewData.value = null
-    return
-  }
-
-  selectedFilename.value = backup.filename
+  selectedBackup.value = backup
   previewData.value = null
   previewError.value = null
   previewLoading.value = true
   showRawJson.value = false
+  currentView.value = 'preview'
 
   try {
     const result = await fetchBackupData(username.value, backup.filename)
@@ -70,21 +67,50 @@ async function handlePreview(backup) {
   }
 }
 
-const previewSummary = computed(() => {
-  if (!previewData.value) return null
-  const d = previewData.value
-  return {
-    updateDate: d.資料更新日期 || '--',
-    usdRate: d.匯率?.美元匯率 || '--',
-    sections: [
-      { label: '直債', count: d.股票?.length || 0 },
-      { label: 'ETF', count: d.ETF?.length || 0 },
-      { label: '其它資產', count: d.其它資產?.length || 0 },
-      { label: '貸款', count: d.貸款?.length || 0 },
-      { label: '資產變化記錄', count: d.資產變化記錄?.length || 0 },
-    ]
-  }
-})
+function backToList() {
+  currentView.value = 'list'
+  selectedBackup.value = null
+  previewData.value = null
+}
+
+// User-input fields for each section
+const USER_INPUT_BOND_FIELDS = [
+  { key: '代號', label: '代號' },
+  { key: '公司名稱', label: '公司名稱' },
+  { key: '買入價格', label: '買入價格' },
+  { key: '持有單位', label: '持有單位', altKey: '面額' },
+  { key: '票面利率', label: '票面利率', suffix: '%' },
+  { key: '配息日', label: '配息日' },
+  { key: '交易日', label: '交易日' },
+  { key: '到期日', label: '到期日' },
+  { key: '質押單位', label: '質押單位' },
+]
+
+const USER_INPUT_STOCK_FIELDS = [
+  { key: '代號', label: '代號' },
+  { key: '名稱', label: '名稱' },
+  { key: '持有單位', label: '持有數量', altKey: '股數' },
+  { key: '買入均價', label: '買入均價' },
+  { key: '每股配息', label: '每股配息' },
+]
+
+const USER_INPUT_LOAN_FIELDS = [
+  { key: '貸款別', label: '貸款別' },
+  { key: '貸款餘額', label: '貸款餘額' },
+  { key: '年利率', label: '年利率', suffix: '%' },
+  { key: '還款方式', label: '還款方式' },
+  { key: '貸款期間', label: '貸款期間' },
+  { key: '備註', label: '備註' },
+]
+
+function getFieldValue(item, field) {
+  let val = item[field.key]
+  if (val == null && field.altKey) val = item[field.altKey]
+  if (val == null) return null
+  if (typeof val === 'number') val = val.toLocaleString()
+  if (field.suffix) val = val + field.suffix
+  return val
+}
 
 function openRestoreDialog(backup) {
   restoreTarget.value = backup
@@ -106,10 +132,6 @@ async function handleRestore() {
   }
 }
 
-function selectedBackup() {
-  return backups.value.find(b => b.filename === selectedFilename.value)
-}
-
 onMounted(loadBackups)
 </script>
 
@@ -128,9 +150,8 @@ onMounted(loadBackups)
       {{ error }}
     </div>
 
-    <!-- Content -->
-    <template v-else>
-      <!-- Backup List -->
+    <!-- ===== List View ===== -->
+    <template v-else-if="currentView === 'list'">
       <Card>
         <CardHeader>
           <CardTitle class="flex items-center gap-2">
@@ -157,26 +178,16 @@ onMounted(loadBackups)
                 <TableRow
                   v-for="backup in backups"
                   :key="backup.filename"
-                  :class="{ 'bg-[var(--accent)]': selectedFilename === backup.filename }"
+                  class="cursor-pointer hover:bg-[var(--accent)]"
+                  @click="handlePreview(backup)"
                 >
                   <TableCell>{{ backup.date }}</TableCell>
                   <TableCell>{{ backup.time }}</TableCell>
                   <TableCell class="text-right">
-                    <div class="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        @click="handlePreview(backup)"
-                        :class="selectedFilename === backup.filename ? 'text-[var(--primary)]' : ''"
-                      >
-                        <component :is="selectedFilename === backup.filename ? EyeOff : Eye" class="mr-1 h-4 w-4" />
-                        {{ selectedFilename === backup.filename ? '收起' : '預覽' }}
-                      </Button>
-                      <Button variant="ghost" size="sm" @click="openRestoreDialog(backup)">
-                        <RotateCcw class="mr-1 h-4 w-4" />
-                        還原
-                      </Button>
-                    </div>
+                    <Button variant="ghost" size="sm" @click.stop="openRestoreDialog(backup)">
+                      <RotateCcw class="mr-1 h-4 w-4" />
+                      還原
+                    </Button>
                   </TableCell>
                 </TableRow>
               </TableBody>
@@ -184,12 +195,19 @@ onMounted(loadBackups)
           </div>
         </CardContent>
       </Card>
+    </template>
 
-      <!-- Preview Section -->
-      <Card v-if="selectedFilename">
+    <!-- ===== Preview View ===== -->
+    <template v-else-if="currentView === 'preview'">
+      <Button variant="ghost" size="sm" @click="backToList" class="mb-2">
+        <ArrowLeft class="mr-1 h-4 w-4" />
+        返回備份列表
+      </Button>
+
+      <Card>
         <CardHeader>
           <CardTitle>
-            備份預覽：{{ selectedBackup()?.displayName }}
+            備份預覽：{{ selectedBackup?.displayName }}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -204,86 +222,123 @@ onMounted(loadBackups)
             {{ previewError }}
           </div>
 
-          <!-- Summary -->
-          <div v-else-if="previewSummary" class="space-y-4">
-            <!-- Overview cards -->
-            <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <div class="rounded-lg border border-[var(--border)] p-3">
+          <!-- Preview Content -->
+          <div v-else-if="previewData" class="space-y-6">
+            <!-- Meta info -->
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div v-if="previewData.資料更新日期" class="rounded-lg border border-[var(--border)] p-3">
                 <div class="text-xs text-[var(--muted-foreground)]">資料更新日期</div>
-                <div class="mt-1 font-semibold">{{ previewSummary.updateDate }}</div>
+                <div class="mt-1 font-semibold">{{ previewData.資料更新日期 }}</div>
               </div>
-              <div class="rounded-lg border border-[var(--border)] p-3">
+              <div v-if="previewData.匯率?.美元匯率" class="rounded-lg border border-[var(--border)] p-3">
                 <div class="text-xs text-[var(--muted-foreground)]">美元匯率</div>
-                <div class="mt-1 font-semibold">{{ previewSummary.usdRate }}</div>
-              </div>
-              <div
-                v-for="section in previewSummary.sections"
-                :key="section.label"
-                class="rounded-lg border border-[var(--border)] p-3"
-              >
-                <div class="text-xs text-[var(--muted-foreground)]">{{ section.label }}</div>
-                <div class="mt-1 font-semibold">{{ section.count }} 筆</div>
+                <div class="mt-1 font-semibold">{{ previewData.匯率.美元匯率 }}</div>
               </div>
             </div>
 
-            <!-- Detail lists -->
             <!-- 直債 -->
             <div v-if="previewData.股票?.length">
-              <h4 class="mb-1 text-sm font-medium text-[var(--muted-foreground)]">直債明細</h4>
-              <div class="rounded-md border border-[var(--border)] divide-y divide-[var(--border)]">
+              <h4 class="mb-2 text-sm font-semibold text-[var(--foreground)]">
+                直債 ({{ previewData.股票.length }} 筆)
+              </h4>
+              <div class="space-y-2">
                 <div
                   v-for="bond in previewData.股票"
                   :key="bond.代號"
-                  class="flex items-center justify-between px-3 py-2 text-sm"
+                  class="rounded-md border border-[var(--border)] p-3"
                 >
-                  <span>{{ bond.公司名稱 }} ({{ bond.代號 }})</span>
-                  <span class="text-[var(--muted-foreground)]">{{ bond.面額?.toLocaleString() }} USD</span>
+                  <div class="font-medium mb-1">{{ bond.公司名稱 || bond.代號 }}</div>
+                  <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                    <template v-for="field in USER_INPUT_BOND_FIELDS" :key="field.key">
+                      <template v-if="getFieldValue(bond, field) != null">
+                        <span class="text-[var(--muted-foreground)]">{{ field.label }}</span>
+                        <span>{{ getFieldValue(bond, field) }}</span>
+                      </template>
+                    </template>
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- ETF -->
             <div v-if="previewData.ETF?.length">
-              <h4 class="mb-1 text-sm font-medium text-[var(--muted-foreground)]">ETF 明細</h4>
-              <div class="rounded-md border border-[var(--border)] divide-y divide-[var(--border)]">
+              <h4 class="mb-2 text-sm font-semibold text-[var(--foreground)]">
+                ETF ({{ previewData.ETF.length }} 筆)
+              </h4>
+              <div class="space-y-2">
                 <div
                   v-for="etf in previewData.ETF"
                   :key="etf.代號"
-                  class="flex items-center justify-between px-3 py-2 text-sm"
+                  class="rounded-md border border-[var(--border)] p-3"
                 >
-                  <span>{{ etf.名稱 }} ({{ etf.代號 }})</span>
-                  <span class="text-[var(--muted-foreground)]">{{ etf.股數?.toLocaleString() }} 股</span>
+                  <div class="font-medium mb-1">{{ etf.名稱 || etf.代號 }}</div>
+                  <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                    <template v-for="field in USER_INPUT_STOCK_FIELDS" :key="field.key">
+                      <template v-if="getFieldValue(etf, field) != null">
+                        <span class="text-[var(--muted-foreground)]">{{ field.label }}</span>
+                        <span>{{ getFieldValue(etf, field) }}</span>
+                      </template>
+                    </template>
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- 其它資產 -->
             <div v-if="previewData.其它資產?.length">
-              <h4 class="mb-1 text-sm font-medium text-[var(--muted-foreground)]">其它資產明細</h4>
-              <div class="rounded-md border border-[var(--border)] divide-y divide-[var(--border)]">
+              <h4 class="mb-2 text-sm font-semibold text-[var(--foreground)]">
+                其它資產 ({{ previewData.其它資產.length }} 筆)
+              </h4>
+              <div class="space-y-2">
                 <div
                   v-for="asset in previewData.其它資產"
                   :key="asset.代號"
-                  class="flex items-center justify-between px-3 py-2 text-sm"
+                  class="rounded-md border border-[var(--border)] p-3"
                 >
-                  <span>{{ asset.名稱 }} ({{ asset.代號 }})</span>
-                  <span class="text-[var(--muted-foreground)]">{{ asset.股數?.toLocaleString() }}</span>
+                  <div class="font-medium mb-1">{{ asset.名稱 || asset.代號 }}</div>
+                  <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                    <template v-for="field in USER_INPUT_STOCK_FIELDS" :key="field.key">
+                      <template v-if="getFieldValue(asset, field) != null">
+                        <span class="text-[var(--muted-foreground)]">{{ field.label }}</span>
+                        <span>{{ getFieldValue(asset, field) }}</span>
+                      </template>
+                    </template>
+                  </div>
                 </div>
               </div>
             </div>
 
             <!-- 貸款 -->
             <div v-if="previewData.貸款?.length">
-              <h4 class="mb-1 text-sm font-medium text-[var(--muted-foreground)]">貸款明細</h4>
-              <div class="rounded-md border border-[var(--border)] divide-y divide-[var(--border)]">
+              <h4 class="mb-2 text-sm font-semibold text-[var(--foreground)]">
+                貸款 ({{ previewData.貸款.length }} 筆)
+              </h4>
+              <div class="space-y-2">
                 <div
                   v-for="loan in previewData.貸款"
                   :key="loan.貸款別"
-                  class="flex items-center justify-between px-3 py-2 text-sm"
+                  class="rounded-md border border-[var(--border)] p-3"
                 >
-                  <span>{{ loan.貸款別 }}</span>
-                  <span class="text-[var(--muted-foreground)]">{{ loan.貸款餘額?.toLocaleString() }} 元</span>
+                  <div class="font-medium mb-1">{{ loan.貸款別 }}</div>
+                  <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                    <template v-for="field in USER_INPUT_LOAN_FIELDS" :key="field.key">
+                      <template v-if="getFieldValue(loan, field) != null">
+                        <span class="text-[var(--muted-foreground)]">{{ field.label }}</span>
+                        <span>{{ getFieldValue(loan, field) }}</span>
+                      </template>
+                    </template>
+                  </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- 資產變化記錄 -->
+            <div v-if="previewData.資產變化記錄?.length">
+              <h4 class="mb-2 text-sm font-semibold text-[var(--foreground)]">
+                資產變化記錄 ({{ previewData.資產變化記錄.length }} 筆)
+              </h4>
+              <div class="text-sm text-[var(--muted-foreground)]">
+                共 {{ previewData.資產變化記錄.length }} 筆歷史快照
               </div>
             </div>
 
@@ -297,6 +352,14 @@ onMounted(loadBackups)
                 v-if="showRawJson"
                 class="mt-2 max-h-96 overflow-auto rounded-lg bg-[var(--muted)] p-4 text-xs"
               >{{ JSON.stringify(previewData, null, 2) }}</pre>
+            </div>
+
+            <!-- Restore from preview -->
+            <div class="flex justify-end pt-2 border-t border-[var(--border)]">
+              <Button variant="destructive" size="sm" @click="openRestoreDialog(selectedBackup)">
+                <RotateCcw class="mr-1 h-4 w-4" />
+                還原此備份
+              </Button>
             </div>
           </div>
         </CardContent>

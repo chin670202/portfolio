@@ -22,7 +22,20 @@ export async function createBackup(db, user) {
     'INSERT INTO backups (user, filename, data, backup_date, backup_time) VALUES (?, ?, ?, ?, ?)'
   ).bind(user, filename, portfolio.data, today, time).run()
 
-  // Cleanup: keep max per user
+  // Cleanup: same-day backups — keep at most 3 per day, delete oldest
+  const MAX_DAILY_BACKUPS = 3
+  const { results: dailyBackups } = await db.prepare(
+    'SELECT id FROM backups WHERE user = ? AND backup_date = ? ORDER BY created_at DESC'
+  ).bind(user, today).all()
+
+  if (dailyBackups.length > MAX_DAILY_BACKUPS) {
+    const idsToDelete = dailyBackups.slice(MAX_DAILY_BACKUPS).map(b => b.id)
+    await db.prepare(
+      `DELETE FROM backups WHERE id IN (${idsToDelete.map(() => '?').join(',')})`
+    ).bind(...idsToDelete).run()
+  }
+
+  // Cleanup: keep max per user (across all days)
   await db.prepare(`
     DELETE FROM backups WHERE user = ? AND id NOT IN (
       SELECT id FROM backups WHERE user = ? ORDER BY created_at DESC LIMIT ?
