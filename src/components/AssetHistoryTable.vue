@@ -1,6 +1,8 @@
 <script setup>
 import { defineProps, computed, ref, onMounted, onUnmounted } from 'vue'
 import { useResponsive } from '../composables/useResponsive'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog'
+import { Button } from './ui/button'
 
 const { isMobile } = useResponsive()
 
@@ -14,6 +16,8 @@ function closeTooltip() {
 onMounted(() => document.addEventListener('click', closeTooltip))
 onUnmounted(() => document.removeEventListener('click', closeTooltip))
 
+const emit = defineEmits(['delete-record'])
+
 const props = defineProps({
   records: {
     type: Array,
@@ -24,6 +28,25 @@ const props = defineProps({
     default: () => []
   }
 })
+
+// 刪除確認 Dialog
+const deleteDialog = ref({ open: false, record: null })
+const deleting = ref(false)
+
+function openDeleteDialog(record) {
+  deleteDialog.value = { open: true, record }
+}
+
+function closeDeleteDialog() {
+  deleteDialog.value = { open: false, record: null }
+}
+
+async function handleConfirmDelete() {
+  const date = deleteDialog.value.record?.記錄時間
+  if (!date) return
+  closeDeleteDialog()
+  emit('delete-record', date)
+}
 
 // 欄位定義（移除原始整數欄位，只保留萬元欄位，更精簡）
 const columnDefinitions = {
@@ -128,19 +151,23 @@ function formatWan(val) {
   <table v-if="records && records.length > 0 && !isMobile" class="history-table">
     <thead>
       <tr class="section-header">
-        <th :colspan="sortedVisibleColumns.length">資產變化記錄<span class="unit-note">單位：萬元</span></th>
+        <th :colspan="sortedVisibleColumns.length + 1">資產變化記錄<span class="unit-note">單位：萬元</span></th>
       </tr>
       <tr>
         <th v-for="col in sortedVisibleColumns" :key="col.key" :class="getHeaderClass(col.key)">
           {{ col.label }}
           <span v-if="col.key === 'normalizedPositionWan'" class="tooltip-trigger" @click.stop="toggleTooltip">?<span v-show="showTooltip" class="tooltip-text">模擬美元匯率固定 30 元時的資產值，排除匯率波動影響，觀察資產是否實質成長</span></span>
         </th>
+        <th class="col-action"></th>
       </tr>
     </thead>
     <tbody>
       <tr v-for="(record, index) in records" :key="index">
         <td v-for="col in sortedVisibleColumns" :key="col.key" :class="getCellClass(col.key, record)">
           {{ getCellValue(col.key, record) }}
+        </td>
+        <td class="col-action">
+          <button class="btn-delete" @click="openDeleteDialog(record)" title="刪除此筆記錄">✕</button>
         </td>
       </tr>
     </tbody>
@@ -150,7 +177,7 @@ function formatWan(val) {
   <table v-else-if="records && records.length > 0" class="history-table mobile-history-table">
     <thead>
       <tr class="section-header">
-        <th :colspan="mobileColumns.length">資產變化記錄<span class="unit-note">單位：萬元</span></th>
+        <th :colspan="mobileColumns.length + 1">資產變化記錄<span class="unit-note">單位：萬元</span></th>
       </tr>
       <tr>
         <th v-for="col in mobileColumns" :key="col.key" :class="getHeaderClass(col.key)">
@@ -168,6 +195,7 @@ function formatWan(val) {
           </template>
           <template v-else>{{ col.label }}</template>
         </th>
+        <th class="col-action"></th>
       </tr>
     </thead>
     <tbody>
@@ -185,9 +213,31 @@ function formatWan(val) {
             {{ getCellValue(col.key, record) }}
           </template>
         </td>
+        <td class="col-action">
+          <button class="btn-delete" @click="openDeleteDialog(record)" title="刪除此筆記錄">✕</button>
+        </td>
       </tr>
     </tbody>
   </table>
+
+  <!-- 刪除確認 Dialog -->
+  <Dialog :open="deleteDialog.open" @update:open="(v) => { if (!v) closeDeleteDialog() }">
+    <DialogContent class="max-w-sm">
+      <DialogHeader>
+        <DialogTitle>刪除資產快照</DialogTitle>
+      </DialogHeader>
+      <div class="py-4 space-y-3">
+        <p class="text-base">確定要刪除「<strong>{{ deleteDialog.record?.記錄時間 }}</strong>」的資產快照嗎？</p>
+        <p class="text-sm text-[var(--muted-foreground)]">此操作無法復原（但可從備份還原）</p>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" @click="closeDeleteDialog" :disabled="deleting">取消</Button>
+        <Button variant="destructive" @click="handleConfirmDelete" :disabled="deleting">
+          {{ deleting ? '刪除中...' : '確認刪除' }}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <style scoped>
@@ -254,5 +304,24 @@ function formatWan(val) {
   border-radius: 6px;
   white-space: nowrap;
   z-index: 10;
+}
+
+.col-action {
+  width: 36px;
+  text-align: center !important;
+}
+
+.btn-delete {
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+.btn-delete:hover {
+  color: #e53e3e;
 }
 </style>

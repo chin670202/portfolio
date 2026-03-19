@@ -18,7 +18,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['open-news', 'loan-add', 'loan-select', 'position-add', 'position-select', 'bond-add', 'bond-select', 'crypto-add', 'crypto-select'])
+const emit = defineEmits(['open-news', 'loan-add', 'loan-select', 'position-add', 'position-select', 'bond-add', 'bond-select', 'crypto-add', 'crypto-select', 'delete-history-record'])
 
 function handleOpenNews(symbol, name) {
   emit('open-news', symbol, name)
@@ -65,6 +65,7 @@ function getModuleComponent(uid) {
           @bond-select="(bond) => emit('bond-select', bond)"
           @crypto-add="emit('crypto-add')"
           @crypto-select="(crypto) => emit('crypto-select', crypto)"
+          @delete-history-record="(date) => emit('delete-history-record', date)"
         />
       </div>
     </template>

@@ -18,6 +18,8 @@ defineProps({
     required: true
   }
 })
+
+const emit = defineEmits(['delete-history-record'])
 </script>
 
 <template>
@@ -26,6 +28,7 @@ defineProps({
       v-if="config.options?.showTable !== false"
       :records="assetHistoryRecords"
       :column-config="config.columns"
+      @delete-record="(date) => emit('delete-history-record', date)"
     />
 
     <!-- 資產變化趨勢圖（兩個版本都顯示） -->

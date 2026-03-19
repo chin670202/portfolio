@@ -84,6 +84,19 @@ export async function applyAdjust(user, adjustment) {
   return res.json()
 }
 
+export async function deleteAssetHistoryRecord(user, date) {
+  const res = await fetch(`${BASE_URL}/portfolio/${user}/asset-history`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+    body: JSON.stringify({ date }),
+  })
+  if (!res.ok) {
+    const data = await res.json()
+    throw new Error(data.error || '刪除失敗')
+  }
+  return res.json()
+}
+
 export async function fetchPnl(user, params = {}) {
   const searchParams = new URLSearchParams(params)
   const qs = searchParams.toString()

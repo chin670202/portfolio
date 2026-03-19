@@ -56,7 +56,60 @@ npm run build && npm run dev:api
 ### 前端開發伺服器
 前端使用 Vite，修改 `src/` 下的檔案會自動 HMR 熱更新，不需要手動重啟。
 
+### D1 本地資料庫注意事項
+
+#### 啟動指令不可加 `--d1` 參數
+`wrangler pages dev` **不能**用 `--d1 DB=portfolio-db` CLI 參數，必須讓 wrangler 讀 `wrangler.toml` 裡的 D1 binding。
+
+原因：CLI `--d1` 參數和 `wrangler.toml` 的 `[[d1_databases]]` 會產生**不同的 SQLite hash 檔名**，導致 `wrangler pages dev` 和 `wrangler d1 execute` 各自讀寫不同的 SQLite 檔案，互相看不到對方的資料。
+
+```bash
+# ✅ 正確：讓 wrangler.toml 管理 D1 binding
+NODE_OPTIONS="--max-old-space-size=8192" npx wrangler pages dev dist --port 8788 --persist-to .wrangler/state
+
+# ❌ 錯誤：CLI --d1 參數會產生不同的 SQLite hash
+NODE_OPTIONS="--max-old-space-size=8192" npx wrangler pages dev dist --d1 DB=portfolio-db --port 8788 --persist-to .wrangler/state
+```
+
+#### 從線上 D1 同步資料到本地
+
+```bash
+# 1. 匯出線上資料
+npx wrangler d1 export portfolio-db --remote --output=remote-dump.sql
+
+# 2. 擷取 INSERT 語句（排除 schema、migrations、brokers seed data）
+grep "^INSERT" remote-dump.sql | grep -v "d1_migrations" | grep -v "sqlite_sequence" | grep -v '"brokers"' | sed 's/INSERT INTO/INSERT OR REPLACE INTO/' > remote-data.sql
+
+# 3. 清空本地資料（保留 schema 和 brokers）
+npx wrangler d1 execute portfolio-db --local --persist-to .wrangler/state --command "DELETE FROM trades; DELETE FROM pnl_records; DELETE FROM open_lots; DELETE FROM portfolios; DELETE FROM backups; DELETE FROM user_settings;"
+
+# 4. 匯入
+npx wrangler d1 execute portfolio-db --local --persist-to .wrangler/state --file=remote-data.sql
+
+# 5. 清理
+rm -f remote-dump.sql remote-data.sql
+
+# 6. 重啟 wrangler dev（D1 變更需要重啟才生效）
+```
+
+注意事項：
+- `d1 execute` 的 `--persist-to` 必須和 `wrangler pages dev` 一致（都用 `.wrangler/state` 或都不用）
+- 匯入前要先清空 seed data，否則會 UNIQUE constraint 衝突
+- 用 `INSERT OR REPLACE INTO` 處理可能的主鍵衝突
+- wrangler dev 重啟後才能看到 `d1 execute` 寫入的資料
+
 ## 用戶體驗規則
+
+### UI 提示風格（強制規則）
+**所有確認視窗和操作回饋必須使用專案統一的 UI 元件，禁止使用瀏覽器原生 `alert()`、`confirm()`。**
+
+- **確認視窗**：使用 shadcn-vue `Dialog`（`DialogContent` + `DialogHeader` + `DialogFooter` + `Button`），風格參考 `BondFormDialog.vue` 的刪除確認
+- **操作回饋**：使用 `vue-sonner` 的 `toast`（`import { toast } from 'vue-sonner'`）
+  - 成功：`toast.success('訊息')`
+  - 失敗：`toast.error('訊息')`
+- **所有使用者操作完成後都必須有回饋提示**（新增/修改/刪除/還原等），不可以靜默完成
+- 破壞性操作（刪除）必須有 Dialog 二次確認，包含說明文字「此操作無法復原（但可從備份還原）」
+- 確認按鈕使用 `variant="destructive"`
 
 ### 錯誤訊息
 **所有錯誤訊息必須針對一般投資用戶，而非開發者。**

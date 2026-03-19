@@ -371,6 +371,47 @@ portfolioRoutes.post('/:user/migrate-loans', async (c) => {
 })
 
 /**
+ * DELETE /portfolio/:user/asset-history - Delete an asset history record by date
+ */
+portfolioRoutes.delete('/:user/asset-history', async (c) => {
+  try {
+    const db = c.env.DB
+    const user = c.req.param('user')
+    const { date } = await c.req.json()
+
+    if (!date) {
+      return c.json({ error: '缺少日期參數' }, 400)
+    }
+
+    const row = await db.prepare('SELECT data FROM portfolios WHERE user = ?').bind(user).first()
+    if (!row) {
+      return c.json({ error: `找不到使用者 "${user}" 的資料` }, 404)
+    }
+
+    await createBackup(db, user)
+    const data = JSON.parse(row.data)
+    const records = data['資產變化記錄']
+    if (!Array.isArray(records)) {
+      return c.json({ error: '找不到資產變化記錄' }, 404)
+    }
+
+    const idx = records.findIndex(r => r['記錄時間'] === date)
+    if (idx < 0) {
+      return c.json({ error: `找不到 ${date} 的記錄` }, 404)
+    }
+
+    records.splice(idx, 1)
+    await db.prepare('UPDATE portfolios SET data = ?, updated_at = ? WHERE user = ?')
+      .bind(JSON.stringify(data), Date.now(), user).run()
+
+    return c.json({ success: true, deleted: date })
+  } catch (error) {
+    console.error('DELETE asset-history error:', error)
+    return c.json({ error: '刪除記錄失敗' }, 500)
+  }
+})
+
+/**
  * PUT /portfolio/:user - Update portfolio data
  */
 portfolioRoutes.put('/:user', async (c) => {

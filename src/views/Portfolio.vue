@@ -20,6 +20,8 @@ import {
   calculateNetIncome
 } from '../services/calculator'
 import { getBondPrice, getStockPrice, getLatestDividend, getNextDividendDate, getCryptoPrice, getUsdTwdRate, getUsStockPrice } from '../services/api'
+import { deleteAssetHistoryRecord } from '../services/tradeApi'
+import { toast } from 'vue-sonner'
 import { useNews } from '../composables/useNews'
 import LoanFormDialog from '../components/LoanFormDialog.vue'
 import PositionFormDialog from '../components/PositionFormDialog.vue'
@@ -115,6 +117,18 @@ function closeCryptoDialog() {
 }
 function handleCryptoSaved() {
   loadData()
+}
+
+// 刪除資產變化記錄
+async function handleDeleteHistoryRecord(date) {
+  try {
+    await deleteAssetHistoryRecord(currentUsername.value, date)
+    toast.success(`已刪除 ${date} 的記錄`)
+    await loadData()
+  } catch (e) {
+    console.error('刪除資產變化記錄失敗:', e)
+    toast.error(e.message || '刪除失敗，請稍後再試')
+  }
 }
 
 // 新聞管理（使用 composable）
@@ -824,6 +838,7 @@ onMounted(() => {
         @bond-select="handleBondSelect"
         @crypto-add="handleCryptoAdd"
         @crypto-select="handleCryptoSelect"
+        @delete-history-record="handleDeleteHistoryRecord"
       />
 
       <div class="update-date">
