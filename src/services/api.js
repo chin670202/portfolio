@@ -18,16 +18,16 @@ const DEFAULT_HEADERS = {
 }
 
 // ============================================================
-// 金交債（法蘭克福交易所）
+// 金交債（ING Wertpapiere API）
 // ============================================================
 
 /**
- * 抓取金交債價格（法蘭克福交易所）
+ * 抓取金交債價格（ING Wertpapiere API，回傳法蘭克福交易所報價）
  * @param {string} isin - 債券 ISIN 代碼
  * @returns {Promise<string>} 價格字串（小數點後3位）
  */
 export async function getBondPrice(isin = 'USG84228FV59') {
-  const url = `https://www.boerse-frankfurt.de/bond/${isin}`
+  const url = `https://component-api.wertpapiere.ing.de/api/v1/components/instrumentheader/${isin}`
 
   try {
     const response = await fetch(CORS_PROXY + encodeURIComponent(url), {
@@ -38,18 +38,11 @@ export async function getBondPrice(isin = 'USG84228FV59') {
       throw new Error(`HTTP ${response.status}`)
     }
 
-    const html = await response.text()
+    const data = await response.json()
+    const price = data?.price
+    if (price == null || isNaN(price)) return '0.000'
 
-    const str = '"lastPrice":'
-    const p0 = html.lastIndexOf(str)
-    if (p0 === -1) return '0.000'
-
-    const p1 = p0 + str.length
-    const p2 = html.indexOf(',', p1)
-    if (p2 === -1) return '0.000'
-
-    const result = html.substring(p1, p2)
-    return parseFloat(result).toFixed(3)
+    return parseFloat(price).toFixed(3)
   } catch (e) {
     console.error(`getBondPrice error for ${isin}:`, e)
     return 'Error: ' + e.message
@@ -533,10 +526,8 @@ export async function getCryptoPrice(symbol = 'bitcoin', currency = 'twd') {
   const url = `https://api.coingecko.com/api/v3/simple/price?ids=${symbol}&vs_currencies=${currency}`
 
   try {
-    // 使用 CORS proxy 避免跨域問題
-    const response = await fetch(CORS_PROXY + encodeURIComponent(url), {
-      headers: DEFAULT_HEADERS
-    })
+    // CoinGecko API 支援 CORS，直接呼叫不需要 proxy
+    const response = await fetch(url)
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`)

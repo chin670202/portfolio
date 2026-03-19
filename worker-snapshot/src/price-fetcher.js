@@ -23,25 +23,17 @@ export async function getUsdTwdRate() {
 }
 
 // ============================================================
-// 債券價格（法蘭克福交易所）
+// 債券價格（ING Wertpapiere API，回傳法蘭克福交易所報價）
 // ============================================================
 
 export async function getBondPrice(isin) {
-  const url = `https://www.boerse-frankfurt.de/bond/${isin}`
+  const url = `https://component-api.wertpapiere.ing.de/api/v1/components/instrumentheader/${isin}`
   const response = await fetch(url, { headers: DEFAULT_HEADERS })
   if (!response.ok) throw new Error(`HTTP ${response.status}`)
 
-  const html = await response.text()
-  const str = '"lastPrice":'
-  const p0 = html.lastIndexOf(str)
-  if (p0 === -1) return null
-
-  const p1 = p0 + str.length
-  const p2 = html.indexOf(',', p1)
-  if (p2 === -1) return null
-
-  const result = parseFloat(html.substring(p1, p2))
-  return isNaN(result) ? null : Math.round(result * 1000) / 1000
+  const data = await response.json()
+  const price = data?.price
+  return (price != null && !isNaN(price)) ? Math.round(price * 1000) / 1000 : null
 }
 
 // ============================================================

@@ -44,7 +44,8 @@ export function usePriceCache() {
       }
 
       rawData.股票?.forEach(b => {
-        cache.bonds[b.代號] = { 最新價格: b.最新價格 }
+        if (b.最新價格 != null && b.最新價格 !== '0.000' && !String(b.最新價格).startsWith('Error'))
+          cache.bonds[b.代號] = { 最新價格: b.最新價格 }
       })
 
       rawData.ETF?.forEach(e => {
@@ -56,7 +57,8 @@ export function usePriceCache() {
       })
 
       rawData.其它資產?.forEach(a => {
-        cache.others[a.代號] = { 最新價格: a.最新價格 }
+        if (a.最新價格 != null && a.最新價格 !== 0 && !String(a.最新價格).startsWith('Error'))
+          cache.others[a.代號] = { 最新價格: a.最新價格 }
       })
 
       localStorage.setItem(CACHE_KEY, JSON.stringify(cache))
