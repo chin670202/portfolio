@@ -23,16 +23,26 @@ export async function getUsdTwdRate() {
 }
 
 // ============================================================
-// 債券價格（ING Wertpapiere API，回傳法蘭克福交易所報價）
+// 債券價格（OnVista API，回傳法蘭克福交易所報價；兩步流程：ISIN → entityValue → snapshot）
 // ============================================================
 
 export async function getBondPrice(isin) {
-  const url = `https://component-api.wertpapiere.ing.de/api/v1/components/instrumentheader/${isin}`
-  const response = await fetch(url, { headers: DEFAULT_HEADERS })
-  if (!response.ok) throw new Error(`HTTP ${response.status}`)
+  const searchResp = await fetch(
+    `https://api.onvista.de/api/v1/instruments/query?searchValue=${encodeURIComponent(isin)}`,
+    { headers: DEFAULT_HEADERS }
+  )
+  if (!searchResp.ok) throw new Error(`HTTP ${searchResp.status}`)
+  const searchData = await searchResp.json()
+  const entity = searchData?.list?.[0]
+  if (!entity?.entityValue || !entity?.entityType) return null
 
-  const data = await response.json()
-  const price = data?.price
+  const snapResp = await fetch(
+    `https://api.onvista.de/api/v1/instruments/${entity.entityType}/${entity.entityValue}/snapshot`,
+    { headers: DEFAULT_HEADERS }
+  )
+  if (!snapResp.ok) throw new Error(`HTTP ${snapResp.status}`)
+  const snapData = await snapResp.json()
+  const price = snapData?.quote?.last
   return (price != null && !isNaN(price)) ? Math.round(price * 1000) / 1000 : null
 }
 

@@ -18,28 +18,30 @@ const DEFAULT_HEADERS = {
 }
 
 // ============================================================
-// 金交債（ING Wertpapiere API）
+// 金交債（OnVista API，回傳法蘭克福交易所報價；原生支援 CORS）
 // ============================================================
 
 /**
- * 抓取金交債價格（ING Wertpapiere API，回傳法蘭克福交易所報價）
+ * 抓取金交債價格（OnVista 公開 API，兩步流程：ISIN → entityValue → snapshot）
  * @param {string} isin - 債券 ISIN 代碼
  * @returns {Promise<string>} 價格字串（小數點後3位）
  */
 export async function getBondPrice(isin = 'USG84228FV59') {
-  const url = `https://component-api.wertpapiere.ing.de/api/v1/components/instrumentheader/${isin}`
-
   try {
-    const response = await fetch(CORS_PROXY + encodeURIComponent(url), {
-      headers: DEFAULT_HEADERS
-    })
+    const searchResp = await fetch(
+      `https://api.onvista.de/api/v1/instruments/query?searchValue=${encodeURIComponent(isin)}`
+    )
+    if (!searchResp.ok) throw new Error(`HTTP ${searchResp.status}`)
+    const searchData = await searchResp.json()
+    const entity = searchData?.list?.[0]
+    if (!entity?.entityValue || !entity?.entityType) return '0.000'
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`)
-    }
-
-    const data = await response.json()
-    const price = data?.price
+    const snapResp = await fetch(
+      `https://api.onvista.de/api/v1/instruments/${entity.entityType}/${entity.entityValue}/snapshot`
+    )
+    if (!snapResp.ok) throw new Error(`HTTP ${snapResp.status}`)
+    const snapData = await snapResp.json()
+    const price = snapData?.quote?.last
     if (price == null || isNaN(price)) return '0.000'
 
     return parseFloat(price).toFixed(3)
