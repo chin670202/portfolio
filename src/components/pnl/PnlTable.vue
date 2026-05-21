@@ -20,9 +20,9 @@ function pnlColor(value) {
   return ''
 }
 
-function formatPnl(value) {
+function formatPnl(value, digits = 2) {
   const prefix = value > 0 ? '+' : ''
-  return prefix + value.toLocaleString('zh-TW', { maximumFractionDigits: 2 })
+  return prefix + value.toLocaleString('zh-TW', { maximumFractionDigits: digits })
 }
 
 function returnPct(record) {
@@ -41,7 +41,7 @@ function returnPct(record) {
       <CardContent class="p-4">
         <p class="text-sm text-[var(--muted-foreground)]">已實現損益</p>
         <p class="text-xl font-bold" :style="pnlColor(summary.totalPnl)">
-          {{ formatPnl(summary.totalPnl) }}
+          {{ formatPnl(summary.totalPnl, 0) }}
         </p>
       </CardContent>
     </Card>
@@ -49,7 +49,7 @@ function returnPct(record) {
       <CardContent class="p-4">
         <p class="text-sm text-[var(--muted-foreground)]">手續費+稅</p>
         <p class="text-xl font-bold text-[var(--foreground)]">
-          {{ summary.totalFees.toLocaleString('zh-TW', { maximumFractionDigits: 2 }) }}
+          {{ summary.totalFees.toLocaleString('zh-TW', { maximumFractionDigits: 0 }) }}
         </p>
       </CardContent>
     </Card>
