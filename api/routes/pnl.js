@@ -17,17 +17,20 @@ pnlRoutes.get('/:user', async (c) => {
     const user = c.req.param('user')
     const { symbol, assetType, dateFrom, dateTo } = c.req.query()
 
-    const conditions = ['user = ?']
+    const conditions = ['p.user = ?']
     const params = [user]
 
-    if (symbol) { conditions.push('symbol LIKE ?'); params.push(`%${symbol}%`) }
-    if (assetType) { conditions.push('asset_type = ?'); params.push(assetType) }
-    if (dateFrom) { conditions.push('sell_date >= ?'); params.push(dateFrom) }
-    if (dateTo) { conditions.push('sell_date <= ?'); params.push(dateTo) }
+    if (symbol) { conditions.push('p.symbol LIKE ?'); params.push(`%${symbol}%`) }
+    if (assetType) { conditions.push('p.asset_type = ?'); params.push(assetType) }
+    if (dateFrom) { conditions.push('p.sell_date >= ?'); params.push(dateFrom) }
+    if (dateTo) { conditions.push('p.sell_date <= ?'); params.push(dateTo) }
 
     const where = conditions.join(' AND ')
+    // LEFT JOIN trades 取賣出交易的標的名稱（pnl_records 本身未存 name）
     const { results: records } = await db.prepare(
-      `SELECT * FROM pnl_records WHERE ${where} ORDER BY sell_date DESC`
+      `SELECT p.*, t.name AS name FROM pnl_records p
+       LEFT JOIN trades t ON t.id = p.sell_trade_id
+       WHERE ${where} ORDER BY p.sell_date DESC`
     ).bind(...params).all()
 
     const totalPnl = records.reduce((sum, r) => sum + r.realized_pnl, 0)

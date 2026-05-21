@@ -1,7 +1,7 @@
 -- Seed 14 Taiwan securities brokers
 INSERT OR REPLACE INTO brokers (id, name, name_en, tw_stock_discount, tw_stock_min_fee, us_stock_fee_rate, us_stock_min_fee, notes, sort_order)
 VALUES
-  ('cathay', '國泰證券', 'Cathay Securities', 0.28, 1, 0.001, 0, '台股電子下單2.8折（線上開戶標準優惠）。美股0.1%免低消，ETF均一價3美元。', 1),
+  ('cathay', '國泰證券', 'Cathay Securities', 0.28, 1, 0.0008, 0, '台股電子下單2.8折（線上開戶標準優惠）。美股複委託 0.08% 免低消（2026 年優惠，至 12/31）。', 1),
   ('yuanta', '元大證券', 'Yuanta Securities', 0.6, 20, 0.001, 1, '台股牌告6折，可協商至2.8~3.8折。美股0.1%低消1美元（促銷價）。券源最多。', 2),
   ('fubon', '富邦證券', 'Fubon Securities', 0.6, 20, 0.0006, 0, '台股牌告6折，新戶100萬內享1.8折。美股新戶0.06%免低消。', 3),
   ('sinopac', '永豐金證券', 'SinoPac Securities', 0.2, 1, 0.0008, 0, '大戶投APP每月成交100萬內享2折，超過6.5折。美股約0.08%免低消。', 4),

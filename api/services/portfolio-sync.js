@@ -32,27 +32,41 @@ export async function applyTradeToPortfolio(db, user, trade) {
 
   const data = JSON.parse(row.data)
   const { symbol, name, side, price, quantity } = trade
+  const fee = trade.fee || 0
 
   const found = findHolding(data, symbol)
 
   if (side === 'buy') {
     if (found) {
+      // 加碼：均價以成交金額加權；若這是第二筆 buy，把首筆 fee 補進均價（券商慣例）
       const old = found.entry
       const oldQty = old['持有單位'] || 0
       const oldAvg = old['買入均價'] || 0
       const newQty = oldQty + quantity
+
+      let firstFeeAdjustment = 0
+      if (trade.id) {
+        const { results: priorBuys } = await db.prepare(
+          'SELECT fee FROM trades WHERE user=? AND symbol=? AND asset_type=? AND side=? AND id < ? ORDER BY trade_date ASC, id ASC'
+        ).bind(user, symbol, trade.asset_type, 'buy', trade.id).all()
+        if (priorBuys.length === 1) {
+          firstFeeAdjustment = priorBuys[0].fee || 0
+        }
+      }
+
       const newAvg = newQty > 0
-        ? (oldAvg * oldQty + price * quantity) / newQty
+        ? (oldAvg * oldQty + firstFeeAdjustment + price * quantity) / newQty
         : 0
 
       old['持有單位'] = newQty
-      old['買入均價'] = Math.round(newAvg * 100) / 100
+      old['買入均價'] = Math.round(newAvg * 10000) / 10000
     } else {
+      // 首次建倉：純價（不含 fee）
       if (!data['其它資產']) data['其它資產'] = []
       data['其它資產'].push({
         '名稱': name || symbol,
         '代號': symbol,
-        '買入均價': Math.round(price * 100) / 100,
+        '買入均價': Math.round(price * 10000) / 10000,
         '持有單位': quantity,
       })
     }

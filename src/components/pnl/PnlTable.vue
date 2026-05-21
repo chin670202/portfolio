@@ -84,6 +84,7 @@ function returnPct(record) {
           <TableHead>賣出日期</TableHead>
           <TableHead>類型</TableHead>
           <TableHead>代號</TableHead>
+          <TableHead>名稱</TableHead>
           <TableHead class="text-right">買入價</TableHead>
           <TableHead class="text-right">賣出價</TableHead>
           <TableHead class="text-right">數量</TableHead>
@@ -101,6 +102,7 @@ function returnPct(record) {
             </Badge>
           </TableCell>
           <TableCell class="font-mono font-medium">{{ record.symbol }}</TableCell>
+          <TableCell class="whitespace-nowrap">{{ record.name || '—' }}</TableCell>
           <TableCell class="text-right font-mono">
             {{ record.buy_price.toLocaleString('zh-TW') }}
           </TableCell>

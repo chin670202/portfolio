@@ -31,3 +31,7 @@ screenshots/
 # Cloudflare
 .dev.vars
 .wrangler/
+
+# Personal portfolio exports & analysis
+*-portfolio.json
+*-portfolio-analysis.md
