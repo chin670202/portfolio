@@ -15,6 +15,9 @@ function getTodayTW() {
   return `${y}/${m}/${d}`
 }
 
+// 債券報價基準：每 1 單位 = 100 面額
+const BOND_PAR_PER_UNIT = 100
+
 /**
  * 計算資產快照
  * @param {Object} data - portfolio JSON 資料
@@ -30,10 +33,14 @@ export function calculateSnapshot(data, priceResult) {
   // ---- 部位總額（當時匯率）----
 
   // 債券：最新價格 × 持有單位 × usdRate
+  // 同時累計面額 — 債券報價以「每 100 面額」為單位，故面額 = 持有單位 × 100，
+  // 不受行情影響，只跟持倉數量有關（日後比對市價/面額就不必回推）
   let bondTotal = 0
+  let bondParUsd = 0
   for (const bond of (data.股票 || [])) {
     const price = getPrice(bond.代號, bond.最新價格)
     bondTotal += price * (bond.持有單位 || 0) * usdRate
+    bondParUsd += (bond.持有單位 || 0) * BOND_PAR_PER_UNIT
   }
 
   // ETF：最新價格 × 持有單位
@@ -93,6 +100,17 @@ export function calculateSnapshot(data, priceResult) {
     台幣負債總額萬: toWan(負債總額),
     當時匯率資產總和萬: toWan(部位總額 - 負債總額),
     還原匯率30部位總額萬: toWan(還原匯率30部位總額),
-    還原匯率30資產總額萬: toWan(還原匯率30部位總額 - 負債總額)
+    還原匯率30資產總額萬: toWan(還原匯率30部位總額 - 負債總額),
+
+    // 債券市價 / 面額分離（actual = 快照當下由實際持倉算出，非回推）
+    債券市價台幣: Math.round(bondTotal),
+    債券面額美元: Math.round(bondParUsd),
+    債券面額台幣: Math.round(bondParUsd * usdRate),
+    債券市價萬: toWan(bondTotal),
+    債券面額萬: toWan(bondParUsd * usdRate),
+    債券面額匯率31: Math.round(bondParUsd * 31),
+    債券面額匯率31萬: toWan(bondParUsd * 31),
+    債券計價基準: '市價',      // 部位總額是用哪個基準算的（沿用線上既有語意）
+    債券數據來源: 'actual'      // 這兩個債券欄位的來源：快照當下實算
   }
 }

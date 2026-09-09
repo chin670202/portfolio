@@ -104,14 +104,16 @@ export const loansColumns = [
 export const assetHistoryColumns = [
   { key: 'recordTime', label: '日期', dataKey: '記錄時間', defaultVisible: true, defaultOrder: 1, align: 'center' },
   { key: 'usdRate', label: '匯率', dataKey: '美元匯率', defaultVisible: true, defaultOrder: 2, align: 'right' },
-  { key: 'totalPosition', label: '部位總額', dataKey: '部位總額', defaultVisible: true, defaultOrder: 3, align: 'right' },
-  { key: 'totalDebt', label: '負債總額', dataKey: '負債總額', defaultVisible: true, defaultOrder: 4, align: 'right' },
+  { key: 'totalDebt', label: '負債總額', dataKey: '負債總額', defaultVisible: true, defaultOrder: 3, align: 'right' },
+  { key: 'totalPosition', label: '部位總額', dataKey: '部位總額', defaultVisible: true, defaultOrder: 4, align: 'right' },
   { key: 'normalizedPosition', label: '還原匯率30部位總額', dataKey: '還原匯率30部位總額', defaultVisible: true, defaultOrder: 5, align: 'right' },
   { key: 'currentPositionWan', label: '當時匯率部位總額(萬)', dataKey: '當時匯率部位總額萬', defaultVisible: true, defaultOrder: 6, align: 'right' },
   { key: 'debtWan', label: '台幣負債總額(萬)', dataKey: '台幣負債總額萬', defaultVisible: true, defaultOrder: 7, align: 'right' },
   { key: 'currentNetWan', label: '當時匯率資產總和(萬)', dataKey: '當時匯率資產總和萬', defaultVisible: true, defaultOrder: 8, align: 'right' },
   { key: 'normalizedPositionWan', label: '還原匯率30部位總額(萬)', dataKey: '還原匯率30部位總額萬', defaultVisible: true, defaultOrder: 9, align: 'right' },
-  { key: 'normalizedNetWan', label: '還原匯率30資產總額(萬)', dataKey: '還原匯率30資產總額萬', defaultVisible: true, defaultOrder: 10, align: 'right' }
+  { key: 'normalizedNetWan', label: '還原匯率30資產總額(萬)', dataKey: '還原匯率30資產總額萬', defaultVisible: true, defaultOrder: 10, align: 'right' },
+  { key: 'posPar31Wan', label: '資產(面額@31,萬)', dataKey: '資產面額匯率31萬', defaultVisible: true, defaultOrder: 11, align: 'right' },
+  { key: 'netPar31Wan', label: '淨值(面額@31,萬)', dataKey: '淨值面額匯率31萬', defaultVisible: true, defaultOrder: 12, align: 'right' }
 ]
 
 // 模組 UID 與欄位定義的對應
